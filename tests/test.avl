@@ -1,0 +1,13 @@
+function ComputeTC(Graph g) {
+  int trianglecount = 0;
+  forall(v in g.nodes()) {
+    forall(u in g.neighbors(v).filter(u < v)) {
+      forall(w in g.neighbors(v).filter(w > v)) {
+        if (g.isanedge(u,w)) {
+          trianglecount += 1;
+        }
+      }
+    }
+  }
+  return trianglecount;
+}
