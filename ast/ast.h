@@ -14,6 +14,48 @@ class ASTNode
         virtual void Accept(Visitor *visitor) const = 0;
 };
 
+class Statement : public ASTNode
+{
+    public:
+        Statement(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitStatement(this);
+        }
+        
+        ~Statement(){
+            delete statement;
+        }
+
+        ASTNode* getstatement() const{return statement;}
+    
+    private:
+        ASTNode *statement;
+};
+
+class Statementlist : public ASTNode
+{
+    public:
+    
+        Statementlist(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitStatementlist(this);
+        }
+        
+        ~Statementlist(){
+            for(ASTNode* param: statementlist)
+                delete param;
+        }
+
+        const vector<ASTNode*> getStatementList() const{return statementlist;}
+        void addstmt(ASTNode* param){statementlist.push_back(param);}
+    
+    private:
+        vector<ASTNode*> statementlist;
+        
+};
+
 class DeclarationStatement : public ASTNode
 {
     public:

@@ -50,8 +50,10 @@ public:
     {
             Arglist* arglist = dynamic_cast<Arglist*> (function->getparams());
             Identifier* funcName = dynamic_cast<Identifier*> (function->getfuncname());
+            Statementlist* stmtlist =  dynamic_cast<Statementlist*> (function->getstmtlist());
 
-            cout<<"Hello from "<<funcName->getname();
+            cout<<"Hello from "<<funcName->getname()<<"\n";
+            cout<<"Statement List "<<stmtlist->getStatementList().size();
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
@@ -68,6 +70,19 @@ public:
     {
 
     }
+
+    virtual void visitStatement(const Statement *statement) override
+    {
+
+    }
+
+    virtual void visitStatementlist(const Statementlist *arglist) override
+    {
+
+    }
+
+
+
 
 
 private:

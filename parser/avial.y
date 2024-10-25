@@ -36,17 +36,28 @@ function : FUNCTION IDENTIFIER LPAREN arglist RPAREN LCURLY stmtlist RCURLY     
                                                                                 }
          ;
 
-stmtlist : stmt         {$$ = $1;}
-         | stmtlist stmt
+stmtlist : stmt                 {
+                                  Statementlist* stmtlist = new Statementlist();
+                                  stmtlist->addstmt($1);
+                                  $$ = stmtlist;
+                                  free($1);
+                                }
+
+         | stmtlist stmt        {
+                                  Statementlist* stmtlist =dynamic_cast<Statementlist*>($1);
+                                  stmtlist->addstmt($2);
+                                  $$ = stmtlist;
+                                  free($2);
+                                }
          ;
 
 stmt :  assignmentstmt
-        |   declarationstmt     {$$ = $1;}
-        |   ifstmt				{$$ = $1;}
+        |   declarationstmt             {$$ = $1;}
+        |   ifstmt			{$$ = $1;}
         |   forstmt 			{$$ = $1;}
         |   returnstmt 			{$$ = $1;}
         |   forallstmt			{$$ = $1;}
-        |   incandassignstmt	{$$ = $1;}
+        |   incandassignstmt	        {$$ = $1;}
         ;
 
 blcstmt : LCURLY stmtlist RCURLY

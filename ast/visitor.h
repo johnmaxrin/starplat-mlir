@@ -13,6 +13,8 @@ class Function;
 class Paramlist;
 class Arglist;
 class Arg;
+class Statement;
+class Statementlist;
 
 
 class Visitor
@@ -31,6 +33,8 @@ class Visitor
         virtual void visitParamlist(const Paramlist *paramlist) = 0;
         virtual void visitArglist(const Arglist *arglist) = 0;
         virtual void visitArg(const Arg *arg) = 0;
+        virtual void visitStatement(const Statement *stmt) = 0;
+        virtual void visitStatementlist(const Statementlist *stmt) = 0;
     
 };
 
