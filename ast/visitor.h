@@ -10,6 +10,10 @@ class Incandassignstmt;
 class Identifier;
 class ReturnStmt;
 class Function;
+class Paramlist;
+class Arglist;
+class Arg;
+
 
 class Visitor
 {
@@ -24,6 +28,9 @@ class Visitor
         virtual void visitIdentifier(const Identifier *identifier) = 0;
         virtual void visitReturnStmt(const ReturnStmt *returnStmt) = 0;
         virtual void visitFunction(const Function *function) = 0;
+        virtual void visitParamlist(const Paramlist *paramlist) = 0;
+        virtual void visitArglist(const Arglist *arglist) = 0;
+        virtual void visitArg(const Arg *arg) = 0;
     
 };
 

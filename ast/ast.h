@@ -2,6 +2,10 @@
 #define AVIALAST
 
 #include "visitor.h"
+#include <vector>
+#include <iostream>
+
+using namespace std;
 
 class ASTNode
 {
@@ -139,8 +143,8 @@ class Incandassignstmt : public ASTNode
 class Identifier : public ASTNode
 {
     public:
-        Identifier(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
+        Identifier(char *name)
+            : name_(name){}
         
         Identifier(){}
 
@@ -149,16 +153,13 @@ class Identifier : public ASTNode
         }
         
         ~Identifier(){
-            delete type;
-            delete varname;
+            delete name_;
         }
 
-        ASTNode* gettype() const{return type;}
-        ASTNode* getvarname() const{return varname;}
+        char* getname() const{return name_;}
     
     private:
-        ASTNode *type;
-        ASTNode *varname;
+        char* name_;
 };
 
 class ReturnStmt : public ASTNode
@@ -189,27 +190,98 @@ class ReturnStmt : public ASTNode
 class Function : public ASTNode
 {
     public:
-        Function(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
+        Function(Identifier *functionname, Arglist *arglist, ASTNode *stmtlist)
+            : functionname(functionname), arglist(arglist), stmtlist(stmtlist){
+
+            }
         
-        Function(){}
+        // Function(){}
 
         virtual void Accept(Visitor *visitor) const override{
             visitor->visitFunction(this);
         }
         
         ~Function(){
-            delete type;
-            delete varname;
+            delete functionname;
+            delete stmtlist;
         }
 
-        ASTNode* gettype() const{return type;}
-        ASTNode* getvarname() const{return varname;}
+        ASTNode* getfuncname() const{return functionname;}
+        Arglist* getparams() const{return arglist;}
+        ASTNode* getstmtlist() const{return stmtlist;}
     
     private:
-        ASTNode *type;
-        ASTNode *varname;
+        ASTNode* functionname;
+        Arglist* arglist;
+        ASTNode* stmtlist;
 };
 
+class Paramlist : public ASTNode
+{
+    public:
+    
+        Paramlist(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitParamlist(this);
+        }
+        
+        ~Paramlist(){
+            for(ASTNode* param: paramlist)
+                delete param;
+        }
+
+        const vector<ASTNode*> getParamList() const{return paramlist;}
+        void addparam(ASTNode* param){paramlist.push_back(param);}
+    
+    private:
+        vector<ASTNode*> paramlist;
+        
+};
+
+
+class Arglist : public ASTNode
+{
+    public:
+    
+        Arglist(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitArglist(this);
+        }
+        
+        ~Arglist(){
+            for(ASTNode* arg: arglist)
+                delete arg;
+        }
+
+        const vector<ASTNode*> getArgList() const{return arglist;}
+        void addarg(ASTNode* arg){arglist.push_back(arg);}
+    
+    private:
+        vector<ASTNode*> arglist;
+        
+};
+
+class Arg : public ASTNode
+{
+    public:
+    
+        Arg(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitArg(this);
+        }
+        
+        ~Arg(){
+                delete arg;
+        }
+
+        const ASTNode* getArg() const{return arg;}
+    
+    private:
+        ASTNode* arg;
+        
+};
 
 #endif

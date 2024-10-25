@@ -1,6 +1,8 @@
 %{
     #include "../ast/ast.h"
     #include "avial.tab.h"
+
+    extern YYSTYPE yylval;
 %}
 
 %%
@@ -29,7 +31,7 @@
 
 [ \t\n]+                ;
 
-[a-zA-Z_][a-zA-Z0-9_]*  {return IDENTIFIER;}
+[a-zA-Z_][a-zA-Z0-9_]*  {yylval.id = strdup(yytext); return IDENTIFIER;}
 [0-9]*                  {return NUMBER;}
 
 %%

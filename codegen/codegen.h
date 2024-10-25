@@ -48,8 +48,27 @@ public:
 
     virtual void visitFunction(const Function *function) override
     {
-        std::cout << "Visit Function\n";
+            Arglist* arglist = dynamic_cast<Arglist*> (function->getparams());
+            Identifier* funcName = dynamic_cast<Identifier*> (function->getfuncname());
+
+            cout<<"Hello from "<<funcName->getname();
     }
+
+    virtual void visitParamlist(const Paramlist *paramlist) override
+    {
+
+    }
+
+    virtual void visitArglist(const Arglist *arglist) override
+    {
+
+    }
+
+    virtual void visitArg(const Arg *arg) override
+    {
+
+    }
+
 
 private:
     int result;
