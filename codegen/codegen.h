@@ -13,8 +13,23 @@ public:
 
     virtual void visitDeclarationStmt(const DeclarationStatement *dclstmt) override
     {
+        cout<<"Declaration Statememt: {\n";
+        
         Type* type = dynamic_cast<Type*>(dclstmt->gettype());
-        cout<<"Type "<<type->getType()<<"\n";
+        Identifier* identifier = dynamic_cast<Identifier*>(dclstmt->getvarname());
+        Number* number = dynamic_cast<Number*>(dclstmt->getnumber());
+
+        cout<<"\t";
+        type->Accept(this);
+        
+        cout<<"\t";
+        identifier->Accept(this);
+        
+        cout<<"\t";
+        number->Accept(this);
+
+        cout<<"}\n";
+
     }
 
     virtual void visitForallStmt(const ForallStatement *forAllStmt) override
@@ -39,7 +54,7 @@ public:
 
     virtual void visitIdentifier(const Identifier *identifier) override
     {
-        cout<<"\tname: "<<identifier->getname();
+        cout<<"name: "<<identifier->getname()<<"\n";
     }
 
     virtual void visitReturnStmt(const ReturnStmt *returnStmt) override
@@ -77,11 +92,11 @@ public:
         
         for(Arg* arg: arglistV)
         {
-            cout<<"Arg: {\n\t";
+            cout<<"Arg: {\n";
 
             arg->Accept(this);
             
-            cout<<"\n}\n";
+            cout<<"   }\n";
         }
             
         
@@ -90,8 +105,11 @@ public:
     }
 
     virtual void visitArg(const Arg *arg) override
-    {
+    {   
+        cout<<"\t";
         arg->getType()->Accept(this);
+        
+        cout<<"\t";
         arg->getVarName()->Accept(this);
     }
 
@@ -112,6 +130,18 @@ public:
     {
             cout<<"type: "<<type->getType()<<"\n";
     }
+
+    
+    virtual void visitNumber(const Number *number) override
+    {
+            cout<<"number: "<<number->getnumber()<<"\n";
+    }
+
+    
+    virtual void visitExpression(const Expression *expr) override
+    {
+            cout<<"expression: ";
+    }  
 
 
 

@@ -59,11 +59,9 @@ class Statementlist : public ASTNode
 class DeclarationStatement : public ASTNode
 {
     public:
-        DeclarationStatement(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
         
-        DeclarationStatement(ASTNode* type) 
-            : type(type){}
+        DeclarationStatement(ASTNode* type, ASTNode* identifier, ASTNode* number) 
+            : type(type), varname(identifier), number(number){}
 
         virtual void Accept(Visitor *visitor) const override{
             visitor->visitDeclarationStmt(this);
@@ -72,14 +70,18 @@ class DeclarationStatement : public ASTNode
         ~DeclarationStatement(){
             delete type;
             delete varname;
+            delete number;
         }
 
         ASTNode* gettype() const{return type;}
         ASTNode* getvarname() const{return varname;}
+        ASTNode* getnumber() const{return number;}
+        
     
     private:
         ASTNode *type;
         ASTNode *varname;
+        ASTNode *number;
 };
 
 class ForallStatement : public ASTNode
@@ -205,29 +207,43 @@ class Identifier : public ASTNode
         char* name_;
 };
 
+class Number : public ASTNode
+{
+    public:
+        Number(char *number)
+            : number_(atoi(number)){}
+        
+        Number(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitNumber(this);
+        }
+        
+
+        int getnumber() const{return number_;}
+    
+    private:
+        int number_;
+};
+
 class ReturnStmt : public ASTNode
 {
     public:
-        ReturnStmt(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
+        ReturnStmt(ASTNode *expr)
+            : expr(expr){}
         
-        ReturnStmt(){}
-
         virtual void Accept(Visitor *visitor) const override{
             visitor->visitReturnStmt(this);
         }
         
         ~ReturnStmt(){
-            delete type;
-            delete varname;
+            delete expr;
         }
 
-        ASTNode* gettype() const{return type;}
-        ASTNode* getvarname() const{return varname;}
+        ASTNode* getexpr() const{return expr;}
     
     private:
-        ASTNode *type;
-        ASTNode *varname;
+        ASTNode *expr;
 };
 
 class Function : public ASTNode
@@ -349,6 +365,23 @@ class Arglist : public ASTNode
     
     private:
         vector<Arg*> arglist;
+        
+};
+
+class Expression : public ASTNode
+{
+    public:
+    
+        Expression(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitExpression(this);
+        }
+
+        const ASTNode* getExpression() const{return expr;}
+    
+    private:
+        ASTNode* expr;
         
 };
 

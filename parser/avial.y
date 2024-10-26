@@ -20,7 +20,7 @@
 %token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL
 
-%type<astNode> type paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
+%type<astNode>  memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
 
 
 %%
@@ -62,7 +62,13 @@ blcstmt : LCURLY stmtlist RCURLY
         ;
 
 declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration statement\n");}
-                | type IDENTIFIER EQUAL NUMBER SEMICLN      {$$ = new DeclarationStatement($1);}
+
+                | type IDENTIFIER EQUAL NUMBER SEMICLN  {
+                                                                Identifier* identifier = new Identifier($2);
+                                                                Number* number =   new Number($4);
+                                                                $$ = new DeclarationStatement($1, identifier, number);
+                                                        
+                                                        }
             ;
 
 assignmentstmt : IDENTIFIER EQUAL expr SEMICLN      {$$ = new Incandassignstmt();}
@@ -81,16 +87,16 @@ forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN blcstmt      {$$ = new ForallStat
 
 forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN blcstmt    {$$ = new ForallStatement();}
 
-expr :  IDENTIFIER 
+expr :  IDENTIFIER              {$$ = new Identifier();} 
      |  boolexpr
-     |  NUMBER
+     |  NUMBER                  {$$ = new Number();}
      |  memberaccess
      ;
 
 incandassignstmt : IDENTIFIER PLUSEQUAL expr SEMICLN  {$$ = new Incandassignstmt();}
              ;
 
-returnstmt : RETURN expr SEMICLN        {$$ = new ReturnStmt();}
+returnstmt : RETURN expr SEMICLN        {$$ = new ReturnStmt($2);}
            ;
 
 methodcall : IDENTIFIER LPAREN paramlist RPAREN 
