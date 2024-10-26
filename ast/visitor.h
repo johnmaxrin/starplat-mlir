@@ -15,6 +15,7 @@ class Arglist;
 class Arg;
 class Statement;
 class Statementlist;
+class Type;
 
 
 class Visitor
@@ -35,6 +36,7 @@ class Visitor
         virtual void visitArg(const Arg *arg) = 0;
         virtual void visitStatement(const Statement *stmt) = 0;
         virtual void visitStatementlist(const Statementlist *stmt) = 0;
+        virtual void visitType(const Type *type) = 0;
     
 };
 

@@ -62,7 +62,8 @@ class DeclarationStatement : public ASTNode
         DeclarationStatement(ASTNode *type, ASTNode *varname)
             : type(type), varname(varname){}
         
-        DeclarationStatement(){}
+        DeclarationStatement(ASTNode* type) 
+            : type(type){}
 
         virtual void Accept(Visitor *visitor) const override{
             visitor->visitDeclarationStmt(this);
@@ -282,6 +283,52 @@ class Paramlist : public ASTNode
 };
 
 
+class Type : public ASTNode
+{
+    public:
+    
+        Type(char* type):type_(type){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitType(this);
+        }
+        
+        ~Type(){
+                delete type_;
+        }
+
+        const char* getType() const{return type_;}
+    
+    private:
+        char* type_;
+        
+};
+
+class Arg : public ASTNode
+{
+    public:
+    
+        Arg(Type* type, Identifier* identifier) 
+            : type(type), varname(identifier){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitArg(this);
+        }
+        
+        ~Arg(){
+                delete type;
+                delete varname;
+        }
+
+        const Type* getType() const{return type;}
+        const Identifier* getVarName() const{return varname;}
+    
+    private:
+        Type* type;
+        Identifier* varname;
+        
+};
+
 class Arglist : public ASTNode
 {
     public:
@@ -293,37 +340,18 @@ class Arglist : public ASTNode
         }
         
         ~Arglist(){
-            for(ASTNode* arg: arglist)
+            for(Arg* arg: arglist)
                 delete arg;
         }
 
-        const vector<ASTNode*> getArgList() const{return arglist;}
-        void addarg(ASTNode* arg){arglist.push_back(arg);}
+        const vector<Arg*> getArgList() const{return arglist;}
+        void addarg(Arg* arg){arglist.push_back(arg);}
     
     private:
-        vector<ASTNode*> arglist;
+        vector<Arg*> arglist;
         
 };
 
-class Arg : public ASTNode
-{
-    public:
-    
-        Arg(){}
 
-        virtual void Accept(Visitor *visitor) const override{
-            visitor->visitArg(this);
-        }
-        
-        ~Arg(){
-                delete arg;
-        }
-
-        const ASTNode* getArg() const{return arg;}
-    
-    private:
-        ASTNode* arg;
-        
-};
 
 #endif

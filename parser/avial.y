@@ -20,7 +20,7 @@
 %token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL
 
-%type<astNode> paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
+%type<astNode> type paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
 
 
 %%
@@ -40,14 +40,12 @@ stmtlist : stmt                 {
                                   Statementlist* stmtlist = new Statementlist();
                                   stmtlist->addstmt($1);
                                   $$ = stmtlist;
-                                  free($1);
                                 }
 
          | stmtlist stmt        {
                                   Statementlist* stmtlist =dynamic_cast<Statementlist*>($1);
                                   stmtlist->addstmt($2);
                                   $$ = stmtlist;
-                                  free($2);
                                 }
          ;
 
@@ -64,7 +62,7 @@ blcstmt : LCURLY stmtlist RCURLY
         ;
 
 declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration statement\n");}
-                | type IDENTIFIER EQUAL NUMBER SEMICLN      {$$ = new DeclarationStatement();}
+                | type IDENTIFIER EQUAL NUMBER SEMICLN      {$$ = new DeclarationStatement($1);}
             ;
 
 assignmentstmt : IDENTIFIER EQUAL expr SEMICLN      {$$ = new Incandassignstmt();}
@@ -106,21 +104,25 @@ memberaccess : IDENTIFIER DOT methodcall
 
 
 
-arg : type IDENTIFIER           {$$ = new Arg();}
+arg : type IDENTIFIER           {
+                                  Identifier* varname = new Identifier($2);
+                                  Type* type = dynamic_cast<Type*>($1);
+                                  $$ = new Arg(type, varname);
+                                }
     ;
 
 
 arglist : arg                   {
                                   Arglist* arglist = new Arglist();
-                                  arglist->addarg($1);
+                                  Arg* arg = dynamic_cast<Arg*>($1);
+                                  arglist->addarg(arg);
                                   $$ = arglist;
-                                  free($1);
                                 }
         | arglist COMMA arg     {
                                   Arglist* arglist =dynamic_cast<Arglist*>($1);
-                                  arglist->addarg($3);
+                                  Arg* arg = dynamic_cast<Arg*>($3);
+                                  arglist->addarg(arg);
                                   $$ = arglist;
-                                  free($3);
                                 }
         ;
 
@@ -142,8 +144,13 @@ paramlist : IDENTIFIER          {
                                                                 }
           ;
 
-type : INT      
-     | GRAPH 
+type : INT              {       
+                                $$ = new Type($1);
+                        }
+
+     | GRAPH            {
+                                $$ = new Type($1);
+                        }
      ;
 
 

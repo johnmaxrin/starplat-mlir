@@ -9,11 +9,11 @@
 
 "function"              {return FUNCTION;}
 "return"                {return RETURN;}        
-"int"                   {return INT;}
 "if"                    {return IF;}
 "forall"                {return FORALL;}
 "for"                   {return FOR;}
-"Graph"                 {return GRAPH;}
+"Graph"                 {yylval.id = strdup(yytext); return GRAPH;}
+"int"                   {yylval.id = strdup(yytext); return INT;}
 
 
 "{"                     {return LCURLY;}

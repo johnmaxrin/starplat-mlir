@@ -13,7 +13,8 @@ public:
 
     virtual void visitDeclarationStmt(const DeclarationStatement *dclstmt) override
     {
-        std::cout << "Visit Decl Statement\n";
+        Type* type = dynamic_cast<Type*>(dclstmt->gettype());
+        cout<<"Type "<<type->getType()<<"\n";
     }
 
     virtual void visitForallStmt(const ForallStatement *forAllStmt) override
@@ -38,7 +39,7 @@ public:
 
     virtual void visitIdentifier(const Identifier *identifier) override
     {
-        std::cout << "Visit Identifier Statement\n";
+        cout<<"\tname: "<<identifier->getname();
     }
 
     virtual void visitReturnStmt(const ReturnStmt *returnStmt) override
@@ -52,8 +53,15 @@ public:
             Identifier* funcName = dynamic_cast<Identifier*> (function->getfuncname());
             Statementlist* stmtlist =  dynamic_cast<Statementlist*> (function->getstmtlist());
 
-            cout<<"Hello from "<<funcName->getname()<<"\n";
-            cout<<"Statement List "<<stmtlist->getStatementList().size();
+            cout<<"Function: "<<funcName->getname()<<" {\n";
+            arglist->Accept(this);
+
+            cout<<"Body: {\n";
+            stmtlist->Accept(this);
+            cout<<"\n}\n";
+
+            
+            cout<<"\n}";
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
@@ -63,22 +71,46 @@ public:
 
     virtual void visitArglist(const Arglist *arglist) override
     {
+        vector<Arg*> arglistV =  arglist->getArgList();
 
+        cout<<"Arguments: {\n";
+        
+        for(Arg* arg: arglistV)
+        {
+            cout<<"Arg: {\n\t";
+
+            arg->Accept(this);
+            
+            cout<<"\n}\n";
+        }
+            
+        
+
+        cout<<"}\n";
     }
 
     virtual void visitArg(const Arg *arg) override
     {
-
+        arg->getType()->Accept(this);
+        arg->getVarName()->Accept(this);
     }
 
     virtual void visitStatement(const Statement *statement) override
     {
-
+            cout<<"Hello\n";
     }
 
-    virtual void visitStatementlist(const Statementlist *arglist) override
+    virtual void visitStatementlist(const Statementlist *stmtlist) override
     {
+            for(ASTNode *stmt: stmtlist->getStatementList())
+            {
+                stmt->Accept(this);
+            }
+    }
 
+    virtual void visitType(const Type *type) override
+    {
+            cout<<"type: "<<type->getType()<<"\n";
     }
 
 
