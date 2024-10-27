@@ -18,6 +18,8 @@ class Statementlist;
 class Type;
 class Number;
 class Expression;
+class Methodcall;
+class Memberaccess;
 
 
 class Visitor
@@ -41,6 +43,8 @@ class Visitor
         virtual void visitType(const Type *type) = 0;
         virtual void visitNumber(const Number *number) = 0;
         virtual void visitExpression(const Expression *expr) = 0;
+        virtual void visitMethodcall(const Methodcall *methodcall) = 0;
+        virtual void visitMemberaccess(const Memberaccess *methodcall) = 0;
     
 };
 

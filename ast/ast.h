@@ -14,6 +14,28 @@ class ASTNode
         virtual void Accept(Visitor *visitor) const = 0;
 };
 
+class Identifier : public ASTNode
+{
+    public:
+        Identifier(char *name)
+            : name_(name){}
+        
+        Identifier(){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitIdentifier(this);
+        }
+        
+        ~Identifier(){
+            delete name_;
+        }
+
+        char* getname() const{return name_;}
+    
+    private:
+        char* name_;
+};
+
 class Statement : public ASTNode
 {
     public:
@@ -31,6 +53,61 @@ class Statement : public ASTNode
     
     private:
         ASTNode *statement;
+};
+
+class Methodcall : public ASTNode
+{
+    public:
+    
+        Methodcall(Identifier* identifier, ASTNode* node)
+                    : identifier(identifier), node(node) {}
+
+        Methodcall(Identifier* identifier)
+                    : identifier(identifier), node(nullptr){}
+        
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitMethodcall(this);
+        }
+        
+        ~Methodcall(){
+            delete identifier;
+            delete node;
+        }
+
+        const Identifier* getIdentifier() const {return identifier;} 
+        const ASTNode* getnode() const {return node;}       
+
+    private:
+        const Identifier* identifier;
+        const ASTNode* node;
+        
+};
+
+class Memberaccess : public ASTNode
+{
+    public:
+    
+        Memberaccess(Identifier* identifier, ASTNode* node)
+                    : identifier(identifier), node(node) {}
+        
+
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitMemberaccess(this);
+        }
+        
+        ~Memberaccess(){
+            delete identifier;
+            delete node;
+        }
+
+        const Identifier* getIdentifier()const {return identifier;} 
+        const ASTNode* getnode()const{return node;}       
+
+    private:
+        const Identifier* identifier;
+        const ASTNode* node;
+        
 };
 
 class Statementlist : public ASTNode
@@ -87,8 +164,8 @@ class DeclarationStatement : public ASTNode
 class ForallStatement : public ASTNode
 {
     public:
-        ForallStatement(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
+        ForallStatement(Identifier *loopVar, ASTNode *expr, ASTNode* blcstmt)
+            : loopVar(loopVar), expr(expr), blcstmt(blcstmt){}
         
         ForallStatement(){}
 
@@ -97,23 +174,26 @@ class ForallStatement : public ASTNode
         }
         
         ~ForallStatement(){
-            delete type;
-            delete varname;
+            delete loopVar;
+            delete expr;
+            delete blcstmt;
         }
 
-        ASTNode* gettype() const{return type;}
-        ASTNode* getvarname() const{return varname;}
+        Identifier* getLoopVar() const{return loopVar;}
+        ASTNode* getexpr() const{return expr;}
+        ASTNode* getblcstmt() const{return blcstmt;}
     
     private:
-        ASTNode *type;
-        ASTNode *varname;
+        Identifier *loopVar;
+        ASTNode *expr;
+        ASTNode *blcstmt;
 };
 
 class IfStatement : public ASTNode
 {
     public:
-        IfStatement(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
+        IfStatement(ASTNode *expr, ASTNode *stmt)
+            : expr(expr), stmt(stmt){}
         
         IfStatement(){}
 
@@ -122,24 +202,24 @@ class IfStatement : public ASTNode
         }
         
         ~IfStatement(){
-            delete type;
-            delete varname;
+            delete expr;
+            delete stmt;
         }
 
-        ASTNode* gettype() const{return type;}
-        ASTNode* getvarname() const{return varname;}
+        ASTNode* getexpr() const{return expr;}
+        ASTNode* getstmt() const{return stmt;}
     
     private:
-        ASTNode *type;
-        ASTNode *varname;
+        ASTNode *expr;
+        ASTNode *stmt;
 };
 
 
 class BoolExpr : public ASTNode
 {
     public:
-        BoolExpr(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
+        BoolExpr(Identifier *identifier1, char *op,  Identifier *identifier2)
+            : identifier1(identifier1), op(op), identifier2(identifier2){}
         
         BoolExpr(){}
 
@@ -148,23 +228,26 @@ class BoolExpr : public ASTNode
         }
         
         ~BoolExpr(){
-            delete type;
-            delete varname;
+            delete identifier1;
+            delete identifier2;
+            delete op;
         }
 
-        ASTNode* gettype() const{return type;}
-        ASTNode* getvarname() const{return varname;}
+        Identifier* getIdentifier1() const{return identifier1;}
+        Identifier* getIdentifier2() const{return identifier2;}
+        char* getop() const{return op;}
     
     private:
-        ASTNode *type;
-        ASTNode *varname;
+        Identifier *identifier1;
+        Identifier *identifier2;
+        char *op;
 };
 
 class Incandassignstmt : public ASTNode
 {
     public:
-        Incandassignstmt(ASTNode *type, ASTNode *varname)
-            : type(type), varname(varname){}
+        Incandassignstmt(Identifier *identifier, char *op, ASTNode *expr)
+            : identifier(identifier),op(op), expr(expr){}
         
         Incandassignstmt(){}
 
@@ -173,39 +256,21 @@ class Incandassignstmt : public ASTNode
         }
         
         ~Incandassignstmt(){
-            delete type;
-            delete varname;
+            delete identifier;
+            delete op;
+            delete expr;
         }
 
-        ASTNode* gettype() const{return type;}
-        ASTNode* getvarname() const{return varname;}
+        Identifier* getIdentifier() const{return identifier;}
+        ASTNode* getexpr() const{return expr;}
     
     private:
-        ASTNode *type;
-        ASTNode *varname;
+        Identifier *identifier;
+        char *op;
+        ASTNode *expr;
 };
 
-class Identifier : public ASTNode
-{
-    public:
-        Identifier(char *name)
-            : name_(name){}
-        
-        Identifier(){}
 
-        virtual void Accept(Visitor *visitor) const override{
-            visitor->visitIdentifier(this);
-        }
-        
-        ~Identifier(){
-            delete name_;
-        }
-
-        char* getname() const{return name_;}
-    
-    private:
-        char* name_;
-};
 
 class Number : public ASTNode
 {

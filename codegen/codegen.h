@@ -34,12 +34,29 @@ public:
 
     virtual void visitForallStmt(const ForallStatement *forAllStmt) override
     {
-        std::cout << "Visit Foralll Statement\n";
+        std::cout << "Forall: {\n";
+        
+        std::cout << "Loop Var: {\n\t";
+        forAllStmt->getLoopVar()->Accept(this);
+        std::cout << "\t}\n";
+
+        std::cout << "Loop Expr: {\n\t";
+        forAllStmt->getexpr()->Accept(this);
+        std::cout <<"}\n";
+
+        std::cout << "Loop Body: {\n\t";
+        forAllStmt->getblcstmt()->Accept(this);
+        std::cout <<"}\n";
+
+        cout<<"}\n";
     }
 
     virtual void visitIfStmt(const IfStatement *ifStmt) override
     {
-        std::cout << "Visit If Statement\n";
+        std::cout << "If Statement: {\n";
+        ifStmt->getexpr()->Accept(this);
+        ifStmt->getstmt()->Accept(this);
+        std::cout << "}\n";
     }
 
     virtual void visitBoolExpr(const BoolExpr *boolExpr) override
@@ -49,17 +66,25 @@ public:
 
     virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt) override
     {
-        std::cout << "Visit Inc and Assign Statement\n";
+        std::cout << "Increment and Assign Statement: {\n";
+        incandassignstmt->getIdentifier()->Accept(this);
+        incandassignstmt->getexpr()->Accept(this);
+
+        cout<<"}\n";
     }
 
     virtual void visitIdentifier(const Identifier *identifier) override
     {
-        cout<<"name: "<<identifier->getname()<<"\n";
+        cout<<"Identifier: "<<identifier->getname()<<"\n";
     }
 
     virtual void visitReturnStmt(const ReturnStmt *returnStmt) override
     {
-        std::cout << "Visit Return Statement\n";
+        ASTNode* expr = returnStmt->getexpr();
+        
+        cout<<"Return: {\n";
+        expr->Accept(this);
+        cout<<"}";
     }
 
     virtual void visitFunction(const Function *function) override
@@ -71,7 +96,7 @@ public:
             cout<<"Function: "<<funcName->getname()<<" {\n";
             arglist->Accept(this);
 
-            cout<<"Body: {\n";
+            cout<<"Function Body: {\n";
             stmtlist->Accept(this);
             cout<<"\n}\n";
 
@@ -82,6 +107,29 @@ public:
     virtual void visitParamlist(const Paramlist *paramlist) override
     {
 
+    }
+
+    virtual void visitMethodcall(const Methodcall *methodcall) override
+    {       
+            cout<<"Methodcall: {\n\t";
+            methodcall->getIdentifier()->Accept(this);
+            
+            cout<<"\t";
+            if(methodcall->getnode() != nullptr)
+                methodcall->getnode()->Accept(this);
+            cout<<"}\n";
+    }
+
+    virtual void visitMemberaccess(const Memberaccess *memberaccess) override
+    {
+        cout << "Member Access: {\n\t";
+        memberaccess->getIdentifier()->Accept(this);
+
+        cout<<"\t";
+        if(memberaccess->getnode() != nullptr)
+            memberaccess->getnode()->Accept(this);
+        
+        cout<<"}\n";
     }
 
     virtual void visitArglist(const Arglist *arglist) override
@@ -115,7 +163,6 @@ public:
 
     virtual void visitStatement(const Statement *statement) override
     {
-            cout<<"Hello\n";
     }
 
     virtual void visitStatementlist(const Statementlist *stmtlist) override
@@ -140,7 +187,7 @@ public:
     
     virtual void visitExpression(const Expression *expr) override
     {
-            cout<<"expression: ";
+            
     }  
 
 

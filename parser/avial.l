@@ -32,7 +32,7 @@
 [ \t\n]+                ;
 
 [a-zA-Z_][a-zA-Z0-9_]*  {yylval.id = strdup(yytext); return IDENTIFIER;}
-[0-9]*                  {return NUMBER;}
+[0-9]*                  {yylval.id = strdup(yytext); return NUMBER;}
 
 %%
 

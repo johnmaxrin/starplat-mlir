@@ -20,7 +20,7 @@
 %token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL
 
-%type<astNode>  memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
+%type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
 
 
 %%
@@ -58,7 +58,7 @@ stmt :  assignmentstmt
         |   incandassignstmt	        {$$ = $1;}
         ;
 
-blcstmt : LCURLY stmtlist RCURLY
+blcstmt : LCURLY stmtlist RCURLY        {$$ = $2;}
         ;
 
 declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration statement\n");}
@@ -74,37 +74,66 @@ declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration
 assignmentstmt : IDENTIFIER EQUAL expr SEMICLN      {$$ = new Incandassignstmt();}
             ;
 
-boolexpr : IDENTIFIER LT IDENTIFIER 		{$$ = new BoolExpr();}
-         | IDENTIFIER GT IDENTIFIER             {$$ = new BoolExpr();}
+boolexpr : IDENTIFIER LT IDENTIFIER 		{
+                                                  Identifier *id1 = new Identifier($1);
+                                                  Identifier *id2 = new Identifier($3);
+                                                  $$ = new BoolExpr(id1, $2, id2);
+                                                }
+
+         | IDENTIFIER GT IDENTIFIER             {
+                                                  Identifier *id1 = new Identifier($1);
+                                                  Identifier *id2 = new Identifier($3);
+                                                  $$ = new BoolExpr(id1, $2, id2);
+                                                }
          ;
 
-ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement();}
-        | IF LPAREN expr RPAREN blcstmt     {$$ = new IfStatement();}
+ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement($3, $5);}
+        | IF LPAREN expr RPAREN blcstmt     {$$ = new IfStatement($3, $5);}
         ;
 
 
-forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN blcstmt      {$$ = new ForallStatement();}
+forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN blcstmt      { $$ = new ForallStatement();}
 
-forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN blcstmt    {$$ = new ForallStatement();}
+forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN blcstmt    { 
+                                                                  Identifier* identifier = new Identifier($3);
+                                                                  $$ = new ForallStatement(identifier, $5, $7);
+                                                                }
 
-expr :  IDENTIFIER              {$$ = new Identifier();} 
-     |  boolexpr
-     |  NUMBER                  {$$ = new Number();}
-     |  memberaccess
+expr :  IDENTIFIER              {$$ = new Identifier($1);} 
+     |  boolexpr                {$$ = $1;}
+     |  NUMBER                  {$$ = new Number($1);}
+     |  memberaccess            {$$ = $1;}
      ;
 
-incandassignstmt : IDENTIFIER PLUSEQUAL expr SEMICLN  {$$ = new Incandassignstmt();}
+incandassignstmt : IDENTIFIER PLUSEQUAL expr SEMICLN  {
+                                                        Identifier* identifier = new Identifier($1);
+                                                        $$ = new Incandassignstmt(identifier, $2, $3);
+                                                      }
              ;
 
 returnstmt : RETURN expr SEMICLN        {$$ = new ReturnStmt($2);}
            ;
 
-methodcall : IDENTIFIER LPAREN paramlist RPAREN 
-            | IDENTIFIER LPAREN expr RPAREN 
-            | IDENTIFIER LPAREN RPAREN
+methodcall : IDENTIFIER LPAREN paramlist RPAREN {
+                                                  Identifier* identifier = new Identifier($1);
+                                                  $$ = new Methodcall(identifier, $3);
+                                                }
+
+            | IDENTIFIER LPAREN expr RPAREN     {
+                                                  Identifier* identifier = new Identifier($1);
+                                                  $$ = new Methodcall(identifier, $3);
+                                                }
+
+            | IDENTIFIER LPAREN RPAREN          {
+                                                  Identifier* identifier = new Identifier($1);
+                                                  $$ = new Methodcall(identifier);
+                                                }
             ;
 
-memberaccess : IDENTIFIER DOT methodcall
+memberaccess : IDENTIFIER DOT methodcall        {
+                                                  Identifier* identifier = new Identifier($1);
+                                                  $$ = new Memberaccess(identifier, $3);
+                                                }
              | memberaccess DOT methodcall
              ;
 
