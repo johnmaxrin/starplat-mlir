@@ -3,7 +3,7 @@
 ### How to compile?
 ```bash
 chmod +x compile.sh
-./run.sh
+./compile.sh
 ```
 
 ### How to run?
