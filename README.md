@@ -2,12 +2,12 @@
 
 ### How to compile?
 ```bash
-chmod +x run.sh
+chmod +x compile.sh
 ./run.sh
 ```
 
 ### How to run?
 
 ```bash
-./app tests/test.avl > ast.avl
+.build/app tests/test.avl > ast.avl
 ```
