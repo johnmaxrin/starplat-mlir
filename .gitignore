@@ -2,3 +2,4 @@ app
 parser/*.c
 parser/*.h
 ast.avl
+build

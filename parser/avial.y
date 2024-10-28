@@ -2,7 +2,7 @@
     #include <cstdio>
     #include <cstdlib>
     #include <cstring>
-	#include "../ast/ast.h"
+	  #include "../ast/ast.h"
     extern int yylex();
     void yyerror(const char* s);
 
