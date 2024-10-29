@@ -1,4 +1,5 @@
 #include "../ast/visitor.h"
+#include "../ast/ast.h"
 #include <map>
 #include <string>
 #include <iostream>
