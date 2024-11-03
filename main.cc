@@ -5,7 +5,7 @@
 #include "ast/ast.h"
 #include "ast/visitor.h"
 #include "codegen/astdump.h"
-#include "parser/avial.tab.h"
+#include "avial.tab.h"
 
 extern int yyparse();
 extern FILE *yyin;

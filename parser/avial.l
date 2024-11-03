@@ -1,5 +1,5 @@
 %{
-    #include "../ast/ast.h"
+    #include "../../ast/ast.h"
     #include "avial.tab.h"
 
     extern YYSTYPE yylval;
