@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.9)
+cmake_minimum_required(VERSION 3.20.0)
 project(Avial)
 
 set(CMAKE_CXX_STANDARD 11)
@@ -47,6 +47,7 @@ add_definitions(${NO_RTTI})
 
 # Include parser directory as a subdirectory
 add_subdirectory(parser)
+add_subdirectory(avialDialect)
 
 # Include directories for the source files
 include_directories(

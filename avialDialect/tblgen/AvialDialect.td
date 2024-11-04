@@ -1,7 +1,7 @@
-#include "mlir/IR/DialectBase.td"
+include "mlir/IR/DialectBase.td"
 
 def AvialDialect : Dialect {
     let summary = "Contains all the graph related operations in starplat";
-    let name = avialDialect;
-    let cppNamespace = "::avialDialect"
+    let name = "avialDialect";
+    let cppNamespace = "::avialDialect";
 }
