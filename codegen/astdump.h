@@ -16,9 +16,9 @@ public:
     {
         cout<<"Declaration Statememt: {\n";
         
-        Type* type = dynamic_cast<Type*>(dclstmt->gettype());
-        Identifier* identifier = dynamic_cast<Identifier*>(dclstmt->getvarname());
-        Number* number = dynamic_cast<Number*>(dclstmt->getnumber());
+        Type* type = static_cast<Type*>(dclstmt->gettype());
+        Identifier* identifier = static_cast<Identifier*>(dclstmt->getvarname());
+        Number* number = static_cast<Number*>(dclstmt->getnumber());
 
         cout<<"\t";
         type->Accept(this);
@@ -90,9 +90,9 @@ public:
 
     virtual void visitFunction(const Function *function) override
     {
-            Arglist* arglist = dynamic_cast<Arglist*> (function->getparams());
-            Identifier* funcName = dynamic_cast<Identifier*> (function->getfuncname());
-            Statementlist* stmtlist =  dynamic_cast<Statementlist*> (function->getstmtlist());
+            Arglist* arglist = static_cast<Arglist*> (function->getparams());
+            Identifier* funcName = static_cast<Identifier*> (function->getfuncname());
+            Statementlist* stmtlist =  static_cast<Statementlist*> (function->getstmtlist());
 
             cout<<"Function: "<<funcName->getname()<<" {\n";
             arglist->Accept(this);

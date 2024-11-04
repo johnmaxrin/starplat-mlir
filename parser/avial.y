@@ -31,7 +31,7 @@ prgm  : function            {root = $1;}
 
 function : FUNCTION IDENTIFIER LPAREN arglist RPAREN LCURLY stmtlist RCURLY     {
                                                                                         Identifier* funcName = new Identifier($2);
-                                                                                        Arglist* arglist = dynamic_cast<Arglist*>($4);
+                                                                                        Arglist* arglist = static_cast<Arglist*>($4);
                                                                                         $$ = new Function(funcName, arglist, $7);
                                                                                 }
          ;
@@ -43,7 +43,7 @@ stmtlist : stmt                 {
                                 }
 
          | stmtlist stmt        {
-                                  Statementlist* stmtlist =dynamic_cast<Statementlist*>($1);
+                                  Statementlist* stmtlist =static_cast<Statementlist*>($1);
                                   stmtlist->addstmt($2);
                                   $$ = stmtlist;
                                 }
@@ -141,7 +141,7 @@ memberaccess : IDENTIFIER DOT methodcall        {
 
 arg : type IDENTIFIER           {
                                   Identifier* varname = new Identifier($2);
-                                  Type* type = dynamic_cast<Type*>($1);
+                                  Type* type = static_cast<Type*>($1);
                                   $$ = new Arg(type, varname);
                                 }
     ;
@@ -149,13 +149,13 @@ arg : type IDENTIFIER           {
 
 arglist : arg                   {
                                   Arglist* arglist = new Arglist();
-                                  Arg* arg = dynamic_cast<Arg*>($1);
+                                  Arg* arg = static_cast<Arg*>($1);
                                   arglist->addarg(arg);
                                   $$ = arglist;
                                 }
         | arglist COMMA arg     {
-                                  Arglist* arglist =dynamic_cast<Arglist*>($1);
-                                  Arg* arg = dynamic_cast<Arg*>($3);
+                                  Arglist* arglist =static_cast<Arglist*>($1);
+                                  Arg* arg = static_cast<Arg*>($3);
                                   arglist->addarg(arg);
                                   $$ = arglist;
                                 }
@@ -172,7 +172,7 @@ paramlist : IDENTIFIER          {
                                 } 
           | paramlist COMMA IDENTIFIER                          {
                                                                   ASTNode* param = new Identifier();
-                                                                  Paramlist* paramlist = dynamic_cast<Paramlist*>($1);
+                                                                  Paramlist* paramlist = static_cast<Paramlist*>($1);
                                                                   paramlist->addparam(param);
                                                                   $$ = paramlist;
                                                                   free($3);
