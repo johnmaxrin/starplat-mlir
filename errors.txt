@@ -1,0 +1,12 @@
+-- Using MLIRConfig.cmake in: /home/r0b36t/llvm-project/build/lib/cmake/mlir
+-- Using LLVMConfig.cmake in: /home/r0b36t/llvm-project/build/lib/cmake/llvm
+-- Building with -fPIC
+-- Configuring done (0.2s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/r0b36t/Desktop/Avial/build
+[ 22%] Built target MLIRAvialIncGen
+[ 33%] Building CXX object parser/CMakeFiles/parser_lib.dir/lex.yy.cc.o
+[ 44%] Building CXX object parser/CMakeFiles/parser_lib.dir/avial.tab.cc.o
+[ 55%] Linking CXX static library libparser_lib.a
+[ 77%] Built target parser_lib
+[ 88%] Building CXX object CMakeFiles/app.dir/main.cc.o

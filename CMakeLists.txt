@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.20.0)
 project(Avial)
 
-set(CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -34,6 +35,8 @@ include_directories(${MLIR_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
+get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+
 # add_compile_options(-fsanitize=address)
 # add_link_options(-fsanitize=address)
 
@@ -53,9 +56,19 @@ add_subdirectory(avialDialect)
 include_directories(
     ${CMAKE_SOURCE_DIR}/ast       # Include path for AST headers
     ${CMAKE_SOURCE_DIR}/codegen    # Include path for codegen headers
+    ${CMAKE_SOURCE_DIR}/avialDialect    # Include path for codegen headers
     ${CMAKE_BINARY_DIR}/parser  # Include path for generated parser files
+    ${CMAKE_BINARY_DIR}/avialDialect
 )
 
 # Add executable and link it with the parser library
 add_llvm_executable(app main.cc DEPENDS MLIRAvialIncGen)
-target_link_libraries(app parser_lib ${FLEX_LIBRARIES} ${BISON_LIBRARIES})
+target_link_libraries(app 
+  parser_lib 
+  ${dialect_libs}
+  ${FLEX_LIBRARIES} 
+  ${BISON_LIBRARIES} 
+  
+  MLIRIR
+  
+)

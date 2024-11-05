@@ -5,7 +5,12 @@
 #include "ast/ast.h"
 #include "ast/visitor.h"
 #include "codegen/astdump.h"
+#include "codegen/mlirgen.h"
 #include "avial.tab.h"
+
+#include "mlir/IR/MLIRContext.h"
+#include "mlir/IR/Builders.h"
+#include "mlir/IR/BuiltinOps.h"
 
 extern int yyparse();
 extern FILE *yyin;
@@ -30,15 +35,18 @@ int main(int argc, char *argv[])
 
     yyin = file;
     yyparse();
+    fclose(file);
 
-    CodeGen *gen = new CodeGen;
+    // CodeGen *gen = new CodeGen;
+
+
+    MLIRCodeGen *MLIRgen = new MLIRCodeGen;
 
     if(root!= nullptr)
-        root->Accept(gen);
+        root->Accept(MLIRgen);
     
+    MLIRgen->printModule();
     
-
-    fclose(file);
 
     return 0;
 }
