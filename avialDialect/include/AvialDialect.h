@@ -14,6 +14,7 @@
 #include "mlir/IR/OpImplementation.h" 
 
 #include "tblgen/Dialect.h.inc"
+#include "tblgen/Types.h.inc"
 
 
 #endif
