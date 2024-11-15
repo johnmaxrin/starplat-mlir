@@ -11,10 +11,11 @@
 #include "mlir/Bytecode/BytecodeImplementation.h"
 #include "mlir/Bytecode/BytecodeOpInterface.h"
 
-#include "mlir/IR/OpImplementation.h" 
+#include "mlir/IR/OpImplementation.h" // For Op implementation utilities
 
 #include "tblgen/Dialect.h.inc"
-#include "tblgen/Types.h.inc"
 
+#define GET_TYPEDEF_CLASSES
+#include "tblgen/Types.h.inc"
 
 #endif

@@ -62,13 +62,21 @@ include_directories(
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc DEPENDS MLIRAvialIncGen)
+add_llvm_executable(app main.cc avialDialect/lib/AvialDialect.cc DEPENDS MLIRAvialIncGen)
 target_link_libraries(app 
-  parser_lib 
-  ${dialect_libs}
-  ${FLEX_LIBRARIES} 
-  ${BISON_LIBRARIES} 
-  
-  MLIRIR
-  
-)
+
+PRIVATE
+
+    parser_lib 
+    ${dialect_libs}
+    ${FLEX_LIBRARIES} 
+    ${BISON_LIBRARIES} 
+      MLIRAnalysis
+          MLIRIR
+          MLIRParser
+          MLIRPass
+          MLIRSPIRVDialect
+          MLIRTranslateLib
+          MLIRSupport
+          MLIRSideEffectInterfaces
+          MLIRTransforms)

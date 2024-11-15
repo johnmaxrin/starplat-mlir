@@ -141,7 +141,7 @@ memberaccess : IDENTIFIER DOT methodcall        {
 
 arg : type IDENTIFIER           {
                                   Identifier* varname = new Identifier($2);
-                                  Type* type = static_cast<Type*>($1);
+                                  TypeExpr* type = static_cast<TypeExpr*>($1);
                                   $$ = new Arg(type, varname);
                                 }
     ;
@@ -180,11 +180,11 @@ paramlist : IDENTIFIER          {
           ;
 
 type : INT              {       
-                                $$ = new Type($1);
+                                $$ = new TypeExpr($1);
                         }
 
      | GRAPH            {
-                                $$ = new Type($1);
+                                $$ = new TypeExpr($1);
                         }
      ;
 

@@ -364,17 +364,17 @@ class Paramlist : public ASTNode
 };
 
 
-class Type : public ASTNode
+class TypeExpr : public ASTNode
 {
     public:
     
-        Type(char* type):type_(type){}
+        TypeExpr(char* type):type_(type){}
 
         virtual void Accept(Visitor *visitor) const override{
             visitor->visitType(this);
         }
         
-        ~Type(){
+        ~TypeExpr(){
                 delete type_;
         }
 
@@ -389,7 +389,7 @@ class Arg : public ASTNode
 {
     public:
     
-        Arg(Type* type, Identifier* identifier) 
+        Arg(TypeExpr* type, Identifier* identifier) 
             : type(type), varname(identifier){}
 
         virtual void Accept(Visitor *visitor) const override{
@@ -401,11 +401,11 @@ class Arg : public ASTNode
                 delete varname;
         }
 
-        const Type* getType() const{return type;}
+        const TypeExpr* getType() const{return type;}
         const Identifier* getVarName() const{return varname;}
     
     private:
-        Type* type;
+        TypeExpr* type;
         Identifier* varname;
         
 };

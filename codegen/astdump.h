@@ -16,7 +16,7 @@ public:
     {
         cout<<"Declaration Statememt: {\n";
         
-        Type* type = static_cast<Type*>(dclstmt->gettype());
+        TypeExpr* type = static_cast<TypeExpr*>(dclstmt->gettype());
         Identifier* identifier = static_cast<Identifier*>(dclstmt->getvarname());
         Number* number = static_cast<Number*>(dclstmt->getnumber());
 
@@ -174,7 +174,7 @@ public:
             }
     }
 
-    virtual void visitType(const Type *type) override
+    virtual void visitType(const TypeExpr *type) override
     {
             cout<<"type: "<<type->getType()<<"\n";
     }

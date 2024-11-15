@@ -18,7 +18,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 
-using namespace avial;
+
 
 class MLIRCodeGen : public Visitor
 {
@@ -32,6 +32,7 @@ public:
     {
         // Load Dialects here. 
         context.getOrLoadDialect<mlir::func::FuncDialect>();
+        context.getOrLoadDialect<mlir::avial::AvialDialect>();
 
     }
 
@@ -74,7 +75,9 @@ public:
         
         auto funcTy = builder.getFunctionType({},builder.getIntegerType(32));
         auto funcBl = mlir::func::FuncOp::create(builder.getUnknownLoc(), "foo", funcTy);
+        auto *entryBlock = funcBl.addEntryBlock();
         module.push_back(funcBl);
+        builder.setInsertionPointToStart(entryBlock);
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
@@ -111,7 +114,7 @@ public:
             
     }
 
-    virtual void visitType(const Type *type) override
+    virtual void visitType(const TypeExpr *type) override
     {
             
     }
