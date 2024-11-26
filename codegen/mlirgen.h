@@ -74,7 +74,8 @@ public:
     {
         
         auto funcTy = builder.getFunctionType({},builder.getIntegerType(32));
-        auto funcBl = mlir::func::FuncOp::create(builder.getUnknownLoc(), "foo", funcTy);
+
+        auto funcBl = mlir::func::FuncOp::create(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcTy);
         auto *entryBlock = funcBl.addEntryBlock();
         module.push_back(funcBl);
         builder.setInsertionPointToStart(entryBlock);
