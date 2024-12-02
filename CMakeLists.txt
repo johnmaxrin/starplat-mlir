@@ -36,6 +36,7 @@ link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+get_property(extension_libs GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
 
 # add_compile_options(-fsanitize=address)
 # add_link_options(-fsanitize=address)
@@ -71,6 +72,7 @@ PRIVATE
     ${dialect_libs}
     ${FLEX_LIBRARIES} 
     ${BISON_LIBRARIES} 
+    ${extension_libs}
       MLIRAnalysis
           MLIRIR
           MLIRParser
