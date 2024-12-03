@@ -14,7 +14,6 @@
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 
-
 class MLIRCodeGen : public Visitor
 {
 
@@ -62,11 +61,17 @@ public:
 
         auto grty = mlir::avial::GraphType::get(builder.getContext());
 
-
         auto funcTy = builder.getFunctionType({}, grty);
-        //auto funcTy = builder.getFunctionType({}, builder.getIntegerType(32));
+        // auto funcTy = builder.getFunctionType({}, builder.getIntegerType(32));
+        llvm::StringRef value = "g";
+        llvm::ArrayRef<mlir::NamedAttribute> attrs;
+        llvm::ArrayRef<mlir::DictionaryAttr> args;
 
-        auto funcBl = mlir::func::FuncOp::create(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcTy);
+        llvm::SmallVector<mlir::NamedAttribute, 4> attributes;
+
+        llvm::SmallVector<mlir::DictionaryAttr, 4> arguments;
+
+        auto funcBl = mlir::func::FuncOp::create(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcTy, attributes, arguments);
         auto *entryBlock = funcBl.addEntryBlock();
         module.push_back(funcBl);
         builder.setInsertionPointToStart(entryBlock);

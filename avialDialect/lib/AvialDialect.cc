@@ -10,6 +10,9 @@
 #define GET_TYPEDEF_CLASSES
 #include "tblgen/Types.cpp.inc"
 
+#define GET_OP_CLASSES
+#include "tblgen/Ops.h.inc"
+
 using namespace mlir;
 using namespace mlir::avial;
 
@@ -23,7 +26,12 @@ namespace mlir
             addTypes<
                 #define GET_TYPEDEF_LIST
                 #include "tblgen/Types.cpp.inc"
-                >();    
+                >();  
+
+            addOperations<
+                #define GET_OP_LIST
+                #include "tblgen/Ops.cpp.inc"
+      >();  
         }
     }
 

@@ -1,5 +1,6 @@
 include "mlir/IR/DialectBase.td"
 include "mlir/IR/AttrTypeBase.td"
+include "mlir/IR/SymbolInterfaces.td"
 
 
 def AvialDialect : Dialect {
@@ -19,3 +20,21 @@ class AvialDialectType<string name, string typeMnemonic, list<Trait> traits = []
 def AvialGraphType : AvialDialectType<"Graph", "graph"> {
   let summary = "A graph type";
 }
+
+def AvialNodeType : AvialDialectType<"Node", "node"> {
+  let summary = "A node type";
+}
+
+
+
+
+class AvialOps : Op<AvialDialect, "nodes">
+{
+  let summary = "Get nodes of a graph type";
+  let arguments = (ins AvialGraphType:$graph);
+  let results = (outs AvialNodeType:$node);
+  let assemblyFormat = "$graph  attr-dict `:` `(` type($graph)  `)` `->` type($node)";
+}
+
+
+
