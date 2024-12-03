@@ -317,6 +317,8 @@ class Function : public ASTNode
         Function(Identifier *functionname, Arglist *arglist, ASTNode *stmtlist)
             : functionname(functionname), arglist(arglist), stmtlist(stmtlist){
 
+            funcName = functionname->getname();
+
             }
         
         // Function(){}
@@ -333,11 +335,13 @@ class Function : public ASTNode
         ASTNode* getfuncname() const{return functionname;}
         Arglist* getparams() const{return arglist;}
         ASTNode* getstmtlist() const{return stmtlist;}
+        string getfuncNameIdentifier() const{return funcName;} // Returns the function name as a string. 
     
     private:
         ASTNode* functionname;
         Arglist* arglist;
         ASTNode* stmtlist;
+        string funcName;
 };
 
 class Paramlist : public ASTNode
