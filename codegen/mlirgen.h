@@ -11,6 +11,7 @@
 #include "mlir/Parser/Parser.h"
 
 #include "include/AvialTypes.h"
+#include "include/AvialOps.h"
 
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 
@@ -73,6 +74,11 @@ public:
 
         auto funcBl = mlir::func::FuncOp::create(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcTy, attributes, arguments);
         auto *entryBlock = funcBl.addEntryBlock();
+
+        auto getNodes = builder.create<mlir::avial::GetNodes>(builder.getUnknownLoc());
+
+        module.push_back(getNodes);
+
         module.push_back(funcBl);
         builder.setInsertionPointToStart(entryBlock);
     }

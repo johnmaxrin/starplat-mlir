@@ -1,6 +1,13 @@
+#ifndef AVIALTDFILE
+#define AVIALTDFILE
+
 include "mlir/IR/DialectBase.td"
+
 include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/SymbolInterfaces.td"
+include "mlir/IR/OpBase.td"
+include "mlir/IR/BuiltinAttributes.td"
+
 
 
 def AvialDialect : Dialect {
@@ -28,13 +35,19 @@ def AvialNodeType : AvialDialectType<"Node", "node"> {
 
 
 
-class AvialOps : Op<AvialDialect, "nodes">
+class AvialGraphOps<string mnemonic> : Op<AvialDialect, mnemonic>
 {
   let summary = "Get nodes of a graph type";
-  let arguments = (ins AvialGraphType:$graph);
-  let results = (outs AvialNodeType:$node);
-  let assemblyFormat = "$graph  attr-dict `:` `(` type($graph)  `)` `->` type($node)";
+  //let arguments = (ins AvialGraphType:$graph);
+  //let results = (outs AvialNodeType:$node);
+  //let assemblyFormat = "$graph  attr-dict `:` `(` type($graph)  `)` `->` type($node)";
+}
+
+def Avial_GetNodes : AvialGraphOps<"nodes">
+{
+  let summary = "Get all nodes of a graph!";
 }
 
 
+#endif 
 

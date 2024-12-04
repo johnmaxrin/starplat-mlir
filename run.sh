@@ -1,4 +1,6 @@
-echo "Running Tests\n"
+printf "Running Tests\n\n"
+
 ./build/bin/app tests/test.avl
 
-echo "\nTesting complete\n"
+printf '\n'
+echo "Testing complete"
