@@ -90,7 +90,17 @@ public:
         auto garphvar = builder.create<mlir::avial::createCSRGraph>(builder.getUnknownLoc(), grty, builder.getStringAttr("Grapg"));
         builder.create<mlir::avial::GetNodes>(builder.getUnknownLoc(), ndty, garphvar);
 
-        
+
+        auto valueAttr2 = builder.getIntegerAttr(builder.getIntegerType(64), 0);
+
+
+        auto forallOp = builder.create<mlir::avial::forAll>(builder.getUnknownLoc(), valueAttr2);
+
+        mlir::Region &bodyRegion = forallOp.getBody();
+        bodyRegion.push_back(new mlir::Block);
+        mlir::Block &block = bodyRegion.back();
+
+        builder.setInsertionPointToStart(&block);
 
         
     }

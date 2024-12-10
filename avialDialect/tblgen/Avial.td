@@ -36,7 +36,7 @@ def AvialNodeType : AvialDialectType<"Node", "node"> {
 
 
 
-
+class AvialLoopOps<string mnemonic> : Op<AvialDialect, mnemonic>; 
 class AvialGraphOps<string mnemonic> : Op<AvialDialect, mnemonic>;
 //{
   //let summary = "Get nodes of a graph type";
@@ -60,6 +60,16 @@ def Avial_GetNodes : AvialGraphOps<"nodes">
   
   let results = (outs AvialNodeType:$nodes);
 
+}
+
+
+def Avial_forAll : AvialLoopOps<"forall">
+{
+  let summary = "The normal forall";
+
+  let arguments = (ins Builtin_IntegerAttr:$lowerbound);
+
+  let regions = (region AnyRegion:$body);
 }
 
 
