@@ -14,6 +14,8 @@
 "for"                   {return FOR;}
 "Graph"                 {yylval.id = strdup(yytext); return GRAPH;}
 "int"                   {yylval.id = strdup(yytext); return INT;}
+"propNode"              {yylval.id = strdup(yytext); return PROPNODE; }
+"propEdge"              {yylval.id = strdup(yytext); return PROPEDGE; }
 
 
 "{"                     {return LCURLY;}

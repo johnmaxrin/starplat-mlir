@@ -18,7 +18,7 @@
 
 
 %token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR
-%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL
+%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
 
@@ -51,11 +51,14 @@ stmtlist : stmt                 {
 
 stmt :  assignmentstmt
         |   declarationstmt             {$$ = $1;}
-        |   ifstmt			{$$ = $1;}
-        |   forstmt 			{$$ = $1;}
-        |   returnstmt 			{$$ = $1;}
-        |   forallstmt			{$$ = $1;}
-        |   incandassignstmt	        {$$ = $1;}
+        |   ifstmt			                {$$ = $1;}
+        |   forstmt 			              {$$ = $1;}
+        |   returnstmt 			            {$$ = $1;}
+        |   forallstmt			            {$$ = $1;}
+        |   incandassignstmt	          {$$ = $1;}
+        |   templateDecl                {}
+        |   /*epsilon*/                 {$$ = nullptr;}
+        |   memberaccessstmt
         ;
 
 blcstmt : LCURLY stmtlist RCURLY        {$$ = $2;}
@@ -70,6 +73,9 @@ declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration
                                                         
                                                         }
             ;
+
+templateDecl : templateType IDENTIFIER SEMICLN { }
+              ;
 
 assignmentstmt : IDENTIFIER EQUAL expr SEMICLN      {$$ = new Incandassignstmt();}
             ;
@@ -130,21 +136,28 @@ methodcall : IDENTIFIER LPAREN paramlist RPAREN {
                                                 }
             ;
 
-memberaccess : IDENTIFIER DOT methodcall        {
+memberaccess : IDENTIFIER DOT methodcall       {
                                                   Identifier* identifier = new Identifier($1);
                                                   $$ = new Memberaccess(identifier, $3);
                                                 }
              | memberaccess DOT methodcall
              ;
 
-
+memberaccessstmt : memberaccess SEMICLN {}
 
 arg : type IDENTIFIER           {
                                   Identifier* varname = new Identifier($2);
                                   TypeExpr* type = static_cast<TypeExpr*>($1);
                                   $$ = new Arg(type, varname);
                                 }
-    ;
+      | templateType IDENTIFIER {}
+      
+      | /*epsilon*/             {
+                                    $$ = nullptr;
+                                }
+      | IDENTIFIER EQUAL IDENTIFIER   {}
+    
+      ;
 
 
 arglist : arg                   {
@@ -153,7 +166,9 @@ arglist : arg                   {
                                   arglist->addarg(arg);
                                   $$ = arglist;
                                 }
-        | arglist COMMA arg     {
+        
+        | arglist COMMA arg     
+                                {
                                   Arglist* arglist =static_cast<Arglist*>($1);
                                   Arg* arg = static_cast<Arg*>($3);
                                   arglist->addarg(arg);
@@ -169,7 +184,8 @@ paramlist : IDENTIFIER          {
                                   $$ = paramlist;
                                   free($1);
                                   
-                                } 
+                                }
+          | IDENTIFIER EQUAL expr {} 
           | paramlist COMMA IDENTIFIER                          {
                                                                   ASTNode* param = new Identifier();
                                                                   Paramlist* paramlist = static_cast<Paramlist*>($1);
@@ -179,6 +195,13 @@ paramlist : IDENTIFIER          {
                                                                 }
           ;
 
+templateType : properties LT type GT ;
+
+properties : PROPEDGE 
+             | PROPNODE
+             ;
+
+
 type : INT              {       
                                 $$ = new TypeExpr($1);
                         }
@@ -187,6 +210,10 @@ type : INT              {
                                 $$ = new TypeExpr($1);
                         }
      ;
+
+KEYWORDS : "Fasle" 
+          | "INF"
+          ;
 
 
 %%
