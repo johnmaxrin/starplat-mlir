@@ -389,6 +389,28 @@ class TypeExpr : public ASTNode
         
 };
 
+
+class Keyword : public ASTNode
+{
+    public:
+    
+        Keyword(char* keyword):keyword_(keyword){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitType(this);
+        }
+        
+        ~Keyword{
+                delete keyword_;
+        }
+
+        const char* getType() const{return keyword_;}
+    
+    private:
+        char* keyword_;
+        
+};
+
 class Arg : public ASTNode
 {
     public:

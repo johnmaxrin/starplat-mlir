@@ -7,6 +7,8 @@
 
 %%
 
+"//".*                  { /* Ignore single-line comments */ }
+
 "function"              {return FUNCTION;}
 "return"                {return RETURN;}        
 "if"                    {return IF;}
@@ -16,6 +18,12 @@
 "int"                   {yylval.id = strdup(yytext); return INT;}
 "propNode"              {yylval.id = strdup(yytext); return PROPNODE; }
 "propEdge"              {yylval.id = strdup(yytext); return PROPEDGE; }
+"False"                 {yylval.id = strdup(yytext); return FALSE; }
+"INF"                   {yylval.id = strdup(yytext); return INF; }
+"fixedPoint"            {yylval.id = strdup(yytext); return FIXEDPOINT; }
+"until"                 {yylval.id = strdup(yytext); return UNTIL; }
+"edge"                  {yylval.id = strdup(yytext); return EDGE; }
+
 
 
 "{"                     {return LCURLY;}
@@ -30,6 +38,9 @@
 "in"                    {return IN;}
 ","                     {return COMMA;}
 "+="                    {return PLUSEQUAL;}
+":"                     {return COLON;}
+"=="                    {return EQUALS;}
+"+"                     {return PLUS;}
 
 [ \t\n]+                ;
 

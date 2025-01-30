@@ -17,10 +17,12 @@
 }
 
 
-%token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR
-%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE
+%token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR EQUALS EDGE
+%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS
 
-%type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignmentstmt 
+%type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
+stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt
+addExpr KEYWORDS
 
 
 %%
@@ -49,7 +51,7 @@ stmtlist : stmt                 {
                                 }
          ;
 
-stmt :  assignmentstmt
+stmt :  assignment SEMICLN
         |   declarationstmt             {$$ = $1;}
         |   ifstmt			                {$$ = $1;}
         |   forstmt 			              {$$ = $1;}
@@ -58,7 +60,11 @@ stmt :  assignmentstmt
         |   incandassignstmt	          {$$ = $1;}
         |   templateDecl                {}
         |   /*epsilon*/                 {$$ = nullptr;}
-        |   memberaccessstmt
+        |   memberaccessstmt            {}
+        |   initializestmt              {}
+        |   memberaccess EQUAL expr SEMICLN     {}
+        |   fixedPointStmt              {}
+        |   tuppleAssignmentstmt        {}
         ;
 
 blcstmt : LCURLY stmtlist RCURLY        {$$ = $2;}
@@ -77,20 +83,22 @@ declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration
 templateDecl : templateType IDENTIFIER SEMICLN { }
               ;
 
-assignmentstmt : IDENTIFIER EQUAL expr SEMICLN      {$$ = new Incandassignstmt();}
+assignment : IDENTIFIER EQUAL expr      {$$ = new Incandassignstmt();}
             ;
 
-boolexpr : IDENTIFIER LT IDENTIFIER 		{
-                                                  Identifier *id1 = new Identifier($1);
-                                                  Identifier *id2 = new Identifier($3);
-                                                  $$ = new BoolExpr(id1, $2, id2);
-                                                }
+initializestmt : type IDENTIFIER EQUAL expr SEMICLN {}
 
-         | IDENTIFIER GT IDENTIFIER             {
-                                                  Identifier *id1 = new Identifier($1);
-                                                  Identifier *id2 = new Identifier($3);
-                                                  $$ = new BoolExpr(id1, $2, id2);
-                                                }
+paramAssignment : IDENTIFIER EQUAL KEYWORDS {}
+
+fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stmtlist RCURLY         {}
+
+tuppleAssignmentstmt : LT expr COMMA expr GT EQUAL LT expr COMMA expr GT SEMICLN               {}
+
+boolexpr : expr LT expr 		{}
+
+         | expr GT expr             {}
+
+         | expr EQUALS expr           {} 
          ;
 
 ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement($3, $5);}
@@ -109,7 +117,12 @@ expr :  IDENTIFIER              {$$ = new Identifier($1);}
      |  boolexpr                {$$ = $1;}
      |  NUMBER                  {$$ = new Number($1);}
      |  memberaccess            {$$ = $1;}
+     |  KEYWORDS                {}
+     |  methodcall              {}
+     |  addExpr                 {}
      ;
+
+addExpr : expr PLUS expr      {}
 
 incandassignstmt : IDENTIFIER PLUSEQUAL expr SEMICLN  {
                                                         Identifier* identifier = new Identifier($1);
@@ -121,6 +134,7 @@ returnstmt : RETURN expr SEMICLN        {$$ = new ReturnStmt($2);}
            ;
 
 methodcall : IDENTIFIER LPAREN paramlist RPAREN {
+                                                  
                                                   Identifier* identifier = new Identifier($1);
                                                   $$ = new Methodcall(identifier, $3);
                                                 }
@@ -136,11 +150,12 @@ methodcall : IDENTIFIER LPAREN paramlist RPAREN {
                                                 }
             ;
 
-memberaccess : IDENTIFIER DOT methodcall       {
+memberaccess : IDENTIFIER DOT methodcall        {
                                                   Identifier* identifier = new Identifier($1);
                                                   $$ = new Memberaccess(identifier, $3);
                                                 }
-             | memberaccess DOT methodcall
+             | memberaccess DOT methodcall      {}
+             | IDENTIFIER DOT IDENTIFIER        {}
              ;
 
 memberaccessstmt : memberaccess SEMICLN {}
@@ -177,22 +192,13 @@ arglist : arg                   {
         ;
 
 
-paramlist : IDENTIFIER          {
-                                  ASTNode* param = new Identifier();
-                                  Paramlist* paramlist = new Paramlist();
-                                  paramlist->addparam(param);
-                                  $$ = paramlist;
-                                  free($1);
-                                  
-                                }
-          | IDENTIFIER EQUAL expr {} 
-          | paramlist COMMA IDENTIFIER                          {
-                                                                  ASTNode* param = new Identifier();
-                                                                  Paramlist* paramlist = static_cast<Paramlist*>($1);
-                                                                  paramlist->addparam(param);
-                                                                  $$ = paramlist;
-                                                                  free($3);
-                                                                }
+param : expr 
+         | paramAssignment 
+         ;
+
+
+paramlist : param                                          {}
+          | paramlist COMMA param                          {}
           ;
 
 templateType : properties LT type GT ;
@@ -209,10 +215,19 @@ type : INT              {
      | GRAPH            {
                                 $$ = new TypeExpr($1);
                         }
+
+     |  EDGE            {
+                                $$ = new TypeExpr($1);
+                        }
      ;
 
-KEYWORDS : "Fasle" 
-          | "INF"
+KEYWORDS : FALSE         {
+                                $$ = new Keyword($1);
+                         }
+
+          | INF          {
+                                $$ = new Keyword($1);
+                         }
           ;
 
 

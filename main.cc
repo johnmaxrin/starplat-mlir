@@ -37,15 +37,21 @@ int main(int argc, char *argv[])
     yyparse();
     fclose(file);
 
-    // CodeGen *gen = new CodeGen;
-
-
-    MLIRCodeGen *MLIRgen = new MLIRCodeGen;
-
-    if(root!= nullptr)
-        root->Accept(MLIRgen);
     
-    MLIRgen->printModule();
+    CodeGen *codegen = new CodeGen;
+
+    if(root != nullptr)
+        root->Accept(codegen);
+
+        
+
+
+    // MLIRCodeGen *MLIRgen = new MLIRCodeGen;
+
+    // if(root!= nullptr)
+    //     root->Accept(MLIRgen);
+    
+    // MLIRgen->printModule();
     
 
     return 0;
