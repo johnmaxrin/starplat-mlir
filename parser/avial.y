@@ -22,7 +22,7 @@
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
 stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt
-addExpr KEYWORDS
+addExpr properties KEYWORDS 
 
 
 %%
@@ -203,8 +203,8 @@ paramlist : param                                          {}
 
 templateType : properties LT type GT ;
 
-properties : PROPEDGE 
-             | PROPNODE
+properties : PROPEDGE                   {$$ = new GraphProperties($1);} 
+             | PROPNODE                 {$$ = new GraphProperties($1);}
              ;
 
 

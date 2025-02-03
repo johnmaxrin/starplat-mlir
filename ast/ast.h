@@ -36,6 +36,27 @@ class Identifier : public ASTNode
         char* name_;
 };
 
+class GraphProperties : public ASTNode
+{
+    public:
+        GraphProperties(char *properties)
+            : properties_(properties){}
+        
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitGraphProperties(this);
+        }
+        
+        ~GraphProperties(){
+            delete properties_;
+        }
+
+        char* getPropertyType() const{return properties_;}
+    
+    private:
+        char* properties_;
+};
+
 class Statement : public ASTNode
 {
     public:
@@ -397,10 +418,10 @@ class Keyword : public ASTNode
         Keyword(char* keyword):keyword_(keyword){}
 
         virtual void Accept(Visitor *visitor) const override{
-            visitor->visitType(this);
+            visitor->visitKeyword(this);
         }
         
-        ~Keyword{
+        ~Keyword(){
                 delete keyword_;
         }
 

@@ -110,6 +110,16 @@ public:
 
     }
 
+    virtual void visitKeyword(const Keyword *keyword) override
+    {
+
+    }
+
+    virtual void visitGraphProperties(const GraphProperties *graphproperties) override
+    {
+       cout<<graphproperties->getPropertyType()<<" "; 
+    }
+
     virtual void visitMethodcall(const Methodcall *methodcall) override
     {       
             cout<<"Methodcall: {\n\t";
