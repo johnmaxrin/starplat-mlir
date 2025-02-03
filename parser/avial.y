@@ -22,7 +22,7 @@
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
 stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt
-addExpr properties KEYWORDS 
+addExpr properties templateType  KEYWORDS 
 
 
 %%
@@ -201,7 +201,14 @@ paramlist : param                                          {}
           | paramlist COMMA param                          {}
           ;
 
-templateType : properties LT type GT ;
+templateType : properties LT type GT   {
+                                                GraphProperties *graphproperties = static_cast<GraphProperties *>($1);
+                                                TypeExpr *type = static_cast<TypeExpr *>($3);
+                                                $$ = new TemplateType(graphproperties, type);
+
+
+                                        }
+                ;
 
 properties : PROPEDGE                   {$$ = new GraphProperties($1);} 
              | PROPNODE                 {$$ = new GraphProperties($1);}

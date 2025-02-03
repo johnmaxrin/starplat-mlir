@@ -16,6 +16,7 @@ class Arg;
 class Statement;
 class Statementlist;
 class TypeExpr;
+class TemplateType;
 class Keyword;
 class GraphProperties;
 class Number;
@@ -42,6 +43,8 @@ class Visitor
         virtual void visitArg(const Arg *arg) = 0;
         virtual void visitStatement(const Statement *stmt) = 0;
         virtual void visitStatementlist(const Statementlist *stmt) = 0;
+        virtual void visitTemplateType(const TemplateType *templatetype) = 0;
+        
         virtual void visitType(const TypeExpr *type) = 0;
         virtual void visitKeyword(const Keyword *keyword) = 0;
         virtual void visitGraphProperties(const GraphProperties *graphproperties) = 0;

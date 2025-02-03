@@ -33,6 +33,11 @@ public:
 
     }
 
+    virtual void visitTemplateType(const TemplateType *templateType)
+    {
+        cout<<"Template Type\n";
+    }
+
     virtual void visitForallStmt(const ForallStatement *forAllStmt) override
     {
         std::cout << "Forall: {\n";

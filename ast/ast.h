@@ -388,6 +388,24 @@ class Paramlist : public ASTNode
         
 };
 
+class TemplateType : public ASTNode
+{
+    public:
+        TemplateType(GraphProperties *graphprop, TypeExpr *type):graphproperties_(graphprop), type_(type){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitTemplateType(this);
+        }
+
+        const GraphProperties* getGraphPropNode()const {return graphproperties_;}
+        const TypeExpr* getType() const {return type_;}
+
+    private:
+        GraphProperties *graphproperties_;
+        TypeExpr *type_;
+
+};
+
 
 class TypeExpr : public ASTNode
 {
