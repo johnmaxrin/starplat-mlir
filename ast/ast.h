@@ -182,6 +182,32 @@ class DeclarationStatement : public ASTNode
         ASTNode *number;
 };
 
+class TemplateDeclarationStatement : public ASTNode
+{
+    public:
+        
+        TemplateDeclarationStatement(ASTNode* type, ASTNode* identifier) 
+            : type(type), varname(identifier){}
+
+        virtual void Accept(Visitor *visitor) const override{
+            visitor->visitTemplateDeclarationStmt(this);
+        }
+        
+        ~TemplateDeclarationStatement(){
+            delete type;
+            delete varname;
+        }
+
+        ASTNode* gettype() const{return type;}
+        ASTNode* getvarname() const{return varname;}
+        
+    
+    private:
+        ASTNode *type;
+        ASTNode *varname;
+};
+
+
 class ForallStatement : public ASTNode
 {
     public:

@@ -33,6 +33,11 @@ public:
 
     }
 
+    virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt)
+    {
+        cout<<"Template Declaration\n\n";
+    }
+
     virtual void visitTemplateType(const TemplateType *templateType)
     {
         cout<<"Template Type\n";

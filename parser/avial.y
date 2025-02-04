@@ -22,7 +22,7 @@
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
 stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt
-addExpr properties templateType  KEYWORDS 
+addExpr properties templateType templateDecl  KEYWORDS 
 
 
 %%
@@ -80,7 +80,11 @@ declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration
                                                         }
             ;
 
-templateDecl : templateType IDENTIFIER SEMICLN { }
+templateDecl : templateType IDENTIFIER SEMICLN {      
+                                                      Identifier *identifier = new Identifier($2);  
+                                                      $$ = new TemplateDeclarationStatement($1, identifier); 
+                                                        
+                                                }
               ;
 
 assignment : IDENTIFIER EQUAL expr      {$$ = new Incandassignstmt();}

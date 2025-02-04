@@ -3,6 +3,7 @@
 
 
 class DeclarationStatement;
+class TemplateDeclarationStatement;
 class ForallStatement;
 class IfStatement;
 class BoolExpr;
@@ -31,6 +32,7 @@ class Visitor
         virtual ~Visitor() = default;
 
         virtual void visitDeclarationStmt(const DeclarationStatement *declStmt) = 0;
+        virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templatedeclStmt) = 0;
         virtual void visitForallStmt(const ForallStatement *forAllStmt) = 0;
         virtual void visitIfStmt(const IfStatement *ifStmt) = 0;
         virtual void visitBoolExpr(const BoolExpr *boolExpr) = 0;
