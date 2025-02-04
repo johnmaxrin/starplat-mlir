@@ -19,7 +19,7 @@ function Compute_SSSP (Graph g,propNode<int> dist, propEdge<int> weight, Graph s
                  <nbr.dist,nbr.modified_nxt> = 
 	                    <Min (nbr.dist, v.dist + e.weight), True>;
                     
-               }
+                }
         
                }
 

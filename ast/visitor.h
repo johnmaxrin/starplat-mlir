@@ -4,6 +4,7 @@
 
 class DeclarationStatement;
 class TemplateDeclarationStatement;
+class MemberAccessAssignment;
 class ParameterAssignment;
 class ForallStatement;
 class IfStatement;
@@ -12,6 +13,7 @@ class Incandassignstmt;
 class Identifier;
 class ReturnStmt;
 class Function;
+class Param;
 class Paramlist;
 class Arglist;
 class Arg;
@@ -44,10 +46,12 @@ class Visitor
         virtual void visitParamlist(const Paramlist *paramlist) = 0;
         virtual void visitArglist(const Arglist *arglist) = 0;
         virtual void visitArg(const Arg *arg) = 0;
+        virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment) = 0;
         virtual void visitStatement(const Statement *stmt) = 0;
         virtual void visitStatementlist(const Statementlist *stmt) = 0;
         virtual void visitTemplateType(const TemplateType *templatetype) = 0;
         virtual void visitParameterAssignment(const ParameterAssignment *parameterAssignment) = 0;
+        virtual void visitParam(const Param *param) = 0;
         virtual void visitType(const TypeExpr *type) = 0;
         virtual void visitKeyword(const Keyword *keyword) = 0;
         virtual void visitGraphProperties(const GraphProperties *graphproperties) = 0;

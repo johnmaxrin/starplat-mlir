@@ -430,15 +430,15 @@ public:
 
     ~Paramlist()
     {
-        for (ASTNode *param : paramlist)
+        for (Param *param : paramlist)
             delete param;
     }
 
-    const vector<ASTNode *> getParamList() const { return paramlist; }
-    void addparam(ASTNode *param) { paramlist.push_back(param); }
+    const vector<Param *> getParamList() const { return paramlist; }
+    void addparam(Param *param) { paramlist.push_back(param); }
 
 private:
-    vector<ASTNode *> paramlist;
+    vector<Param *> paramlist;
 };
 
 class TemplateType : public ASTNode
@@ -478,6 +478,30 @@ public:
 
 private:
     char *type_;
+};
+
+class MemberAccessAssignment : public ASTNode
+{
+public:
+    MemberAccessAssignment(ASTNode *memberAccess, ASTNode *expr) : memberAccess_(memberAccess), expr_(expr) {}
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitMemberAccessAssignment(this);
+    }
+
+    ~MemberAccessAssignment()
+    {
+        delete memberAccess_;
+        delete expr_;
+    }
+
+    const ASTNode *getMemberAccess() const { return memberAccess_; }
+    const ASTNode *getExpr() const {return expr_;}
+
+private:
+    ASTNode *memberAccess_;
+    ASTNode *expr_;
 };
 
 class Keyword : public ASTNode
@@ -548,6 +572,37 @@ public:
 private:
     vector<Arg *> arglist;
 };
+
+
+
+
+class Param : public ASTNode
+{
+public:
+    Param(Expression *expr)
+        : expr_(expr){}
+    Param(ParameterAssignment *paramAssignment)
+        :paramAssignment_(paramAssignment) {}
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitParam(this);
+    }
+
+    ~Param()
+    {
+        delete expr_;
+        delete paramAssignment_;
+    }
+
+    const Expression *getExpr() const { return expr_; }
+
+private:
+    Expression *expr_;
+    ParameterAssignment *paramAssignment_;
+};
+
+
 
 class Expression : public ASTNode
 {

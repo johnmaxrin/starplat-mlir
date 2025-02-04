@@ -103,6 +103,11 @@ public:
         cout<<"Parameter Assignment\n";
     }
 
+    virtual void visitParam(const Param* param)
+    {
+        cout<<"Params\n\n";
+    }
+
     virtual void visitFunction(const Function *function) override
     {
             Arglist* arglist = static_cast<Arglist*> (function->getparams());
@@ -122,7 +127,12 @@ public:
 
     virtual void visitParamlist(const Paramlist *paramlist) override
     {
+            cout<<"ParamList\n\n";
+    }
 
+    virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment)
+    {
+        cout<<"Member Access Assignment\n\n";
     }
 
     virtual void visitKeyword(const Keyword *keyword) override

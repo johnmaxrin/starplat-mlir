@@ -22,7 +22,7 @@
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
 stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt
-addExpr properties templateType templateDecl paramAssignment KEYWORDS 
+addExpr properties templateType templateDecl paramAssignment param memberaccessAssignment KEYWORDS 
 
 
 %%
@@ -62,13 +62,18 @@ stmt :  assignment SEMICLN
         |   /*epsilon*/                 {$$ = nullptr;}
         |   memberaccessstmt            {}
         |   initializestmt              {}
-        |   memberaccess EQUAL expr SEMICLN     {}
+        |   memberaccessAssignment     {$$ = $1;}
         |   fixedPointStmt              {}
         |   tuppleAssignmentstmt        {}
         ;
 
 blcstmt : LCURLY stmtlist RCURLY        {$$ = $2;}
         ;
+
+
+memberaccessAssignment : memberaccess EQUAL expr SEMICLN        {$$ = new MemberAccessAssignment($1, $3);}
+                        ;
+
 
 declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration statement\n");}
 
@@ -201,13 +206,33 @@ arglist : arg                   {
         ;
 
 
-param : expr 
-         | paramAssignment 
+param : expr                    {       Expression *expr = static_cast<Expression *>($1);
+                                        $$ = new Param(expr);
+                                }
+
+         | paramAssignment      {
+                                        ParameterAssignment *paramAssignment = static_cast<ParameterAssignment *>($1);
+                                        $$ = new Param(paramAssignment);
+                                }
          ;
 
 
-paramlist : param                                          {}
-          | paramlist COMMA param                          {}
+paramlist : param                                          {
+                                                                Paramlist *paramlist = new Paramlist();
+                                                                Param *param = static_cast<Param *>($1);
+                                                                paramlist->addparam(param);
+                                                                $$ = paramlist;
+                                                                
+
+                                                           }
+
+          | paramlist COMMA param                          {
+                                                                Paramlist *paramlist = static_cast<Paramlist *>($1);
+                                                                Param *param = static_cast<Param *>($3);
+                                                                paramlist->addparam(param);
+                                                                $$ = paramlist;
+
+                                                           }
           ;
 
 templateType : properties LT type GT   {

@@ -2,4 +2,5 @@ app
 parser/*.c
 parser/*.h
 ast.avl
+Avial.code*
 build
