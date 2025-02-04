@@ -22,7 +22,7 @@
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
 stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt
-addExpr properties templateType templateDecl  KEYWORDS 
+addExpr properties templateType templateDecl paramAssignment KEYWORDS 
 
 
 %%
@@ -92,7 +92,12 @@ assignment : IDENTIFIER EQUAL expr      {$$ = new Incandassignstmt();}
 
 initializestmt : type IDENTIFIER EQUAL expr SEMICLN {}
 
-paramAssignment : IDENTIFIER EQUAL KEYWORDS {}
+paramAssignment : IDENTIFIER EQUAL KEYWORDS  {
+                                                Identifier *identifier = new Identifier($1);
+                                                $$ = new ParameterAssignment(identifier, $3);
+
+
+}
 
 fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stmtlist RCURLY         {}
 

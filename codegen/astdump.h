@@ -98,6 +98,11 @@ public:
         cout<<"}";
     }
 
+    virtual void visitParameterAssignment(const ParameterAssignment *paramAssignment)
+    {
+        cout<<"Parameter Assignment\n";
+    }
+
     virtual void visitFunction(const Function *function) override
     {
             Arglist* arglist = static_cast<Arglist*> (function->getparams());
