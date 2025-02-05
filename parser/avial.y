@@ -107,7 +107,10 @@ paramAssignment : IDENTIFIER EQUAL KEYWORDS  {
 
 }
 
-fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stmtlist RCURLY         {}
+fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stmtlist RCURLY         { 
+                                                                                                                Identifier *identifier = new Identifier($4);
+                                                                                                                $$ = new FixedpointUntil(identifier, $6, $9);
+                                                                                                        }
 
 tuppleAssignmentstmt : LT expr COMMA expr GT EQUAL LT expr COMMA expr GT SEMICLN               {}
 

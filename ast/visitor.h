@@ -18,6 +18,7 @@ class Paramlist;
 class Arglist;
 class Arg;
 class Statement;
+class FixedpointUntil;
 class InitialiseAssignmentStmt;
 class Statementlist;
 class TypeExpr;
@@ -51,6 +52,7 @@ class Visitor
         virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment) = 0;
         virtual void visitStatement(const Statement *stmt) = 0;
         virtual void visitStatementlist(const Statementlist *stmt) = 0;
+        virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil) = 0;
         virtual void visitTemplateType(const TemplateType *templatetype) = 0;
         virtual void visitParameterAssignment(const ParameterAssignment *parameterAssignment) = 0;
         virtual void visitParam(const Param *param) = 0;

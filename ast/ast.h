@@ -210,6 +210,30 @@ private:
     ASTNode *expr_;
 };
 
+class FixedpointUntil : public ASTNode
+{
+public:
+    FixedpointUntil(ASTNode *identifier , ASTNode *expr, ASTNode *stmtlist)
+        : expr_(expr), identifier_(identifier),  stmtlist_(stmtlist)  {}
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitFixedpointUntil(this);
+    }
+    ASTNode *getstmtlist() const{ return stmtlist_; }
+    ~FixedpointUntil()
+    {
+        delete stmtlist_;
+        delete identifier_;
+        delete expr_;
+    }
+
+private:
+    ASTNode *expr_;
+    ASTNode *identifier_;
+    ASTNode *stmtlist_;
+};
+
 class ParameterAssignment : public ASTNode
 {
 public:

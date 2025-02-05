@@ -130,6 +130,14 @@ public:
             cout<<"ParamList\n\n";
     }
 
+    virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil) override
+    {
+        Statementlist *stmtlist = static_cast<Statementlist*> (fixedpointuntil->getstmtlist());
+        cout<<"Fixed Point Until\n";
+        stmtlist->Accept(this);
+
+    }
+
     virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt)
     {
             cout<<"Init Assignment Stmt\n";
