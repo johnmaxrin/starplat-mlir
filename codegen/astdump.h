@@ -130,6 +130,11 @@ public:
             cout<<"ParamList\n\n";
     }
 
+    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt)
+    {
+            cout<<"Init Assignment Stmt\n";
+    }
+
     virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment)
     {
         cout<<"Member Access Assignment\n\n";

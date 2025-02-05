@@ -185,6 +185,31 @@ private:
     ASTNode *number;
 };
 
+
+class InitialiseAssignmentStmt : public ASTNode
+{
+public:
+    InitialiseAssignmentStmt(ASTNode *type,  ASTNode *identifier, ASTNode *expr)
+        : type_(type), identifier_(identifier), expr_(expr) {}
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitInitialiseAssignmentStmt(this);
+    }
+
+    ~InitialiseAssignmentStmt()
+    {
+        delete type_;
+        delete identifier_;
+        delete expr_;
+    }
+
+private:
+    ASTNode *type_;
+    ASTNode *identifier_;
+    ASTNode *expr_;
+};
+
 class ParameterAssignment : public ASTNode
 {
 public:

@@ -18,6 +18,7 @@ class Paramlist;
 class Arglist;
 class Arg;
 class Statement;
+class InitialiseAssignmentStmt;
 class Statementlist;
 class TypeExpr;
 class TemplateType;
@@ -45,6 +46,7 @@ class Visitor
         virtual void visitFunction(const Function *function) = 0;
         virtual void visitParamlist(const Paramlist *paramlist) = 0;
         virtual void visitArglist(const Arglist *arglist) = 0;
+        virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt) = 0;
         virtual void visitArg(const Arg *arg) = 0;
         virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment) = 0;
         virtual void visitStatement(const Statement *stmt) = 0;

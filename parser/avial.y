@@ -95,7 +95,10 @@ templateDecl : templateType IDENTIFIER SEMICLN {
 assignment : IDENTIFIER EQUAL expr      {$$ = new Incandassignstmt();}
             ;
 
-initializestmt : type IDENTIFIER EQUAL expr SEMICLN {}
+initializestmt : type IDENTIFIER EQUAL expr SEMICLN {
+                                                        Identifier *identifier = new Identifier($2);
+                                                        $$ = new InitialiseAssignmentStmt($1, identifier, $4);
+                                                }
 
 paramAssignment : IDENTIFIER EQUAL KEYWORDS  {
                                                 Identifier *identifier = new Identifier($1);
