@@ -78,8 +78,8 @@ public:
     virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt) override
     {
         std::cout << "Increment and Assign Statement: {\n";
-        incandassignstmt->getIdentifier()->Accept(this);
-        incandassignstmt->getexpr()->Accept(this);
+        // incandassignstmt->getIdentifier()->Accept(this);
+        // incandassignstmt->getexpr()->Accept(this);
 
         cout<<"}\n";
     }
@@ -106,6 +106,11 @@ public:
     virtual void visitParam(const Param* param)
     {
         cout<<"Params\n\n";
+    }
+
+    virtual void visitTupleAssignment(const TupleAssignment *tupleAssignment)
+    {
+        cout<<"Tuple Assignment\n";
     }
 
     virtual void visitFunction(const Function *function) override

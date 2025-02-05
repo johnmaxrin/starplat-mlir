@@ -112,7 +112,7 @@ fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stm
                                                                                                                 $$ = new FixedpointUntil(identifier, $6, $9);
                                                                                                         }
 
-tuppleAssignmentstmt : LT expr COMMA expr GT EQUAL LT expr COMMA expr GT SEMICLN               {}
+tuppleAssignmentstmt : LT expr COMMA expr GT EQUAL LT expr COMMA expr GT SEMICLN               {$$ = new TupleAssignment($2, $4, $8, $10);}
 
 boolexpr : expr LT expr 		{}
 

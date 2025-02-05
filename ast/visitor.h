@@ -22,6 +22,7 @@ class FixedpointUntil;
 class InitialiseAssignmentStmt;
 class Statementlist;
 class TypeExpr;
+class TupleAssignment;
 class TemplateType;
 class Keyword;
 class GraphProperties;
@@ -47,6 +48,7 @@ class Visitor
         virtual void visitFunction(const Function *function) = 0;
         virtual void visitParamlist(const Paramlist *paramlist) = 0;
         virtual void visitArglist(const Arglist *arglist) = 0;
+        virtual void visitTupleAssignment(const TupleAssignment *tupleAssignment) = 0;
         virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt) = 0;
         virtual void visitArg(const Arg *arg) = 0;
         virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment) = 0;

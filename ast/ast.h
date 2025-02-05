@@ -109,6 +109,38 @@ private:
     const ASTNode *node;
 };
 
+class TupleAssignment : public ASTNode
+{
+public:
+    TupleAssignment(ASTNode *lhsexpr1, ASTNode *lhsexpr2, ASTNode *rhsexpr1, ASTNode *rhsexpr2)
+        : lhsexpr1_(lhsexpr1), lhsexpr2_(lhsexpr2), rhsexpr1_(rhsexpr1), rhsexpr2_(rhsexpr2) {}
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitTupleAssignment(this);
+    }
+
+    ~TupleAssignment()
+    {
+        delete lhsexpr1_;
+        delete lhsexpr2_;
+        delete rhsexpr1_;
+        delete rhsexpr2_;
+    }
+
+    const ASTNode *getlhsexpr1() const { return lhsexpr1_; }
+    const ASTNode *getlhsexpr2() const { return lhsexpr2_; }
+    const ASTNode *getrhsexpr1() const { return rhsexpr1_; }
+    const ASTNode *getrhsexpr2() const { return rhsexpr2_; }
+
+private:
+    const ASTNode *lhsexpr1_;
+    const ASTNode *lhsexpr2_;
+    const ASTNode *rhsexpr1_;
+    const ASTNode *rhsexpr2_;
+};
+
+
 class Memberaccess : public ASTNode
 {
 public:
