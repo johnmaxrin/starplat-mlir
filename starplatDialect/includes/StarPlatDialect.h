@@ -1,5 +1,5 @@
-#ifndef MLIRDIALECT
-#define MLIRDIALECT
+#ifndef STARPLATDIALECT
+#define STARPLATDIALECT
 
 
 

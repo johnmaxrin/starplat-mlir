@@ -33,3 +33,17 @@ namespace mlir
 
 
 }
+
+mlir::Type mlir::starplat::StarPlatDialect::parseType(mlir::DialectAsmParser &parser) const {
+  
+}
+
+void mlir::starplat::StarPlatDialect::printType(mlir::Type type, mlir::DialectAsmPrinter &printer) const {
+//   if (type.isa<PropNodeType>()) {
+//     printer << "propNode";
+//     return;
+//   }
+
+//   printer << "<unknown StarPlat type>";
+}
+

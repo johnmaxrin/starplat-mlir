@@ -1,5 +1,5 @@
-#ifndef AVIALOPS_H
-#define AVIALOPS_H
+#ifndef STARPLATOPS_H
+#define STARPLATOPS_H
 
 #include "StarPlatDialect.h"
 
@@ -11,4 +11,4 @@
 #include "Ops.h.inc"
 
 
-#endif  // AVIALOPS~_H
+#endif  // STARPLATOPS~_H

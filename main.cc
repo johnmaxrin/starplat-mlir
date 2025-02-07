@@ -5,7 +5,7 @@
 #include "ast/ast.h"
 #include "ast/visitor.h"
 #include "codegen/astdump.h"
-#include "codegen/mlirgen.h"
+#include "codegen/starplatIR.h"
 #include "avial.tab.h"
 
 #include "mlir/IR/MLIRContext.h"
@@ -38,12 +38,12 @@ int main(int argc, char *argv[])
     fclose(file);
 
     
-    CodeGen *codegen = new CodeGen;
+    // CodeGen *codegen = new CodeGen;
 
-    if(root != nullptr)
-        root->Accept(codegen);
+    // if(root != nullptr)
+    //     root->Accept(codegen);
 
-        
+    StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen; 
 
 
     // MLIRCodeGen *MLIRgen = new MLIRCodeGen;
