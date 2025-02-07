@@ -7,14 +7,14 @@ include "mlir/IR/SymbolInterfaces.td"
 include "mlir/IR/OpBase.td"
 include "mlir/IR/BuiltinAttributes.td"
 
-def StarplatDialect : Dialect {
+def StarPlatDialect : Dialect {
     let summary = "Starplat dialect";
     let name = "starplat";
-    let cppNamespace = "mlir::avial";
+    let cppNamespace = "mlir::starplat";
     let useDefaultTypePrinterParser = 1;
 }
 
-class StarplatBaseOp<string mnemonic> : Op<StarplatDialect, mnemonic>
+class StarplatBaseOp<string mnemonic> : Op<StarPlatDialect, mnemonic>
 {
     let summary = "Starplat base operation class.";
 }
@@ -27,12 +27,19 @@ def FuncOp : StarplatBaseOp<"func">
                         It has a single region for the function body.
                         }];
 
-    let arguments = (ins
-                        Variadic<AnyType>:$inputs
-                    );
+  let arguments = (ins SymbolNameAttr:$sym_name,
+                       TypeAttrOf<FunctionType>:$function_type,
+                       OptionalAttr<StrAttr>:$sym_visibility,
+                       OptionalAttr<DictArrayAttr>:$arg_attrs,
+                       OptionalAttr<DictArrayAttr>:$res_attrs);
 
-    let results = (outs);
+  let regions = (region AnyRegion:$body);
 
+  let builders = [OpBuilder<(ins
+    "StringRef":$name, "FunctionType":$type,
+    CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs,
+    CArg<"ArrayRef<DictionaryAttr>", "{}">:$argAttrs)
+  >];
 
 }
 
