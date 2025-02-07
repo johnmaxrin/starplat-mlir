@@ -43,7 +43,10 @@ int main(int argc, char *argv[])
     // if(root != nullptr)
     //     root->Accept(codegen);
 
-    StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen; 
+    StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen;
+    if(root!= nullptr)
+        root->Accept(starplatcodegen);
+
     starplatcodegen->print();
 
     // MLIRCodeGen *MLIRgen = new MLIRCodeGen;

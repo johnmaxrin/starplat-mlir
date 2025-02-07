@@ -1,6 +1,6 @@
 #include "include/AvialDialect.h"
 
-#include "tblgen/Dialect.cpp.inc"
+#include "tblgen/StarPlatDialect.cpp.inc"
 
 #include "llvm/ADT/TypeSwitch.h"
 #include "mlir/IR/Builders.h"
@@ -10,10 +10,10 @@
 
 
 #define GET_TYPEDEF_CLASSES
-#include "tblgen/Types.cpp.inc"
+#include "tblgen/StarPlatTypes.cpp.inc"
 
 #define GET_OP_CLASSES
-#include "tblgen/Ops.cpp.inc"
+#include "tblgen/StarPlatOps.cpp.inc"
 
 using namespace mlir;
 using namespace mlir::avial;
@@ -27,12 +27,12 @@ namespace mlir
         {
             addTypes<
                 #define GET_TYPEDEF_LIST
-                #include "tblgen/Types.cpp.inc"
+                #include "tblgen/StarPlatTypes.cpp.inc"
                 >();  
 
             addOperations<
                 #define GET_OP_LIST
-                #include "tblgen/Ops.cpp.inc"
+                #include "tblgen/StarPlatOps.cpp.inc"
                 >();  
         }
     }

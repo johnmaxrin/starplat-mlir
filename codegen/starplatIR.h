@@ -12,18 +12,16 @@
 
 #include "includes/StarPlatOps.h"
 
-#include "mlir/Dialect/Func/IR/FuncOps.h"
 
-using namespace std;
 
 class StarPlatCodeGen : public Visitor
 {
 
 public:
     StarPlatCodeGen() : result(0),
-                    context(),
-                    builder(&context),
-                    module(mlir::ModuleOp::create(builder.getUnknownLoc()))
+                        context(),
+                        builder(&context),
+                        module(mlir::ModuleOp::create(builder.getUnknownLoc()))
     {
         // Load Dialects here.
         context.getOrLoadDialect<mlir::starplat::StarPlatDialect>();
@@ -79,6 +77,14 @@ public:
 
     virtual void visitFunction(const Function *function) override
     {
+        llvm::StringRef value = function->getfuncNameIdentifier();
+        auto funcType = builder.getFunctionType({},{});
+        llvm::ArrayRef<mlir::NamedAttribute> attrs;
+        llvm::ArrayRef<mlir::DictionaryAttr> args;
+
+        auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), value);
+
+        module.push_back(funcbl);
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
@@ -143,6 +149,7 @@ public:
 
     void print()
     {
+        verify(module);
         module.dump();
     }
 

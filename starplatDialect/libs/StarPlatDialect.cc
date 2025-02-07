@@ -11,7 +11,7 @@
 
 
 #define GET_OP_CLASSES
-#include "Ops.cpp.inc"
+#include "tblgen/Ops.cpp.inc"
 
 using namespace mlir;
 using namespace mlir::starplat;
@@ -26,7 +26,7 @@ namespace mlir
 
             addOperations<
                 #define GET_OP_LIST
-                #include "Ops.cpp.inc"
+                #include "tblgen/Ops.cpp.inc"
                 >();  
         }
     }

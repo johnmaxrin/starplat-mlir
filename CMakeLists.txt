@@ -58,8 +58,8 @@ add_subdirectory(starplatDialect)
 include_directories(
     ${CMAKE_SOURCE_DIR}/ast       # Include path for AST headers
     ${CMAKE_SOURCE_DIR}/codegen    # Include path for codegen headers
-    ${CMAKE_SOURCE_DIR}/avialDialect    # Include path for codegen headers
-    ${CMAKE_SOURCE_DIR}/starplatDialect    # Include path for codegen headers
+    ${CMAKE_SOURCE_DIR}/avialDialect    
+    ${CMAKE_SOURCE_DIR}/starplatDialect    
 
     ${CMAKE_BINARY_DIR}/parser  # Include path for generated parser files
     ${CMAKE_BINARY_DIR}/avialDialect
@@ -67,7 +67,7 @@ include_directories(
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc avialDialect/lib/AvialDialect.cc starplatDialect/libs/StarplatDialect.cc DEPENDS MLIRAvialIncGen MLIRStarplatIncGen)
+add_llvm_executable(app main.cc avialDialect/lib/AvialDialect.cc starplatDialect/libs/StarPlatDialect.cc DEPENDS MLIRStarplatIncGen MLIRAvialIncGen )
 target_link_libraries(app 
 
 PRIVATE
@@ -81,7 +81,6 @@ PRIVATE
           MLIRIR
           MLIRParser
           MLIRPass
-          MLIRSPIRVDialect
           MLIRTranslateLib
           MLIRSupport
           MLIRSideEffectInterfaces
