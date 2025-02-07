@@ -1,4 +1,5 @@
 #include "includes/StarPlatDialect.h"
+#include "includes/StarPlatOps.h"
 
 #include "mlir/IR/Builders.h"  // For mlir::OpBuilder
 #include "mlir/IR/Operation.h" // For mlir::Operation
@@ -10,7 +11,9 @@
 #include "mlir/IR/Verifier.h"
 #include "mlir/Parser/Parser.h"
 
-#include "includes/StarPlatOps.h"
+#include "tblgen2/StarPlatOps.h.inc"
+#include "tblgen2/StarPlatOps.cpp.inc"
+
 
 
 

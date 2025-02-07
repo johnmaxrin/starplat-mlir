@@ -1,17 +1,17 @@
 #include "includes/StarPlatDialect.h"
+#include "includes/StarPlatOps.h"
 
-#include "Dialect.cpp.inc"
+#include "tblgen2/StarPlatDialect.cpp.inc"
 
 #include "llvm/ADT/TypeSwitch.h"
 #include "mlir/IR/Builders.h"
 
-#include "includes/StarPlatOps.h"
 
 
 
 
 #define GET_OP_CLASSES
-#include "tblgen/Ops.cpp.inc"
+#include "tblgen2/StarPlatOps.cpp.inc"
 
 using namespace mlir;
 using namespace mlir::starplat;
@@ -26,7 +26,7 @@ namespace mlir
 
             addOperations<
                 #define GET_OP_LIST
-                #include "tblgen/Ops.cpp.inc"
+                #include "tblgen2/StarPlatOps.cpp.inc"
                 >();  
         }
     }

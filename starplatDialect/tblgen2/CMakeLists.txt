@@ -12,7 +12,7 @@ mlir_tablegen(StarPlatOps.cpp.inc -gen-op-defs)
 mlir_tablegen(StarPlatTypes.h.inc -gen-typedef-decls )
 mlir_tablegen(StarPlatTypes.cpp.inc -gen-typedef-defs )
   
-add_public_tablegen_target(MLIRStarplatIncGen)
+add_public_tablegen_target(MLIRStarPlatIncGen)
 
 # Define the location for generated include files
 set(GENERATED_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR})

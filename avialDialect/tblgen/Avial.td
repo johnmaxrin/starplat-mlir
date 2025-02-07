@@ -2,7 +2,6 @@
 #define AVIALTDFILE
 
 include "mlir/IR/DialectBase.td"
-
 include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/SymbolInterfaces.td"
 include "mlir/IR/OpBase.td"

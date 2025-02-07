@@ -8,7 +8,7 @@
 #include "mlir/IR/Dialect.h"       // from @llvm-project
 
 #define GET_OP_CLASSES
-#include "tblgen/Ops.h.inc"
+#include "tblgen2/StarPlatOps.h.inc"
 
 
 #endif  // STARPLATOPS~_H

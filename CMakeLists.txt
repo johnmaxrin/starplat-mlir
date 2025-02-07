@@ -67,7 +67,12 @@ include_directories(
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc avialDialect/lib/AvialDialect.cc starplatDialect/libs/StarPlatDialect.cc DEPENDS MLIRStarplatIncGen MLIRAvialIncGen )
+add_llvm_executable(app main.cc avialDialect/lib/AvialDialect.cc starplatDialect/libs/StarPlatDialect.cc 
+        DEPENDS 
+          MLIRStarPlatIncGen 
+          MLIRAvialIncGen )
+
+
 target_link_libraries(app 
 
 PRIVATE
