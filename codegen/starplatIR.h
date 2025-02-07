@@ -141,6 +141,11 @@ public:
     {
     }
 
+    void print()
+    {
+        module.dump();
+    }
+
 private:
     int result;
     map<string, int> variables;

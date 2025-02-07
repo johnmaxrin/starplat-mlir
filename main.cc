@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
     //     root->Accept(codegen);
 
     StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen; 
-
+    starplatcodegen->print();
 
     // MLIRCodeGen *MLIRgen = new MLIRCodeGen;
 
