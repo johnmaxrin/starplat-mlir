@@ -83,8 +83,10 @@ public:
 
 
         auto grty = mlir::starplat::GraphType::get(builder.getContext());
+        auto ndty = mlir::starplat::NodeType::get(builder.getContext());
+        auto propndty = mlir::starplat::PropNodeType::get(builder.getContext(), builder.getI32Type());
 
-        auto funcType = builder.getFunctionType({grty},{});
+        auto funcType = builder.getFunctionType({grty,propndty, ndty},{});
         llvm::ArrayRef<mlir::NamedAttribute> attrs;
         llvm::ArrayRef<mlir::DictionaryAttr> args;
 

@@ -57,4 +57,16 @@ def GraphType : StarPlatDialectType<"Graph", "graph"> {
   let summary = "Graph type";
 }
 
+def NodeType : StarPlatDialectType<"Node", "node"> {
+  let summary = "Node type";
+}
+
+def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{
+  let summary = "Property of Node";
+  let parameters = (ins "Type":$parameter);
+  let assemblyFormat = "`<` $parameter `>`";
+
+}
+
+
 #endif 
