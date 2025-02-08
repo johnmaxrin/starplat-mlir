@@ -85,15 +85,23 @@ public:
         auto grty = mlir::starplat::GraphType::get(builder.getContext());
         auto ndty = mlir::starplat::NodeType::get(builder.getContext());
         auto propndty = mlir::starplat::PropNodeType::get(builder.getContext(), builder.getI32Type());
+        auto propedty = mlir::starplat::PropEdgeType::get(builder.getContext(), builder.getI32Type());
 
-        auto funcType = builder.getFunctionType({grty,propndty, ndty},{});
+        auto funcType = builder.getFunctionType({grty,propndty, propedty, ndty},{});
         llvm::ArrayRef<mlir::NamedAttribute> attrs;
         llvm::ArrayRef<mlir::DictionaryAttr> args;
 
         //auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(),value);
         mlir::OperationState state(builder.getUnknownLoc(), "starplat.func");
-        
-        auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType);
+
+        auto arg1 = builder.getStringAttr("g");
+        auto arg2 = builder.getStringAttr("dist");
+        auto arg3 = builder.getStringAttr("weight");
+        auto arg4 = builder.getStringAttr("src");
+
+        auto argNames = builder.getArrayAttr({arg1, arg2, arg3, arg4});
+
+        auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNames);
  
         // mlir::starplat::FuncOp::build(builder, state, value);
 

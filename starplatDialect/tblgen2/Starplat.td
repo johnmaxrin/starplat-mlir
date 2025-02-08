@@ -32,7 +32,8 @@ def FuncOp : StarplatBaseOp<"func">
 
   let arguments = (ins 
                     SymbolNameAttr:$funcName,
-                    TypeAttrOf<FunctionType>:$funcType  
+                    TypeAttrOf<FunctionType>:$funcType,
+                    OptionalAttr<ArrayAttr>:$argNames // Argument Attributes 
                   );
 
   let regions = (region AnyRegion:$body);
@@ -41,6 +42,7 @@ def FuncOp : StarplatBaseOp<"func">
 
   let extraClassDeclaration = [{
     static FuncOp create(Location location, StringRef name, FunctionType funcType);
+    static FuncOp create(Location location, StringRef name, FunctionType funcType, ArrayAttr argNames);
                          }];
 
 }
@@ -66,6 +68,12 @@ def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{
   let parameters = (ins "Type":$parameter);
   let assemblyFormat = "`<` $parameter `>`";
 
+}
+
+def PropEdgeType : StarPlatDialectType<"PropEdge", "propEdge">{
+  let summary = "Property of Edge";
+  let parameters = (ins "Type":$parameter);
+  let assemblyFormat = "`<` $parameter `>`";
 }
 
 
