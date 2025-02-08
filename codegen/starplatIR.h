@@ -1,5 +1,6 @@
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
+#include "includes/StarPlatTypes.h"
 
 #include "mlir/IR/Builders.h"  // For mlir::OpBuilder
 #include "mlir/IR/Operation.h" // For mlir::Operation
@@ -79,7 +80,11 @@ public:
     virtual void visitFunction(const Function *function) override
     {
         llvm::StringRef value = function->getfuncNameIdentifier();
-        auto funcType = builder.getFunctionType({},{});
+
+
+        auto grty = mlir::starplat::GraphType::get(builder.getContext());
+
+        auto funcType = builder.getFunctionType({grty},{});
         llvm::ArrayRef<mlir::NamedAttribute> attrs;
         llvm::ArrayRef<mlir::DictionaryAttr> args;
 

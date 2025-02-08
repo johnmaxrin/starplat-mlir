@@ -19,6 +19,9 @@ class StarplatBaseOp<string mnemonic> : Op<StarPlatDialect, mnemonic>
     let summary = "Starplat base operation class.";
 }
 
+
+
+
 def FuncOp : StarplatBaseOp<"func">
 {
     let summary = "Defines a function in the Starplat Dialect";
@@ -42,5 +45,16 @@ def FuncOp : StarplatBaseOp<"func">
 
 }
 
+// TYPES
+
+class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits = []>
+    : TypeDef<StarPlatDialect, name, traits> {
+  let mnemonic = typeMnemonic;
+}
+
+
+def GraphType : StarPlatDialectType<"Graph", "graph"> {
+  let summary = "Graph type";
+}
 
 #endif 

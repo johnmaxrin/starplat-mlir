@@ -1,5 +1,6 @@
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
+#include "includes/StarPlatTypes.h"
 
 #include "tblgen2/StarPlatDialect.cpp.inc"
 
@@ -8,7 +9,8 @@
 
 
 
-
+#define GET_TYPEDEF_CLASSES
+#include "tblgen2/StarPlatTypes.cpp.inc"
 
 #define GET_OP_CLASSES
 #include "tblgen2/StarPlatOps.cpp.inc"
@@ -24,6 +26,13 @@ namespace mlir
         void StarPlatDialect::initialize()
         {
 
+            addTypes<
+                #define GET_TYPEDEF_LIST
+                #include "tblgen2/StarPlatTypes.cpp.inc"
+                >();  
+
+
+
             addOperations<
                 #define GET_OP_LIST
                 #include "tblgen2/StarPlatOps.cpp.inc"
@@ -32,18 +41,5 @@ namespace mlir
     }
 
 
-}
-
-mlir::Type mlir::starplat::StarPlatDialect::parseType(mlir::DialectAsmParser &parser) const {
-  
-}
-
-void mlir::starplat::StarPlatDialect::printType(mlir::Type type, mlir::DialectAsmPrinter &printer) const {
-//   if (type.isa<PropNodeType>()) {
-//     printer << "propNode";
-//     return;
-//   }
-
-//   printer << "<unknown StarPlat type>";
 }
 
