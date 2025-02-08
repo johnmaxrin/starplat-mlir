@@ -27,14 +27,18 @@ def FuncOp : StarplatBaseOp<"func">
                         It has a single region for the function body.
                         }];
 
-  let arguments = (ins SymbolNameAttr:$sym_name,
-                       TypeAttrOf<FunctionType>:$function_type);
+  let arguments = (ins 
+                    SymbolNameAttr:$funcName,
+                    TypeAttrOf<FunctionType>:$funcType  
+                  );
 
   let regions = (region AnyRegion:$body);
 
-  let builders = [OpBuilder<(ins
-    "StringRef":$name)
-  >];
+
+
+  let extraClassDeclaration = [{
+    static FuncOp create(Location location, StringRef name, FunctionType funcType);
+                         }];
 
 }
 

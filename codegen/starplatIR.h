@@ -11,8 +11,6 @@
 #include "mlir/IR/Verifier.h"
 #include "mlir/Parser/Parser.h"
 
-#include "tblgen2/StarPlatOps.h.inc"
-#include "tblgen2/StarPlatOps.cpp.inc"
 
 
 
@@ -85,7 +83,12 @@ public:
         llvm::ArrayRef<mlir::NamedAttribute> attrs;
         llvm::ArrayRef<mlir::DictionaryAttr> args;
 
-        auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), value);
+        //auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(),value);
+        mlir::OperationState state(builder.getUnknownLoc(), "starplat.func");
+        
+        auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType);
+ 
+        // mlir::starplat::FuncOp::build(builder, state, value);
 
         module.push_back(funcbl);
     }

@@ -12,6 +12,8 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 
+#include "tblgen2/StarPlatOps.cpp.inc"
+
 extern int yyparse();
 extern FILE *yyin;
 ASTNode* root;

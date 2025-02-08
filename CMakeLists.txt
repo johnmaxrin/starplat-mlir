@@ -74,9 +74,7 @@ add_llvm_executable(app main.cc avialDialect/lib/AvialDialect.cc starplatDialect
 
 
 target_link_libraries(app 
-
-PRIVATE
-
+    PRIVATE
     parser_lib 
     ${dialect_libs}
     ${FLEX_LIBRARIES} 

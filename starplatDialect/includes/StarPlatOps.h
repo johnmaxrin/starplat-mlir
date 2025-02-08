@@ -11,4 +11,4 @@
 #include "tblgen2/StarPlatOps.h.inc"
 
 
-#endif  // STARPLATOPS~_H
+#endif  // STARPLATOPS_H
