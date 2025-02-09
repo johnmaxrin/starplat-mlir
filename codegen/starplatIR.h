@@ -102,10 +102,21 @@ public:
         auto argNames = builder.getArrayAttr({arg1, arg2, arg3, arg4});
 
         auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNames);
- 
+        auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
+        auto typeAttr = ::mlir::TypeAttr::get(type);
+
+        auto resType = builder.getI32Type();
+
+        auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(),resType, typeAttr);
         // mlir::starplat::FuncOp::build(builder, state, value);
+        
 
         module.push_back(funcbl);
+
+        auto &entryBlock = funcbl.getBody().emplaceBlock();
+        builder.setInsertionPointToStart(&entryBlock);
+
+        entryBlock.push_back(declare);
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override

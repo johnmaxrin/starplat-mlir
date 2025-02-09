@@ -47,6 +47,24 @@ def FuncOp : StarplatBaseOp<"func">
 
 }
 
+def DeclareOp : StarplatBaseOp<"declare">
+{
+  let summary = "Declares a variable of a specified type and returns its SSA value.";
+  let description = [{
+                          The declare operation is used to define a variable within the Starplat dialect. 
+                          The variable is associated with a specific type (e.g., integers, 
+                          floating-point numbers, or custom types such as propNode), 
+                          and it returns an SSA value representing the declared variable. 
+  }];
+
+  let arguments = (ins TypeAttr :$type);
+  let results = (outs I32);
+
+  let extraClassDeclaration = [{
+      static DeclareOp create(Location location, TypeAttr type);
+  }];
+}
+
 // TYPES
 
 class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits = []>
