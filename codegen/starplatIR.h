@@ -102,13 +102,23 @@ public:
         auto argNames = builder.getArrayAttr({arg1, arg2, arg3, arg4});
 
         auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNames);
+        
+        // propNode <int> modified;
         auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
         auto typeAttr = ::mlir::TypeAttr::get(type);
-
         auto resType = builder.getI32Type();
-
         auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(),resType, typeAttr);
-        // mlir::starplat::FuncOp::build(builder, state, value);
+
+        // propNode <int> modifiednxt;
+        auto type2 = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
+        auto typeAttr2 = ::mlir::TypeAttr::get(type);
+        auto resType2 = builder.getI32Type();
+        auto declare2 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(),resType2, typeAttr2);
+
+        // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
+        // dist = INF
+        // auto type3 = builder.getF32Type
+
         
 
         module.push_back(funcbl);
@@ -117,6 +127,7 @@ public:
         builder.setInsertionPointToStart(&entryBlock);
 
         entryBlock.push_back(declare);
+        entryBlock.push_back(declare2);
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override

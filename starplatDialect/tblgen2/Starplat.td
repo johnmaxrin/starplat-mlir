@@ -65,6 +65,22 @@ def DeclareOp : StarplatBaseOp<"declare">
   }];
 }
 
+def AssignmentOp : StarplatBaseOp<"assign">
+{
+  let summary = "The AssignmentOp assigns a value to a variable";
+  let description = [{
+                The AssignmentOp is used to perform variable assignments in the Starplat dialect. 
+                It operates by taking an SSA value (source) and assigning it to a destination
+  }];
+
+  let arguments = (ins AnyType:$rhs);
+  let results = (outs AnyType:$lhs);
+
+  let extraClassDeclaration = [{
+      static AssignmentOp create(Location location, Value lhs, Value rhs);
+  }];
+}
+
 // TYPES
 
 class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits = []>
