@@ -73,12 +73,17 @@ def AssignmentOp : StarplatBaseOp<"assign">
                 It operates by taking an SSA value (source) and assigning it to a destination
   }];
 
-  let arguments = (ins AnyType:$rhs);
-  let results = (outs AnyType:$lhs);
+  let arguments = (ins AnyType:$lhs, AnyType:$rhs);
 
   let extraClassDeclaration = [{
       static AssignmentOp create(Location location, Value lhs, Value rhs);
   }];
+}
+
+def ConstOp : StarplatBaseOp<"const">
+{
+  let summary = "Const Operaiton";
+  let arguments = (ins AnyType:$)
 }
 
 // TYPES

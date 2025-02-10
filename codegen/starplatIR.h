@@ -117,7 +117,9 @@ public:
 
         // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
         // dist = INF
-        // auto type3 = builder.getF32Type
+        auto lhs = declare.getResult();
+        auto rhs = declare2.getResult();
+        auto assign1 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
 
         
 
@@ -128,6 +130,7 @@ public:
 
         entryBlock.push_back(declare);
         entryBlock.push_back(declare2);
+        entryBlock.push_back(assign1);
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
