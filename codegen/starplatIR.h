@@ -121,7 +121,7 @@ public:
         auto rhs = declare2.getResult();
         auto assign1 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
 
-        
+        auto boolType = builder.getI1Type();
 
         module.push_back(funcbl);
 
@@ -131,6 +131,11 @@ public:
         entryBlock.push_back(declare);
         entryBlock.push_back(declare2);
         entryBlock.push_back(assign1);
+        
+        auto infAttr = builder.getStringAttr("INF");
+        auto INFSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), infAttr); 
+
+        //entryBlock.push_back(INFSSA);
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
