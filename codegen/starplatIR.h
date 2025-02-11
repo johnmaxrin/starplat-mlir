@@ -12,10 +12,6 @@
 #include "mlir/IR/Verifier.h"
 #include "mlir/Parser/Parser.h"
 
-
-
-
-
 class StarPlatCodeGen : public Visitor
 {
 
@@ -81,17 +77,16 @@ public:
     {
         llvm::StringRef value = function->getfuncNameIdentifier();
 
-
         auto grty = mlir::starplat::GraphType::get(builder.getContext());
         auto ndty = mlir::starplat::NodeType::get(builder.getContext());
         auto propndty = mlir::starplat::PropNodeType::get(builder.getContext(), builder.getI32Type());
         auto propedty = mlir::starplat::PropEdgeType::get(builder.getContext(), builder.getI32Type());
 
-        auto funcType = builder.getFunctionType({grty,propndty, propedty, ndty},{});
+        auto funcType = builder.getFunctionType({grty, propndty, propedty, ndty}, {});
         llvm::ArrayRef<mlir::NamedAttribute> attrs;
         llvm::ArrayRef<mlir::DictionaryAttr> args;
 
-        //auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(),value);
+        // auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(),value);
         mlir::OperationState state(builder.getUnknownLoc(), "starplat.func");
 
         auto arg1 = builder.getStringAttr("g");
@@ -102,24 +97,18 @@ public:
         auto argNames = builder.getArrayAttr({arg1, arg2, arg3, arg4});
 
         auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNames);
-        
+
         // propNode <int> modified;
         auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
         auto typeAttr = ::mlir::TypeAttr::get(type);
         auto resType = builder.getI32Type();
-        auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(),resType, typeAttr);
+        auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr);
 
         // propNode <int> modifiednxt;
         auto type2 = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
         auto typeAttr2 = ::mlir::TypeAttr::get(type);
         auto resType2 = builder.getI32Type();
-        auto declare2 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(),resType2, typeAttr2);
-
-        // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
-        // dist = INF
-        auto lhs = declare.getResult();
-        auto rhs = declare2.getResult();
-        auto assign1 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
+        auto declare2 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType2, typeAttr2);
 
         auto boolType = builder.getI1Type();
 
@@ -130,15 +119,20 @@ public:
 
         entryBlock.push_back(declare);
         entryBlock.push_back(declare2);
-        entryBlock.push_back(assign1);
-        
+
         auto infAttr = builder.getStringAttr("INF");
-        auto infInt = builder.getI32IntegerAttr(33);
+        auto falseAttr = builder.getStringAttr("False");
+
+        auto INFSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), infAttr);
+        auto FALSESSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), falseAttr);
+
+        // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
+        // dist = INF
+        auto lhs = declare.getResult();
+        auto rhs = FALSESSA.getResult();
+        auto assign1 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
 
 
-        auto INFSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), infInt); 
-
-        //entryBlock.push_back(INFSSA);
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override

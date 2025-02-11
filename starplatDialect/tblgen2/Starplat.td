@@ -93,6 +93,16 @@ def ConstOp : StarplatBaseOp<"const">
   }];
 }
 
+// def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
+// {
+//   let summary = "Attach Node Property. Attach this property with all nodes in the given graph";
+
+//   let arguments = (ins 
+//                     GraphType : $graph,
+//                     ArrayAttr : 
+//                   );
+// }
+
 // TYPES
 
 class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits = []>
