@@ -41,7 +41,7 @@ def FuncOp : StarplatBaseOp<"func">
 
 
   let extraClassDeclaration = [{
-    static FuncOp create(Location location, StringRef strVal = nullptr, int intVal = nullptr);
+    static FuncOp create(Location location, StringRef strVal, int intVal);
                          }];
 
 }
@@ -82,14 +82,14 @@ def AssignmentOp : StarplatBaseOp<"assign">
 def ConstOp : StarplatBaseOp<"const"> 
 {
   let summary = "Const Operaiton";
-  let arguments = (ins 
-                    OptionalAttr<SymbolNameAttr>:$strVal, 
-                    OptionalAttr<Builtin_IntegerAttr>:$intval 
+  let arguments = (ins
+                    TypedAttrInterface:$value
                   );
+
   let results = (outs AnyType:$retValue);
+
     let extraClassDeclaration = [{
       static ConstOp create(Location location, Value result, Value argument);
-      static ConstOp create(Location location, Value result, StringRef argument);
   }];
 }
 

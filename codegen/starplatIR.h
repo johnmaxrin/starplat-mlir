@@ -133,7 +133,10 @@ public:
         entryBlock.push_back(assign1);
         
         auto infAttr = builder.getStringAttr("INF");
-        auto INFSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), infAttr); 
+        auto infInt = builder.getI32IntegerAttr(33);
+
+
+        auto INFSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), infInt); 
 
         //entryBlock.push_back(INFSSA);
     }
