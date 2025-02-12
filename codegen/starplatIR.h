@@ -126,11 +126,12 @@ public:
 
         auto infAttr = builder.getStringAttr("INF");
         auto falseAttr = builder.getStringAttr("False");
+        auto trueAttr = builder.getStringAttr("True");
 
         auto INFSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), infAttr);
         auto FALSESSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), falseAttr);
+        auto TRUESSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), trueAttr);
 
-        // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
         // dist = INF
         auto lhs = entryBlock.getArgument(1);
         auto rhs = INFSSA.getResult();
@@ -144,7 +145,15 @@ public:
         auto value2 = declare2.getResult();
         auto assign3 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), value2, FALSESSA.getResult());
 
-        auto attachnodeprop = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), declare2.getResult());
+
+        llvm::SmallVector<mlir::Value, 2> operands = {entryBlock.getArgument(1), declare.getResult(), declare2.getResult()};
+        
+        // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
+        auto attachnodeprop = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operands);
+
+        // src.modified = True; 
+        auto setNode1 = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(),entryBlock.getArgument(3) ,declare.getResult(), TRUESSA.getResult());
+
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override

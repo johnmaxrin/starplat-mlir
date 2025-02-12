@@ -98,13 +98,23 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
   let summary = "Attach Node Property. Attach this property with all nodes in the given graph";
 
   let arguments = (ins 
-                     //GraphType : $graph,
                      Variadic<AnyType>:$operands
                    );
 
-  let extraClassDeclaration = [{
-      static AttachNodePropertyOp create();
-  }]; 
+  // let extraClassDeclaration = [{
+  //     static AttachNodePropertyOp create();
+  // }]; 
+ }
+
+ def SetNodePropertyOp : StarplatBaseOp<"setNodeProperty">
+ {
+    let summary = "Set Node property";
+
+    let arguments = ( ins
+                      AnyType : $node,
+                      AnyType : $property,
+                      AnyType : $value
+                    );
  }
 
 // TYPES
