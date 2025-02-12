@@ -14,7 +14,7 @@ def StarPlatDialect : Dialect {
     let useDefaultTypePrinterParser = 1;
 }
 
-class StarplatBaseOp<string mnemonic> : Op<StarPlatDialect, mnemonic>
+class StarplatBaseOp<string mnemonic, list<Trait> traits = []> : Op<StarPlatDialect, mnemonic, traits>
 {
     let summary = "Starplat base operation class.";
 }
@@ -22,7 +22,7 @@ class StarplatBaseOp<string mnemonic> : Op<StarPlatDialect, mnemonic>
 
 
 
-def FuncOp : StarplatBaseOp<"func">
+def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove]>
 {
     let summary = "Defines a function in the Starplat Dialect";
     let description = [{This operation represents a function definiton in the Starplat dialect.

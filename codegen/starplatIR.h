@@ -94,6 +94,7 @@ public:
         auto arg3 = builder.getStringAttr("weight");
         auto arg4 = builder.getStringAttr("src");
 
+
         auto argNames = builder.getArrayAttr({arg1, arg2, arg3, arg4});
 
         auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNames);
@@ -115,6 +116,11 @@ public:
         module.push_back(funcbl);
 
         auto &entryBlock = funcbl.getBody().emplaceBlock();
+        
+        for(auto arg : funcType.getInputs())
+            entryBlock.addArgument(arg, builder.getUnknownLoc());
+
+
         builder.setInsertionPointToStart(&entryBlock);
 
         entryBlock.push_back(declare);
@@ -133,6 +139,10 @@ public:
         auto assign1 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
 
 
+        auto value1 = entryBlock.getArgument(0);
+        auto assign2 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, value1);
+
+        
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
