@@ -94,7 +94,6 @@ public:
         auto arg3 = builder.getStringAttr("weight");
         auto arg4 = builder.getStringAttr("src");
 
-
         auto argNames = builder.getArrayAttr({arg1, arg2, arg3, arg4});
 
         auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNames);
@@ -116,10 +115,9 @@ public:
         module.push_back(funcbl);
 
         auto &entryBlock = funcbl.getBody().emplaceBlock();
-        
-        for(auto arg : funcType.getInputs())
-            entryBlock.addArgument(arg, builder.getUnknownLoc());
 
+        for (auto arg : funcType.getInputs())
+            entryBlock.addArgument(arg, builder.getUnknownLoc());
 
         builder.setInsertionPointToStart(&entryBlock);
 
@@ -134,15 +132,19 @@ public:
 
         // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
         // dist = INF
-        auto lhs = declare.getResult();
-        auto rhs = FALSESSA.getResult();
+        auto lhs = entryBlock.getArgument(1);
+        auto rhs = INFSSA.getResult();
         auto assign1 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
 
+        // modified = False
+        auto value1 = declare.getResult();
+        auto assign2 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), value1, FALSESSA.getResult());
 
-        auto value1 = entryBlock.getArgument(0);
-        auto assign2 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, value1);
+        // modified_nxt = False
+        auto value2 = declare2.getResult();
+        auto assign3 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), value2, FALSESSA.getResult());
 
-        
+        auto attachnodeprop = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), declare2.getResult());
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
