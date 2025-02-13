@@ -57,7 +57,7 @@ def DeclareOp : StarplatBaseOp<"declare">
   }];
 
   let arguments = (ins TypeAttr :$type);
-  let results = (outs I32);
+  let results = (outs AnyType);
 
   let extraClassDeclaration = [{
       static DeclareOp create(Location location, TypeAttr type);
@@ -115,6 +115,18 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
                       AnyType : $property,
                       AnyType : $value
                     );
+ }
+
+ def FixedPointUntilOp : StarplatBaseOp<"fixedPointUntil">
+ {
+    let summary = "Fixed-point operation for iterative graph processing";
+    
+    let description = [{
+    This operation performs a fixed-point iteration over graph nodes and edges
+    until a convergence condition is met.
+    }];
+
+
  }
 
 // TYPES

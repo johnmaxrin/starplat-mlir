@@ -154,6 +154,15 @@ public:
         // src.modified = True; 
         auto setNode1 = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(),entryBlock.getArgument(3) ,declare.getResult(), TRUESSA.getResult());
 
+        // int finished =False;
+        auto declare3 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getI32Type());
+        auto assign4 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), declare3.getResult(), FALSESSA.getResult());
+
+        // fixedPoint until (finished:!modified) 
+        auto fixedPoint = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc());
+
+
+
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
