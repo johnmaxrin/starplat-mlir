@@ -134,6 +134,20 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
 
  }
 
+ def ForAllOp : StarplatBaseOp<"forall">
+ {
+    let summary = "Forall loop";
+    let description = [{"For all operation description."}];
+
+    let arguments = ( ins 
+                      Variadic<AnyType> : $arguments,
+                      OptionalAttr<ArrayAttr> : $extra  
+                    );
+    
+    let regions = (region AnyRegion:$body);
+
+ }
+
 // TYPES
 
 class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits = []>
@@ -150,6 +164,11 @@ def NodeType : StarPlatDialectType<"Node", "node"> {
   let summary = "Node type";
 }
 
+def NodesType : StarPlatDialectType<"Nodes", "nodes">
+{
+  let summary = "For More than one node";
+}
+
 def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{
   let summary = "Property of Node";
   let parameters = (ins "Type":$parameter);
@@ -162,6 +181,9 @@ def PropEdgeType : StarPlatDialectType<"PropEdge", "propEdge">{
   let parameters = (ins "Type":$parameter);
   let assemblyFormat = "`<` $parameter `>`";
 }
+
+// End of types
+
 
 
 #endif 

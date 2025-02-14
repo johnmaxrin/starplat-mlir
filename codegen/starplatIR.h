@@ -165,6 +165,20 @@ public:
         auto argCondAttr = builder.getArrayAttr({cond});
         llvm::SmallVector<mlir::Value, 2> condArgs = {assign4.getLhs(), assign2.getLhs()};
         auto fixedPoint = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc(), condArgs, argCondAttr);
+        
+        // Change the Region.
+        auto &loopBlock = fixedPoint.getBody().emplaceBlock();
+        builder.setInsertionPointToStart(&loopBlock);
+
+        // node v
+        auto vtype = builder.getType<mlir::starplat::NodeType>();
+        auto vtypeAttr = ::mlir::TypeAttr::get(vtype);
+        auto declare4 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), vtypeAttr);
+        
+
+        // forall (v in g.nodes().filter(modified == True)) {}
+        
+
 
 
 
