@@ -126,6 +126,11 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
     until a convergence condition is met.
     }];
 
+    let arguments = ( ins Variadic<AnyType> : $argumets,
+                          OptionalAttr<ArrayAttr> : $terminationCondition
+    );
+    
+    let regions = (region AnyRegion:$body);
 
  }
 

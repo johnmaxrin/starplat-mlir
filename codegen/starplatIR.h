@@ -159,7 +159,12 @@ public:
         auto assign4 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), declare3.getResult(), FALSESSA.getResult());
 
         // fixedPoint until (finished:!modified) 
-        auto fixedPoint = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc());
+
+        auto cond = builder.getStringAttr("NTEQ");
+
+        auto argCondAttr = builder.getArrayAttr({cond});
+        llvm::SmallVector<mlir::Value, 2> condArgs = {assign4.getLhs(), assign2.getLhs()};
+        auto fixedPoint = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc(), condArgs, argCondAttr);
 
 
 
