@@ -177,8 +177,9 @@ public:
         
 
         // forall (v in g.nodes().filter(modified == True)) {}
-        
-
+        llvm::SmallVector<mlir::Value,4> forall1Args = {declare4.getResult(), entryBlock.getArgument(0),assign2.getRhs(),TRUESSA.getResult()}; 
+        auto forloopAttr = builder.getArrayAttr({builder.getStringAttr("EQ"), builder.getStringAttr("nodes")});
+        auto forallLoop1 = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), forall1Args, forloopAttr);
 
 
 
