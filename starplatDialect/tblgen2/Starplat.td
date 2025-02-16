@@ -100,10 +100,6 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
   let arguments = (ins 
                      Variadic<AnyType>:$operands
                    );
-
-  // let extraClassDeclaration = [{
-  //     static AttachNodePropertyOp create();
-  // }]; 
  }
 
  def SetNodePropertyOp : StarplatBaseOp<"setNodeProperty">
@@ -116,6 +112,22 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
                       AnyType : $value
                     );
  }
+
+def GetNodePropertyOp : StarplatBaseOp<"getNodeProperty">
+ {
+    let summary = "Get Node property";
+
+    let arguments = ( ins
+                      AnyType : $node,
+                      AnyType : $property,
+                      AnyType : $value
+                    );
+    let results = ( outs
+                    AnyType : $result
+    );
+ }
+
+
 
  def FixedPointUntilOp : StarplatBaseOp<"fixedPointUntil">
  {
