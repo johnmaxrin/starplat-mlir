@@ -141,12 +141,28 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
 
     let arguments = ( ins 
                       Variadic<AnyType> : $arguments,
-                      OptionalAttr<ArrayAttr> : $extra  
+                      OptionalAttr<ArrayAttr> : $loopattributes 
                     );
     
     let regions = (region AnyRegion:$body);
-
  }
+
+ def GetEdgeOp : StarplatBaseOp<"getedge">
+ {
+    let summary = "Return Edge between node1 and node 2";
+
+    let arguments = ( ins 
+                      AnyType : $graph,
+                      AnyType : $node1,
+                      AnyType : $node2
+    );
+
+    let results = ( outs
+                    AnyType : $edge
+    );
+ }
+
+
 
 // TYPES
 
@@ -167,6 +183,11 @@ def NodeType : StarPlatDialectType<"Node", "node"> {
 def NodesType : StarPlatDialectType<"Nodes", "nodes">
 {
   let summary = "For More than one node";
+}
+
+def EdgeType : StarPlatDialectType<"Edge", "edge">
+{
+  let summary = "Starplat Edge Type";
 }
 
 def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{

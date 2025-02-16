@@ -78,6 +78,7 @@ public:
         llvm::StringRef value = function->getfuncNameIdentifier();
 
         auto grty = mlir::starplat::GraphType::get(builder.getContext());
+        auto edgety = mlir::starplat::EdgeType::get(builder.getContext());
         auto ndty = mlir::starplat::NodeType::get(builder.getContext());
         auto propndty = mlir::starplat::PropNodeType::get(builder.getContext(), builder.getI32Type());
         auto propedty = mlir::starplat::PropEdgeType::get(builder.getContext(), builder.getI32Type());
@@ -180,6 +181,23 @@ public:
         llvm::SmallVector<mlir::Value,4> forall1Args = {declare4.getResult(), entryBlock.getArgument(0),assign2.getRhs(),TRUESSA.getResult()}; 
         auto forloopAttr = builder.getArrayAttr({builder.getStringAttr("EQ"), builder.getStringAttr("nodes")});
         auto forallLoop1 = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), forall1Args, forloopAttr);
+
+        auto &loop1Block = forallLoop1.getBody().emplaceBlock();
+        builder.setInsertionPointToStart(&loop1Block);
+
+        // node nbr
+        auto nbrtype = builder.getType<mlir::starplat::NodeType>();
+        auto nbrtypeAttr = ::mlir::TypeAttr::get(nbrtype);
+        auto declare5 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), nbrtypeAttr);
+        
+        // forall (nbr in g.neighbors(v)) 
+        llvm::SmallVector<mlir::Value,4> forall2Args = {declare5.getResult(), entryBlock.getArgument(0),declare4.getResult()}; 
+        auto forloopAttr2 = builder.getArrayAttr({builder.getStringAttr("neighbours")});
+        auto forallLoop2 = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), forall2Args, forloopAttr2);
+
+        // edge e = g.get_edge(v, nbr);
+        auto getnode = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(),edgety, entryBlock.getArgument(0), declare4.getResult(), declare5.getResult());
+
 
 
 
