@@ -119,15 +119,25 @@ def GetNodePropertyOp : StarplatBaseOp<"getNodeProperty">
 
     let arguments = ( ins
                       AnyType : $node,
-                      AnyType : $property,
-                      AnyType : $value
+                      Builtin_StringAttr : $property
                     );
     let results = ( outs
                     AnyType : $result
     );
  }
 
+def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
+ {
+    let summary = "Get Edge property";
 
+    let arguments = ( ins
+                      AnyType : $node,
+                      Builtin_StringAttr : $property 
+                    );
+    let results = ( outs
+                    AnyType : $result
+    );
+ }
 
  def FixedPointUntilOp : StarplatBaseOp<"fixedPointUntil">
  {
@@ -172,6 +182,24 @@ def GetNodePropertyOp : StarplatBaseOp<"getNodeProperty">
     let results = ( outs
                     AnyType : $edge
     );
+ }
+
+
+ def MinOp : StarplatBaseOp<"min">
+ {
+    let summary = "Min Operation of starplat";
+
+    let arguments = ( ins 
+                      AnyType : $lhs1,
+                      AnyType : $lhs2,
+                      AnyType : $rhs1,
+                      AnyType : $rhs2
+    );
+
+    let results = ( outs
+                    AnyType : $result1 
+    );
+
  }
 
 

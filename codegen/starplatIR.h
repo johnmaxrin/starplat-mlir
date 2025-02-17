@@ -196,11 +196,26 @@ public:
         auto forallLoop2 = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), forall2Args, forloopAttr2);
 
         // edge e = g.get_edge(v, nbr);
-        auto getnode = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(),edgety, entryBlock.getArgument(0), declare4.getResult(), declare5.getResult());
+        auto getnedge = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(),edgety, entryBlock.getArgument(0), declare4.getResult(), declare5.getResult());
+        
+        // nbr.dist
+        auto getprop = builder.getStringAttr("DIST");
+        auto getnbrdist = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), declare5.getResult(), getprop);
 
+        // nbr.modified_nxt
+        auto getprop2 = builder.getStringAttr("MODIFIED_NXT");
+        auto getnbrmdfnxt = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), declare5.getResult(), getprop2);
+        
+        // v.dist
+        auto getvdist = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), declare4.getResult(), getprop);
 
+        // e.weight
+        auto getprop3 = builder.getStringAttr("WEIGTH");
+        auto geteweight = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), getnedge.getResult(), getprop3);
 
-
+        // <nbr.dist,nbr.modified_nxt> = 
+        // <Min (nbr.dist, v.dist + e.weight), True>;
+        auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(),builder.getI32Type(), getnbrdist.getResult(), getnbrmdfnxt.getResult(), getvdist.getResult(), geteweight.getResult());
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
