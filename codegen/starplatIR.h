@@ -216,6 +216,18 @@ public:
         // <nbr.dist,nbr.modified_nxt> = 
         // <Min (nbr.dist, v.dist + e.weight), True>;
         auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(),builder.getI32Type(), getnbrdist.getResult(), getnbrmdfnxt.getResult(), getvdist.getResult(), geteweight.getResult());
+        auto end1 = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+        builder.setInsertionPointAfter(forallLoop1);
+
+
+        auto assign7 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), declare3.getResult(), FALSESSA.getResult());
+        llvm::SmallVector<mlir::Value, 2> operands6 = {entryBlock.getArgument(1)};
+        auto attachnodeprop2 = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operands6);
+        auto end2 = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+
+        builder.setInsertionPointAfter(fixedPoint);
+        auto end3 = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override

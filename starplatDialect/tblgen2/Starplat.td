@@ -202,6 +202,11 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
 
  }
 
+ def endOp : StarplatBaseOp<"end", [Terminator]>
+ {
+    let summary = "End of the operation";
+ }
+
 
 
 // TYPES
