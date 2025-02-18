@@ -75,159 +75,34 @@ public:
 
     virtual void visitFunction(const Function *function) override
     {
-        llvm::StringRef value = function->getfuncNameIdentifier();
-
-        auto grty = mlir::starplat::GraphType::get(builder.getContext());
-        auto edgety = mlir::starplat::EdgeType::get(builder.getContext());
-        auto ndty = mlir::starplat::NodeType::get(builder.getContext());
-        auto propndty = mlir::starplat::PropNodeType::get(builder.getContext(), builder.getI32Type());
-        auto propedty = mlir::starplat::PropEdgeType::get(builder.getContext(), builder.getI32Type());
-
-        auto funcType = builder.getFunctionType({grty, propndty, propedty, ndty}, {});
-        llvm::ArrayRef<mlir::NamedAttribute> attrs;
-        llvm::ArrayRef<mlir::DictionaryAttr> args;
-
-        // auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(),value);
-        mlir::OperationState state(builder.getUnknownLoc(), "starplat.func");
-
-        auto arg1 = builder.getStringAttr("g");
-        auto arg2 = builder.getStringAttr("dist");
-        auto arg3 = builder.getStringAttr("weight");
-        auto arg4 = builder.getStringAttr("src");
-
-        auto argNames = builder.getArrayAttr({arg1, arg2, arg3, arg4});
-
-        auto funcbl = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNames);
-
-        // propNode <int> modified;
-        auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
-        auto typeAttr = ::mlir::TypeAttr::get(type);
-        auto resType = builder.getI32Type();
-        auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr);
-
-        // propNode <int> modifiednxt;
-        auto type2 = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
-        auto typeAttr2 = ::mlir::TypeAttr::get(type);
-        auto resType2 = builder.getI32Type();
-        auto declare2 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType2, typeAttr2);
-
-        auto boolType = builder.getI1Type();
-
-        module.push_back(funcbl);
-
-        auto &entryBlock = funcbl.getBody().emplaceBlock();
-
-        for (auto arg : funcType.getInputs())
-            entryBlock.addArgument(arg, builder.getUnknownLoc());
-
-        builder.setInsertionPointToStart(&entryBlock);
-
-        entryBlock.push_back(declare);
-        entryBlock.push_back(declare2);
-
-        auto infAttr = builder.getStringAttr("INF");
-        auto falseAttr = builder.getStringAttr("False");
-        auto trueAttr = builder.getStringAttr("True");
-
-        auto INFSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), infAttr);
-        auto FALSESSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), falseAttr);
-        auto TRUESSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), trueAttr);
-
-        // dist = INF
-        auto lhs = entryBlock.getArgument(1);
-        auto rhs = INFSSA.getResult();
-        auto assign1 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
-
-        // modified = False
-        auto value1 = declare.getResult();
-        auto assign2 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), value1, FALSESSA.getResult());
-
-        // modified_nxt = False
-        auto value2 = declare2.getResult();
-        auto assign3 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), value2, FALSESSA.getResult());
+        // Create function type. 
+        llvm::SmallVector<mlir::Type, 4> argTypes;
+        llvm::ArrayRef<llvm::StringRef> argNames;
+        // TODO: Make Function return the number of arguments and change 4 to that number.
 
 
-        llvm::SmallVector<mlir::Value, 2> operands = {entryBlock.getArgument(1), declare.getResult(), declare2.getResult()};
+        auto args = function->getparams()->getArgList();
+        for(auto arg : args)
+        {
+            if(arg->getType() != nullptr)
+            {
+                if(arg->getType()->getType() == "Graph")
+                    argTypes.push_back(builder.getType<mlir::starplat::GraphType>()); 
+            }
+            else if(arg->getTemplateType() != nullptr)
+            {
+                if(arg->getTemplateType()->getGraphPropNode()->getPropertyType() == "propNode")
+                    argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type()));
+            }
+
+            argNames.vec
+            argNames.push_back(builder.getStringAttr(arg->getVarName()->getname()));
+        }
+
+        auto funcType = builder.getFunctionType(argTypes, {});
+        auto argNames = builder.getStrArrayAttr(argNames(argNamesVec));
+
         
-        // g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
-        auto attachnodeprop = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operands);
-
-        // src.modified = True; 
-        auto setNode1 = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(),entryBlock.getArgument(3) ,declare.getResult(), TRUESSA.getResult());
-
-        // int finished =False;
-        auto declare3 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getI32Type());
-        auto assign4 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), declare3.getResult(), FALSESSA.getResult());
-
-        // fixedPoint until (finished:!modified) 
-
-        auto cond = builder.getStringAttr("NTEQ");
-
-        auto argCondAttr = builder.getArrayAttr({cond});
-        llvm::SmallVector<mlir::Value, 2> condArgs = {assign4.getLhs(), assign2.getLhs()};
-        auto fixedPoint = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc(), condArgs, argCondAttr);
-        
-        // Change the Region.
-        auto &loopBlock = fixedPoint.getBody().emplaceBlock();
-        builder.setInsertionPointToStart(&loopBlock);
-
-        // node v
-        auto vtype = builder.getType<mlir::starplat::NodeType>();
-        auto vtypeAttr = ::mlir::TypeAttr::get(vtype);
-        auto declare4 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), vtypeAttr);
-        
-
-        // forall (v in g.nodes().filter(modified == True)) {}
-        llvm::SmallVector<mlir::Value,4> forall1Args = {declare4.getResult(), entryBlock.getArgument(0),assign2.getRhs(),TRUESSA.getResult()}; 
-        auto forloopAttr = builder.getArrayAttr({builder.getStringAttr("EQ"), builder.getStringAttr("nodes")});
-        auto forallLoop1 = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), forall1Args, forloopAttr);
-
-        auto &loop1Block = forallLoop1.getBody().emplaceBlock();
-        builder.setInsertionPointToStart(&loop1Block);
-
-        // node nbr
-        auto nbrtype = builder.getType<mlir::starplat::NodeType>();
-        auto nbrtypeAttr = ::mlir::TypeAttr::get(nbrtype);
-        auto declare5 = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), nbrtypeAttr);
-        
-        // forall (nbr in g.neighbors(v)) 
-        llvm::SmallVector<mlir::Value,4> forall2Args = {declare5.getResult(), entryBlock.getArgument(0),declare4.getResult()}; 
-        auto forloopAttr2 = builder.getArrayAttr({builder.getStringAttr("neighbours")});
-        auto forallLoop2 = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), forall2Args, forloopAttr2);
-
-        // edge e = g.get_edge(v, nbr);
-        auto getnedge = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(),edgety, entryBlock.getArgument(0), declare4.getResult(), declare5.getResult());
-        
-        // nbr.dist
-        auto getprop = builder.getStringAttr("DIST");
-        auto getnbrdist = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), declare5.getResult(), getprop);
-
-        // nbr.modified_nxt
-        auto getprop2 = builder.getStringAttr("MODIFIED_NXT");
-        auto getnbrmdfnxt = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), declare5.getResult(), getprop2);
-        
-        // v.dist
-        auto getvdist = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), declare4.getResult(), getprop);
-
-        // e.weight
-        auto getprop3 = builder.getStringAttr("WEIGTH");
-        auto geteweight = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), getnedge.getResult(), getprop3);
-
-        // <nbr.dist,nbr.modified_nxt> = 
-        // <Min (nbr.dist, v.dist + e.weight), True>;
-        auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(),builder.getI32Type(), getnbrdist.getResult(), getnbrmdfnxt.getResult(), getvdist.getResult(), geteweight.getResult());
-        auto end1 = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
-        builder.setInsertionPointAfter(forallLoop1);
-
-
-        auto assign7 = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), declare3.getResult(), FALSESSA.getResult());
-        llvm::SmallVector<mlir::Value, 2> operands6 = {entryBlock.getArgument(1)};
-        auto attachnodeprop2 = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operands6);
-        auto end2 = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
-
-        builder.setInsertionPointAfter(fixedPoint);
-        auto end3 = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
-
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override

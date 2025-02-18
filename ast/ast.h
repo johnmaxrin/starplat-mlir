@@ -610,7 +610,10 @@ class Arg : public ASTNode
 {
 public:
     Arg(TypeExpr *type, Identifier *identifier)
-        : type(type), varname(identifier) {}
+        : type(type), varname(identifier), templatetype(nullptr) {}
+    
+    Arg(TemplateType *type, Identifier *identifier)
+        : templatetype(type), varname(identifier), type(nullptr) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -624,10 +627,12 @@ public:
     }
 
     const TypeExpr *getType() const { return type; }
+    const TemplateType *getTemplateType() const { return templatetype; }
     const Identifier *getVarName() const { return varname; }
 
 private:
     TypeExpr *type;
+    TemplateType *templatetype;
     Identifier *varname;
 };
 

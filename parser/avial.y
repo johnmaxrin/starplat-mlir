@@ -185,7 +185,12 @@ arg : type IDENTIFIER           {
                                   TypeExpr* type = static_cast<TypeExpr*>($1);
                                   $$ = new Arg(type, varname);
                                 }
-      | templateType IDENTIFIER {}
+      | templateType IDENTIFIER {
+
+                                  Identifier* varname = new Identifier($2);
+                                  TemplateType* type = static_cast<TemplateType*>($1);
+                                  $$ = new Arg(type, varname);
+                                }
       
       | /*epsilon*/             {
                                     $$ = nullptr;
