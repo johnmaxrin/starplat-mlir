@@ -27,10 +27,12 @@ public:
     StarPlatCodeGen() : result(0),
                         context(),
                         builder(&context),
-                        module(mlir::ModuleOp::create(builder.getUnknownLoc()))
+                        module(mlir::ModuleOp::create(builder.getUnknownLoc())),
+                        symbolTable(module)
     {
         // Load Dialects here.
         context.getOrLoadDialect<mlir::starplat::StarPlatDialect>();
+        
     }
 
     virtual void visitDeclarationStmt(const DeclarationStatement *dclstmt) override
@@ -49,7 +51,8 @@ public:
             auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
-            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr);
+            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()));
+            symbolTable.insert(declare);
         }
 
         else if(std::string(Type->getGraphPropNode()->getPropertyType()) == "propEdge")
@@ -57,7 +60,8 @@ public:
             auto type = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type());
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
-            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr);
+            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()));
+            symbolTable.insert(declare);
         }
 
     }
@@ -141,10 +145,23 @@ public:
             entryBlock.addArgument(arg, builder.getUnknownLoc());
 
         builder.setInsertionPointToStart(&entryBlock);
+        
 
         // Visit the function body.
         Statementlist* stmtlist =  static_cast<Statementlist*> (function->getstmtlist());
         stmtlist->Accept(this);
+        
+        // TEST
+        auto found = symbolTable.lookup<mlir::starplat::DeclareOp>("modified");
+        if (found) {
+            llvm::outs() << "DeclareOp symbol 'modified' found in the table!\n";
+        }
+        else
+        {
+            llvm::outs() << "DeclareOp symbol 'modified' not found in the table!\n";
+        }
+
+        // END TEST
 
         // Create end operation.
         auto end = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
@@ -227,4 +244,5 @@ private:
     mlir::MLIRContext context;
     mlir::OpBuilder builder;
     mlir::ModuleOp module;
+    mlir::SymbolTable symbolTable;
 };

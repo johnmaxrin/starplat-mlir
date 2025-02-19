@@ -22,7 +22,7 @@ class StarplatBaseOp<string mnemonic, list<Trait> traits = []> : Op<StarPlatDial
 
 
 
-def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove]>
+def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove, SymbolTable, Symbol]>
 {
     let summary = "Defines a function in the Starplat Dialect";
     let description = [{This operation represents a function definiton in the Starplat dialect.
@@ -31,7 +31,7 @@ def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove]>
                         }];
 
   let arguments = (ins 
-                    SymbolNameAttr:$funcName,
+                    SymbolNameAttr:$sym_name,
                     TypeAttrOf<FunctionType>:$funcType,
                     OptionalAttr<ArrayAttr>:$argNames // Argument Attributes 
                   );
@@ -46,7 +46,7 @@ def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove]>
 
 }
 
-def DeclareOp : StarplatBaseOp<"declare">
+def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
 {
   let summary = "Declares a variable of a specified type and returns its SSA value.";
   let description = [{
@@ -56,12 +56,10 @@ def DeclareOp : StarplatBaseOp<"declare">
                           and it returns an SSA value representing the declared variable. 
   }];
 
-  let arguments = (ins TypeAttr :$type);
+  let arguments = (ins TypeAttr :$type, SymbolNameAttr:$sym_name);
+
   let results = (outs AnyType);
 
-  let extraClassDeclaration = [{
-      static DeclareOp create(Location location, TypeAttr type);
-  }];
 }
 
 def AssignmentOp : StarplatBaseOp<"assign">
