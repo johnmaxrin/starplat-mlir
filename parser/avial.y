@@ -51,20 +51,20 @@ stmtlist : stmt                 {
                                 }
          ;
 
-stmt :  assignment SEMICLN
-        |   declarationstmt             {$$ = $1;}
+stmt :  assignment SEMICLN                              {}
+        |   declarationstmt                             {$$ = $1;}
         |   ifstmt			                {$$ = $1;}
-        |   forstmt 			              {$$ = $1;}
-        |   returnstmt 			            {$$ = $1;}
-        |   forallstmt			            {$$ = $1;}
-        |   incandassignstmt	          {$$ = $1;}
-        |   templateDecl                {}
-        |   /*epsilon*/                 {$$ = nullptr;}
-        |   memberaccessstmt            {}
-        |   initializestmt              {}
-        |   memberaccessAssignment     {$$ = $1;}
-        |   fixedPointStmt              {}
-        |   tuppleAssignmentstmt        {}
+        |   forstmt 			                {$$ = $1;}
+        |   returnstmt 			                {$$ = $1;}
+        |   forallstmt			                {$$ = $1;}
+        |   incandassignstmt	                        {$$ = $1;}
+        |   templateDecl                                {$$ = $1;}
+        |   /*epsilon*/                                 {$$ = nullptr;}
+        |   memberaccessstmt                            {}
+        |   initializestmt                              {$$ = $1;}
+        |   memberaccessAssignment                      {$$ = $1;}
+        |   fixedPointStmt                              {$$ = $1;}
+        |   tuppleAssignmentstmt                        {$$ = $1;}
         ;
 
 blcstmt : LCURLY stmtlist RCURLY        {$$ = $2;}
@@ -88,7 +88,6 @@ declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration
 templateDecl : templateType IDENTIFIER SEMICLN {      
                                                       Identifier *identifier = new Identifier($2);  
                                                       $$ = new TemplateDeclarationStatement($1, identifier); 
-                                                        
                                                 }
               ;
 

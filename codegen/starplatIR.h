@@ -1,3 +1,8 @@
+// Next Iteration TODOs
+// 1. Revmap the parser file. It's very messy. 
+// 2. Think if we need to cast here or at parser file. 
+
+
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
 #include "includes/StarPlatTypes.h"
@@ -11,6 +16,9 @@
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/Parser/Parser.h"
+#include <string>
+
+
 
 class StarPlatCodeGen : public Visitor
 {
@@ -31,6 +39,8 @@ public:
 
     virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt)
     {
+
+        llvm::outs() << "Template Declaration ";
     }
 
     virtual void visitTemplateType(const TemplateType *templateType)
@@ -77,7 +87,7 @@ public:
     {
         // Create function type. 
         llvm::SmallVector<mlir::Type, 4> argTypes;
-        llvm::ArrayRef<llvm::StringRef> argNames;
+        llvm::SmallVector<mlir::Attribute> argNames;
         // TODO: Make Function return the number of arguments and change 4 to that number.
 
 
@@ -85,24 +95,40 @@ public:
         for(auto arg : args)
         {
             if(arg->getType() != nullptr)
-            {
-                if(arg->getType()->getType() == "Graph")
+            {   
+                if(std::string(arg->getType()->getType()) == "Graph")
                     argTypes.push_back(builder.getType<mlir::starplat::GraphType>()); 
             }
             else if(arg->getTemplateType() != nullptr)
             {
-                if(arg->getTemplateType()->getGraphPropNode()->getPropertyType() == "propNode")
+                if(std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propNode")
                     argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type()));
             }
 
-            argNames.vec
+        
             argNames.push_back(builder.getStringAttr(arg->getVarName()->getname()));
         }
 
-        auto funcType = builder.getFunctionType(argTypes, {});
-        auto argNames = builder.getStrArrayAttr(argNames(argNamesVec));
 
+        auto funcType = builder.getFunctionType(argTypes, {});
+        mlir::ArrayAttr argNamesAttr = builder.getArrayAttr(argNames);
+
+        auto func = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNamesAttr);
         
+        module.push_back(func);
+        auto &entryBlock = func.getBody().emplaceBlock();
+
+        for (auto arg : funcType.getInputs())
+            entryBlock.addArgument(arg, builder.getUnknownLoc());
+
+        builder.setInsertionPointToStart(&entryBlock);
+
+        // Visit the function body.
+        Statementlist* stmtlist =  static_cast<Statementlist*> (function->getstmtlist());
+        stmtlist->Accept(this);
+
+        // Create end operation.
+        auto end = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
     }
 
     virtual void visitParamlist(const Paramlist *paramlist) override
@@ -151,6 +177,10 @@ public:
 
     virtual void visitStatementlist(const Statementlist *stmtlist) override
     {
+        for (ASTNode *stmt : stmtlist->getStatementList())
+        {
+            stmt->Accept(this);
+        }
     }
 
     virtual void visitType(const TypeExpr *type) override
