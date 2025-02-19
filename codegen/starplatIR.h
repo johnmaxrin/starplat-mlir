@@ -40,7 +40,26 @@ public:
     virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt)
     {
 
-        llvm::outs() << "Template Declaration ";
+        TemplateType *Type = static_cast<TemplateType *>(templateDeclStmt->gettype());
+        Identifier *identifier = static_cast<Identifier *>(templateDeclStmt->getvarname());
+
+        // TODO: Change the function name to getGraphProp(). 
+        if(std::string(Type->getGraphPropNode()->getPropertyType()) == "propNode")
+        {
+            auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
+            auto typeAttr = ::mlir::TypeAttr::get(type);
+            auto resType = builder.getI32Type();
+            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr);
+        }
+
+        else if(std::string(Type->getGraphPropNode()->getPropertyType()) == "propEdge")
+        {
+            auto type = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type());
+            auto typeAttr = ::mlir::TypeAttr::get(type);
+            auto resType = builder.getI32Type();
+            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr);
+        }
+
     }
 
     virtual void visitTemplateType(const TemplateType *templateType)
