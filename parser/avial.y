@@ -21,7 +21,7 @@
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
-stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt
+stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt memberaccessstmt
 addExpr properties templateType templateDecl paramAssignment param memberaccessAssignment KEYWORDS 
 
 
@@ -60,7 +60,7 @@ stmt :  assignment SEMICLN                              {}
         |   incandassignstmt	                        {$$ = $1;}
         |   templateDecl                                {$$ = $1;}
         |   /*epsilon*/                                 {$$ = nullptr;}
-        |   memberaccessstmt                            {}
+        |   memberaccessstmt                            {$$ = $1;}
         |   initializestmt                              {$$ = $1;}
         |   memberaccessAssignment                      {$$ = $1;}
         |   fixedPointStmt                              {$$ = $1;}
@@ -177,7 +177,7 @@ memberaccess : IDENTIFIER DOT methodcall        {
              | IDENTIFIER DOT IDENTIFIER        {}
              ;
 
-memberaccessstmt : memberaccess SEMICLN {}
+memberaccessstmt : memberaccess SEMICLN {$$ = new MemberacceessStmt($1);}
 
 arg : type IDENTIFIER           {
                                   Identifier* varname = new Identifier($2);

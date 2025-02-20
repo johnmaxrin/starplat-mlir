@@ -3,6 +3,7 @@
 
 #include "visitor.h"
 #include <vector>
+#include <set>
 #include <iostream>
 
 using namespace std;
@@ -84,11 +85,11 @@ private:
 class Methodcall : public ASTNode
 {
 public:
-    Methodcall(Identifier *identifier, ASTNode *node)
-        : identifier(identifier), node(node) {}
+    Methodcall(Identifier *identifier, ASTNode *paramlist)
+        : identifier_(identifier), paramlist_(paramlist), _isBuiltin(checkIfBuiltin(identifier)) {}
 
     Methodcall(Identifier *identifier)
-        : identifier(identifier), node(nullptr) {}
+        : identifier_(identifier), paramlist_(nullptr), _isBuiltin(checkIfBuiltin(identifier)) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -97,16 +98,26 @@ public:
 
     ~Methodcall()
     {
-        delete identifier;
-        delete node;
+        delete identifier_;
+        delete paramlist_;
     }
 
-    const Identifier *getIdentifier() const { return identifier; }
-    const ASTNode *getnode() const { return node; }
+    const Identifier *getIdentifier() const { return identifier_; }
+    const ASTNode *getParamLists() const { return paramlist_; }
+    bool getIsBuiltin() const { return _isBuiltin; }
 
 private:
-    const Identifier *identifier;
-    const ASTNode *node;
+    const Identifier * identifier_;
+    const ASTNode * paramlist_;
+    bool  _isBuiltin;
+
+    static bool checkIfBuiltin(const Identifier *id)
+    {
+        static const std::set<std::string> builtins = {
+            "print", "attachNodeProperty" // Add more built-in methods
+        };
+        return builtins.find(id->getname()) != builtins.end();
+    }
 };
 
 class TupleAssignment : public ASTNode
@@ -141,11 +152,33 @@ private:
 };
 
 
+class MemberacceessStmt : public ASTNode
+{
+    public:
+        MemberacceessStmt(ASTNode *memberAccess) : memberAccess_(memberAccess) {}
+
+        virtual void Accept(Visitor *visitor) const override
+        {
+            visitor->visitMemberaccessStmt(this);
+        }
+
+        const ASTNode *getMemberAccess() const { return memberAccess_; }
+
+        ~MemberacceessStmt()
+        {
+            delete memberAccess_;
+        }
+
+    private:
+        ASTNode *memberAccess_;
+};
+
+
 class Memberaccess : public ASTNode
 {
 public:
-    Memberaccess(Identifier *identifier, ASTNode *node)
-        : identifier(identifier), node(node) {}
+    Memberaccess(Identifier *identifier, ASTNode *methodcall)
+        : identifier_(identifier), methodcall_(methodcall) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -154,16 +187,16 @@ public:
 
     ~Memberaccess()
     {
-        delete identifier;
-        delete node;
+        delete identifier_;
+        delete methodcall_;
     }
 
-    const Identifier *getIdentifier() const { return identifier; }
-    const ASTNode *getnode() const { return node; }
+    const Identifier *getIdentifier() const { return identifier_; }
+    const ASTNode *getMethodCall() const { return methodcall_; }
 
 private:
-    const Identifier *identifier;
-    const ASTNode *node;
+    const Identifier *identifier_;
+    const ASTNode *methodcall_;
 };
 
 class Statementlist : public ASTNode

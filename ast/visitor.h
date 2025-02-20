@@ -30,6 +30,7 @@ class Number;
 class Expression;
 class Methodcall;
 class Memberaccess;
+class MemberacceessStmt;
 
 
 class Visitor
@@ -65,6 +66,7 @@ class Visitor
         virtual void visitExpression(const Expression *expr) = 0;
         virtual void visitMethodcall(const Methodcall *methodcall) = 0;
         virtual void visitMemberaccess(const Memberaccess *methodcall) = 0;
+        virtual void visitMemberaccessStmt(const MemberacceessStmt *memberaccessstmt) = 0;
     
 };
 

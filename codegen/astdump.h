@@ -169,8 +169,8 @@ public:
             methodcall->getIdentifier()->Accept(this);
             
             cout<<"\t";
-            if(methodcall->getnode() != nullptr)
-                methodcall->getnode()->Accept(this);
+            if(methodcall->getParamLists() != nullptr)
+                methodcall->getParamLists()->Accept(this);
             cout<<"}\n";
     }
 
@@ -180,8 +180,8 @@ public:
         memberaccess->getIdentifier()->Accept(this);
 
         cout<<"\t";
-        if(memberaccess->getnode() != nullptr)
-            memberaccess->getnode()->Accept(this);
+        if(memberaccess->getMethodCall() != nullptr)
+            memberaccess->getMethodCall()->Accept(this);
         
         cout<<"}\n";
     }

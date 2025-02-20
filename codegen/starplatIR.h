@@ -1,6 +1,7 @@
 // Next Iteration TODOs
 // 1. Revmap the parser file. It's very messy. 
 // 2. Think if we need to cast here or at parser file. 
+// 3. Return String instead of const char *
 
 
 #include "includes/StarPlatDialect.h"
@@ -72,6 +73,32 @@ public:
 
     virtual void visitForallStmt(const ForallStatement *forAllStmt) override
     {
+    }
+
+    virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt) override
+    {
+        const Memberaccess *memberaccessnode = static_cast<const Memberaccess*>(MemberacceessStmt->getMemberAccess());
+        const Methodcall   *methodcallnode = static_cast<const Methodcall*>(memberaccessnode->getMethodCall());
+        const Paramlist *paramlist = static_cast<const Paramlist*>(methodcallnode->getParamLists());
+
+        if(methodcallnode->getIsBuiltin())
+        {
+            if(std::strcmp(methodcallnode->getIdentifier()->getname(),"attachNodeProperty") == 0)
+            {
+                // Create attachNodeProperty operation.
+                llvm::outs()<<methodcallnode->getIdentifier()->getname() <<"\n";
+                //auto attachNodeProperty = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), builder.getStringAttr("Hello World"));
+            }
+
+            else
+            {
+                llvm::errs() <<methodcallnode->getIdentifier()->getname() << " is not implemented yet\n";
+            }
+        }
+       
+
+
+
     }
 
     virtual void visitIfStmt(const IfStatement *ifStmt) override
@@ -150,18 +177,7 @@ public:
         // Visit the function body.
         Statementlist* stmtlist =  static_cast<Statementlist*> (function->getstmtlist());
         stmtlist->Accept(this);
-        
-        // TEST
-        auto found = symbolTable.lookup<mlir::starplat::DeclareOp>("modified");
-        if (found) {
-            llvm::outs() << "DeclareOp symbol 'modified' found in the table!\n";
-        }
-        else
-        {
-            llvm::outs() << "DeclareOp symbol 'modified' not found in the table!\n";
-        }
 
-        // END TEST
 
         // Create end operation.
         auto end = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
@@ -193,6 +209,7 @@ public:
 
     virtual void visitMethodcall(const Methodcall *methodcall) override
     {
+        
     }
 
     virtual void visitMemberaccess(const Memberaccess *memberaccess) override
