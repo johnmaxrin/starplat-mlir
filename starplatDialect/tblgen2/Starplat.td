@@ -77,11 +77,11 @@ def AssignmentOp : StarplatBaseOp<"assign">
   }];
 }
 
-def ConstOp : StarplatBaseOp<"const"> 
+def ConstOp : StarplatBaseOp<"const", [Symbol]> 
 {
   let summary = "Const Operaiton";
   let arguments = (ins
-                    TypedAttrInterface:$value
+                    TypedAttrInterface:$value, SymbolNameAttr:$sym_name
                   );
 
   let results = (outs AnyType:$retValue);

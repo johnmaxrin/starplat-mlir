@@ -310,6 +310,15 @@ public:
         visitor->visitParameterAssignment(this);
     }
 
+    ~ParameterAssignment()
+    {
+        delete identifier_;
+        delete keyword_;
+    }
+
+    ASTNode *getidentifier() const { return identifier_; }
+    ASTNode *getkeyword() const { return keyword_; }
+
 private:
     ASTNode *identifier_;
     ASTNode *keyword_;
@@ -633,7 +642,7 @@ public:
         delete keyword_;
     }
 
-    const char *getType() const { return keyword_; }
+    const char *getKeyword() const { return keyword_; }
 
 private:
     char *keyword_;
@@ -699,14 +708,17 @@ class Param : public ASTNode
 {
 public:
     Param(Expression *expr)
-        : expr_(expr){}
+        : expr_(expr), paramAssignment_(nullptr){}
+
     Param(ParameterAssignment *paramAssignment)
-        :paramAssignment_(paramAssignment) {}
+        :paramAssignment_(paramAssignment), expr_(nullptr) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitParam(this);
     }
+
+
 
     ~Param()
     {
@@ -715,6 +727,7 @@ public:
     }
 
     const Expression *getExpr() const { return expr_; }
+    const ParameterAssignment *getParamAssignment() const { return paramAssignment_; }
 
 private:
     Expression *expr_;

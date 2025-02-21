@@ -191,9 +191,8 @@ arg : type IDENTIFIER           {
                                   $$ = new Arg(type, varname);
                                 }
       
-      | /*epsilon*/             {
-                                    $$ = nullptr;
-                                }
+      | /*epsilon*/             { $$ = nullptr; }
+      
       | IDENTIFIER EQUAL IDENTIFIER   {}
     
       ;
