@@ -200,6 +200,7 @@ public:
         llvm::SmallVector<mlir::Type> argTypes;
         llvm::SmallVector<mlir::Attribute> argNames;
 
+        std::vector<mlir::Operation*> ops;
         
 
         auto args = function->getparams()->getArgList();
@@ -213,6 +214,7 @@ public:
                     argTypes.push_back(builder.getType<mlir::starplat::GraphType>());
                     auto GraphType = mlir::starplat::GraphType::get(builder.getContext());
                     auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), ::mlir::TypeAttr::get(GraphType), builder.getStringAttr(arg->getVarName()->getname()));
+                    ops.push_back(declareArg.getOperation());
                     symbolTable->insert(declareArg);
                 }
             }
@@ -224,6 +226,7 @@ public:
                     auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
                     auto typeAttr = ::mlir::TypeAttr::get(type);
                     auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr, builder.getStringAttr(arg->getVarName()->getname()));
+                    ops.push_back(declareArg.getOperation());
                     symbolTable->insert(declareArg);
                 }
             }
@@ -247,6 +250,10 @@ public:
         // Visit the function body.
         Statementlist *stmtlist = static_cast<Statementlist *>(function->getstmtlist());
         mlir::SymbolTable funcSymbolTable(func);
+        
+        for(auto op : ops)
+            funcSymbolTable.insert(op->clone()); 
+
         stmtlist->Accept(this, &funcSymbolTable);
 
         // Create end operation.
