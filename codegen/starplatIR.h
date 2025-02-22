@@ -18,11 +18,11 @@
 #include "mlir/Parser/Parser.h"
 #include <string>
 
-class StarPlatCodeGen : public Visitor
+class StarPlatCodeGen : public MLIRVisitor
 {
 
 public:
-    StarPlatCodeGen() : result(0),
+    StarPlatCodeGen() : 
                         context(),
                         builder(&context),
                         module(mlir::ModuleOp::create(builder.getUnknownLoc())),
@@ -32,11 +32,12 @@ public:
         context.getOrLoadDialect<mlir::starplat::StarPlatDialect>();
     }
 
-    virtual void visitDeclarationStmt(const DeclarationStatement *dclstmt) override
+    virtual void visitDeclarationStmt(const DeclarationStatement *dclstmt, mlir::SymbolTable *symbolTable) override
     {
+        llvm::outs() << "Declaration Statement\n";
     }
 
-    virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt)
+    virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt, mlir::SymbolTable *symbolTable) override
     {
 
         TemplateType *Type = static_cast<TemplateType *>(templateDeclStmt->gettype());
@@ -49,19 +50,7 @@ public:
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
             auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()));
-            symbolTable.insert(declare);
-
-            
-            // if(symbolTable.lookup(identifier->getname()))
-            // {
-            //     llvm::outs() << "error: " << identifier->getname() << " already declared.\n";
-            //     exit(1);
-            // }
-            // else
-            // {
-            //     auto newDecl = declare->clone();
-            //     symbolTable.insert(newDecl);
-            // }
+            symbolTable->insert(declare);
 
         }
 
@@ -71,20 +60,20 @@ public:
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
             auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()));
-            //symbolTable.insert(declare);
+            symbolTable->insert(declare);
 
         }
     }
 
-    virtual void visitTemplateType(const TemplateType *templateType)
+    virtual void visitTemplateType(const TemplateType *templateType, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitForallStmt(const ForallStatement *forAllStmt) override
+    virtual void visitForallStmt(const ForallStatement *forAllStmt, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt) override
+    virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt, mlir::SymbolTable *symbolTable) override
     {
         const Memberaccess *memberaccessnode = static_cast<const Memberaccess *>(MemberacceessStmt->getMemberAccess());
         const Methodcall *methodcallnode = static_cast<const Methodcall *>(memberaccessnode->getMethodCall());
@@ -111,9 +100,9 @@ public:
                         Identifier *identifier = static_cast<Identifier *>(paramAssignment->getidentifier());
                         Keyword *keyword = static_cast<Keyword *>(paramAssignment->getkeyword());
 
-                        if(symbolTable.lookup(keyword->getKeyword()) && symbolTable.lookup(identifier->getname()))
+                        if(symbolTable->lookup(keyword->getKeyword()) && symbolTable->lookup(identifier->getname()))
                         {
-                            operandsForAttachNodeProperty.push_back(symbolTable.lookup(identifier->getname())->getResult(0));
+                            operandsForAttachNodeProperty.push_back(symbolTable->lookup(identifier->getname())->getResult(0));
 
                         }
                         else
@@ -136,53 +125,53 @@ public:
             }
         }
 
-        methodcallnode->Accept(this);
+        methodcallnode->Accept(this, symbolTable);
     }
 
-    virtual void visitIfStmt(const IfStatement *ifStmt) override
+    virtual void visitIfStmt(const IfStatement *ifStmt, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitBoolExpr(const BoolExpr *boolExpr) override
+    virtual void visitBoolExpr(const BoolExpr *boolExpr, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt) override
+    virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitIdentifier(const Identifier *identifier) override
+    virtual void visitIdentifier(const Identifier *identifier, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitReturnStmt(const ReturnStmt *returnStmt) override
+    virtual void visitReturnStmt(const ReturnStmt *returnStmt, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitParameterAssignment(const ParameterAssignment *paramAssignment)
+    virtual void visitParameterAssignment(const ParameterAssignment *paramAssignment, mlir::SymbolTable *symbolTable)
     {
         Identifier *identifier = static_cast<Identifier *>(paramAssignment->getidentifier());
         Keyword *keyword = static_cast<Keyword *>(paramAssignment->getkeyword());
 
-        if (!symbolTable.lookup(keyword->getKeyword()))
+        if (!symbolTable->lookup(keyword->getKeyword()))
         {
             auto keywordVal = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(std::string(keyword->getKeyword())), builder.getStringAttr(keyword->getKeyword()));
 
             if (keywordVal)
-                symbolTable.insert(keywordVal);
+                symbolTable->insert(keywordVal);
             else
             {
                 llvm::outs() << "error: " << "while adding to Symbol Table\n";
                 exit(1);
             }
         }
-        if (symbolTable.lookup(identifier->getname()))
+        if (symbolTable->lookup(identifier->getname()))
         {
-            auto lhs = symbolTable.lookup(identifier->getname());
-            auto rhs = symbolTable.lookup(keyword->getKeyword());
+            auto lhs = symbolTable->lookup(identifier->getname());
+            auto rhs = symbolTable->lookup(keyword->getKeyword());
 
             auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0),  builder.getStringAttr(identifier->getname()));
-            symbolTable.rename(assign, builder.getStringAttr(identifier->getname()));
+            symbolTable->rename(assign, builder.getStringAttr(identifier->getname()));
 
         }
         else
@@ -192,24 +181,26 @@ public:
         }
     }
 
-    virtual void visitParam(const Param *param)
+    virtual void visitParam(const Param *param, mlir::SymbolTable *symbolTable)
     {
         const ParameterAssignment *paramAssignment = static_cast<const ParameterAssignment *>(param->getParamAssignment());
         if (paramAssignment != nullptr)
         {
-            paramAssignment->Accept(this);
+            paramAssignment->Accept(this, symbolTable);
         }
     }
 
-    virtual void visitTupleAssignment(const TupleAssignment *tupleAssignment)
+    virtual void visitTupleAssignment(const TupleAssignment *tupleAssignment, mlir::SymbolTable *symbolTable)
     {
     }
 
-    virtual void visitFunction(const Function *function) override
+    virtual void visitFunction(const Function *function, mlir::SymbolTable *symbolTable) override
     {
         // Create function type.
         llvm::SmallVector<mlir::Type> argTypes;
         llvm::SmallVector<mlir::Attribute> argNames;
+
+        
 
         auto args = function->getparams()->getArgList();
         for (auto arg : args)
@@ -222,7 +213,7 @@ public:
                     argTypes.push_back(builder.getType<mlir::starplat::GraphType>());
                     auto GraphType = mlir::starplat::GraphType::get(builder.getContext());
                     auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), ::mlir::TypeAttr::get(GraphType), builder.getStringAttr(arg->getVarName()->getname()));
-                    symbolTable.insert(declareArg);
+                    symbolTable->insert(declareArg);
                 }
             }
             else if (arg->getTemplateType() != nullptr)
@@ -233,7 +224,7 @@ public:
                     auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
                     auto typeAttr = ::mlir::TypeAttr::get(type);
                     auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr, builder.getStringAttr(arg->getVarName()->getname()));
-                    symbolTable.insert(declareArg);
+                    symbolTable->insert(declareArg);
                 }
             }
 
@@ -255,81 +246,82 @@ public:
 
         // Visit the function body.
         Statementlist *stmtlist = static_cast<Statementlist *>(function->getstmtlist());
-        stmtlist->Accept(this);
+        mlir::SymbolTable funcSymbolTable(func);
+        stmtlist->Accept(this, &funcSymbolTable);
 
         // Create end operation.
         auto end = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
     }
 
-    virtual void visitParamlist(const Paramlist *paramlist) override
+    virtual void visitParamlist(const Paramlist *paramlist, mlir::SymbolTable *symbolTable) override
     {
         vector<Param *> paramListVecvtor = paramlist->getParamList();
 
         for (Param *param : paramListVecvtor)
         {
-            param->Accept(this);
+            param->Accept(this, symbolTable);
         }
     }
 
-    virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil) override
+    virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt)
+    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt, mlir::SymbolTable *symbolTable)
     {
     }
 
-    virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment)
+    virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment, mlir::SymbolTable *symbolTable)
     {
     }
 
-    virtual void visitKeyword(const Keyword *keyword) override
+    virtual void visitKeyword(const Keyword *keyword, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitGraphProperties(const GraphProperties *graphproperties) override
+    virtual void visitGraphProperties(const GraphProperties *graphproperties, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitMethodcall(const Methodcall *methodcall) override
+    virtual void visitMethodcall(const Methodcall *methodcall, mlir::SymbolTable *symbolTable) override
     {
         const Paramlist *paramlist = static_cast<const Paramlist *>(methodcall->getParamLists());
-        paramlist->Accept(this);
+        paramlist->Accept(this, symbolTable);
     }
 
-    virtual void visitMemberaccess(const Memberaccess *memberaccess) override
+    virtual void visitMemberaccess(const Memberaccess *memberaccess, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitArglist(const Arglist *arglist) override
+    virtual void visitArglist(const Arglist *arglist, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitArg(const Arg *arg) override
+    virtual void visitArg(const Arg *arg, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitStatement(const Statement *statement) override
+    virtual void visitStatement(const Statement *statement, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitStatementlist(const Statementlist *stmtlist) override
+    virtual void visitStatementlist(const Statementlist *stmtlist, mlir::SymbolTable *symbolTable) override
     {
         for (ASTNode *stmt : stmtlist->getStatementList())
         {
-            stmt->Accept(this);
+            stmt->Accept(this, symbolTable);
         }
     }
 
-    virtual void visitType(const TypeExpr *type) override
+    virtual void visitType(const TypeExpr *type, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitNumber(const Number *number) override
+    virtual void visitNumber(const Number *number, mlir::SymbolTable *symbolTable) override
     {
     }
 
-    virtual void visitExpression(const Expression *expr) override
+    virtual void visitExpression(const Expression *expr, mlir::SymbolTable *symbolTable) override
     {
     }
 
@@ -339,9 +331,12 @@ public:
         module.dump();
     }
 
+    mlir::SymbolTable* getSymbolTable()
+    {
+        return &symbolTable;
+    }
+
 private:
-    int result;
-    map<string, int> variables;
 
     mlir::MLIRContext context;
     mlir::OpBuilder builder;
@@ -351,28 +346,3 @@ private:
 
 
 
-class StarPlatMLIRCodeGen2 : public MLIRVisitor
-{
-    public:
-        StarPlatMLIRCodeGen2() : result(0),
-                        context(),
-                        builder(&context),
-                        module(mlir::ModuleOp::create(builder.getUnknownLoc())),
-                        symbolTable(module)
-    {
-        // Load Dialects here.
-        context.getOrLoadDialect<mlir::starplat::StarPlatDialect>();
-    }
-
-    virtual void visitFunction(const Function *function, mlir::SymbolTable *symbolTable) override
-    {
-        llvm::outs() << "Function\n";
-    }
-
-    private:
-        int result;
-        mlir::MLIRContext context;
-        mlir::OpBuilder builder;
-        mlir::ModuleOp module;
-        mlir::SymbolTable symbolTable;
-};

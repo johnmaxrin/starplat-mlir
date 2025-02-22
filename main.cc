@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 
     StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen;
     if(root!= nullptr)
-        root->Accept(starplatcodegen);
+        root->Accept(starplatcodegen, starplatcodegen->getSymbolTable());
 
     starplatcodegen->print();
 
