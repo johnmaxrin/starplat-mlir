@@ -76,13 +76,44 @@ public:
         const Methodcall *methodcallnode = static_cast<const Methodcall *>(memberaccessnode->getMethodCall());
         const Paramlist *paramlist = static_cast<const Paramlist *>(methodcallnode->getParamLists());
 
-        if (methodcallnode->getIsBuiltin())
+        vector<Param *> paramListVecvtor = paramlist->getParamList();
+
+        const Identifier *identifier1 = memberaccessnode->getIdentifier();
+        const Identifier *identifier2 = memberaccessnode->getIdentifier2();
+
+        if (methodcallnode && methodcallnode->getIsBuiltin())
         {
             if (std::strcmp(methodcallnode->getIdentifier()->getname(), "attachNodeProperty") == 0)
             {
                 // Create attachNodeProperty operation.
-                llvm::outs() << methodcallnode->getIdentifier()->getname() << "\n";
-                // auto attachNodeProperty = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), builder.getStringAttr("Hello World"));
+
+                llvm::SmallVector<mlir::Value> operandsForAttachNodeProperty;
+                
+                for(Param *param : paramListVecvtor)
+                {
+                    if(param->getParamAssignment())
+                    {
+                        const ParameterAssignment *paramAssignment = static_cast<const ParameterAssignment *>(param->getParamAssignment());
+                        Identifier *identifier = static_cast<Identifier *>(paramAssignment->getidentifier());
+                        Keyword *keyword = static_cast<Keyword *>(paramAssignment->getkeyword());
+
+                        if(symbolTable.lookup(keyword->getKeyword()) && symbolTable.lookup(identifier->getname()))
+                        {
+                            operandsForAttachNodeProperty.push_back(symbolTable.lookup(identifier->getname())->getResult(0));
+
+                        }
+                        else
+                        {
+                            llvm::outs() << "error: " << identifier->getname() <<" or "<<keyword->getKeyword() << " not declared.\n";
+                            exit(1);
+                        }
+
+
+                    }
+                }
+                
+                auto attachNodeProp = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operandsForAttachNodeProperty);
+
             }
 
             else
@@ -136,14 +167,15 @@ public:
             auto lhs = symbolTable.lookup(identifier->getname());
             auto rhs = symbolTable.lookup(keyword->getKeyword());
 
-            auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
-            //symbolTable.rename(assign, builder.getStringAttr(identifier->getname()));
+            auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0),  builder.getStringAttr(identifier->getname()));
+            symbolTable.rename(assign, builder.getStringAttr(identifier->getname()));
 
         }
-        // else
-        // {
-        //     llvm::outs() <<"error: " << identifier->getname() << " not declared\n";
-        // }
+        else
+        {
+            llvm::outs() <<"error: " << identifier->getname() << " not declared\n";
+            exit(1);
+        }
     }
 
     virtual void visitParam(const Param *param)
@@ -162,9 +194,8 @@ public:
     virtual void visitFunction(const Function *function) override
     {
         // Create function type.
-        llvm::SmallVector<mlir::Type, 4> argTypes;
+        llvm::SmallVector<mlir::Type> argTypes;
         llvm::SmallVector<mlir::Attribute> argNames;
-        // TODO: Make Function return the number of arguments and change 4 to that number.
 
         auto args = function->getparams()->getArgList();
         for (auto arg : args)

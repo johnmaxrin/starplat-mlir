@@ -174,7 +174,12 @@ memberaccess : IDENTIFIER DOT methodcall        {
                                                   $$ = new Memberaccess(identifier, $3);
                                                 }
              | memberaccess DOT methodcall      {}
-             | IDENTIFIER DOT IDENTIFIER        {}
+             | IDENTIFIER DOT IDENTIFIER        { 
+                                                    Identifier* identifier_1 = new Identifier($1);    
+                                                    Identifier* identifier_2 = new Identifier($3);
+                                                    $$ = new Memberaccess(identifier_1, identifier_2);
+
+                                                }
              ;
 
 memberaccessstmt : memberaccess SEMICLN {$$ = new MemberacceessStmt($1);}
@@ -192,7 +197,7 @@ arg : type IDENTIFIER           {
                                 }
       
       | /*epsilon*/             { $$ = nullptr; }
-      
+
       | IDENTIFIER EQUAL IDENTIFIER   {}
     
       ;

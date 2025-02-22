@@ -62,7 +62,7 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
 
 }
 
-def AssignmentOp : StarplatBaseOp<"assign">
+def AssignmentOp : StarplatBaseOp<"assign", [Symbol]>
 {
   let summary = "The AssignmentOp assigns a value to a variable";
   let description = [{
@@ -70,7 +70,7 @@ def AssignmentOp : StarplatBaseOp<"assign">
                 It operates by taking an SSA value (source) and assigning it to a destination
   }];
 
-  let arguments = (ins AnyType:$lhs, AnyType:$rhs);
+  let arguments = (ins AnyType:$lhs, AnyType:$rhs, SymbolNameAttr:$sym_name);
 
   let extraClassDeclaration = [{
       static AssignmentOp create(Location location, Value lhs, Value rhs);

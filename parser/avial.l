@@ -43,6 +43,7 @@
 "+"                     {return PLUS;}
 
 [ \t\n]+                ;
+#.*                    { /* Ignore single-line comments */ }
 
 [a-zA-Z_][a-zA-Z0-9_]*  {yylval.id = strdup(yytext); return IDENTIFIER;}
 [0-9]*                  {yylval.id = strdup(yytext); return NUMBER;}

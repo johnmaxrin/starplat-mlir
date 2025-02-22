@@ -177,8 +177,11 @@ class MemberacceessStmt : public ASTNode
 class Memberaccess : public ASTNode
 {
 public:
-    Memberaccess(Identifier *identifier, ASTNode *methodcall)
-        : identifier_(identifier), methodcall_(methodcall) {}
+    Memberaccess(Identifier *identifier1, ASTNode *methodcall)
+        : identifier1_(identifier1), methodcall_(methodcall), identifier2_(nullptr) {}
+
+    Memberaccess(Identifier *identifier1, Identifier *identifier2)
+        : identifier1_(identifier1), methodcall_(nullptr), identifier2_(identifier2) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -187,15 +190,17 @@ public:
 
     ~Memberaccess()
     {
-        delete identifier_;
+        delete identifier1_;
         delete methodcall_;
     }
 
-    const Identifier *getIdentifier() const { return identifier_; }
+    const Identifier *getIdentifier() const { return identifier1_; }
+    const Identifier *getIdentifier2() const { return identifier2_; }
     const ASTNode *getMethodCall() const { return methodcall_; }
 
 private:
-    const Identifier *identifier_;
+    const Identifier *identifier1_;
+    const Identifier *identifier2_;
     const ASTNode *methodcall_;
 };
 
@@ -708,10 +713,10 @@ class Param : public ASTNode
 {
 public:
     Param(Expression *expr)
-        : expr_(expr), paramAssignment_(nullptr){}
+        : expr_(expr), paramAssignment_(nullptr) {}
 
     Param(ParameterAssignment *paramAssignment)
-        :paramAssignment_(paramAssignment), expr_(nullptr) {}
+        : paramAssignment_(paramAssignment), expr_(nullptr) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
