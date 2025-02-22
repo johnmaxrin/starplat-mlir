@@ -49,19 +49,19 @@ public:
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
             auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()));
-            //symbolTable.insert(declare);
+            symbolTable.insert(declare);
 
             
-            if(symbolTable.lookup(identifier->getname()))
-            {
-                llvm::outs() << "error: " << identifier->getname() << " already declared.\n";
-                exit(1);
-            }
-            else
-            {
-                auto newDecl = declare->clone();
-                symbolTable.insert(newDecl);
-            }
+            // if(symbolTable.lookup(identifier->getname()))
+            // {
+            //     llvm::outs() << "error: " << identifier->getname() << " already declared.\n";
+            //     exit(1);
+            // }
+            // else
+            // {
+            //     auto newDecl = declare->clone();
+            //     symbolTable.insert(newDecl);
+            // }
 
         }
 
@@ -347,4 +347,32 @@ private:
     mlir::OpBuilder builder;
     mlir::ModuleOp module;
     mlir::SymbolTable symbolTable;
+};
+
+
+
+class StarPlatMLIRCodeGen2 : public MLIRVisitor
+{
+    public:
+        StarPlatMLIRCodeGen2() : result(0),
+                        context(),
+                        builder(&context),
+                        module(mlir::ModuleOp::create(builder.getUnknownLoc())),
+                        symbolTable(module)
+    {
+        // Load Dialects here.
+        context.getOrLoadDialect<mlir::starplat::StarPlatDialect>();
+    }
+
+    virtual void visitFunction(const Function *function, mlir::SymbolTable *symbolTable) override
+    {
+        llvm::outs() << "Function\n";
+    }
+
+    private:
+        int result;
+        mlir::MLIRContext context;
+        mlir::OpBuilder builder;
+        mlir::ModuleOp module;
+        mlir::SymbolTable symbolTable;
 };

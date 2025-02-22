@@ -5,15 +5,20 @@
 #include <vector>
 #include <set>
 #include <iostream>
+#include <mlir/IR/SymbolTable.h>
 
 using namespace std;
+using namespace mlir;
 
 class ASTNode
 {
 public:
     virtual ~ASTNode() {}
     virtual void Accept(Visitor *visitor) const = 0;
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const = 0;
 };
+
+
 
 class Identifier : public ASTNode
 {
@@ -26,6 +31,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitIdentifier(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~Identifier()
@@ -50,6 +60,11 @@ public:
         visitor->visitGraphProperties(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ~GraphProperties()
     {
         delete properties_;
@@ -69,6 +84,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitStatement(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~Statement()
@@ -94,6 +114,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitMethodcall(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~Methodcall()
@@ -131,6 +156,11 @@ public:
         visitor->visitTupleAssignment(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ~TupleAssignment()
     {
         delete lhsexpr1_;
@@ -162,6 +192,11 @@ class MemberacceessStmt : public ASTNode
             visitor->visitMemberaccessStmt(this);
         }
 
+        virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+        {
+            // Do nothing.
+        }
+
         const ASTNode *getMemberAccess() const { return memberAccess_; }
 
         ~MemberacceessStmt()
@@ -186,6 +221,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitMemberaccess(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~Memberaccess()
@@ -214,6 +254,16 @@ public:
         visitor->visitStatementlist(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        for (ASTNode *stmt : statementlist)
+        {
+            stmt->Accept(visitor, symbolTable);
+        }
+    }
+
+
+
     ~Statementlist()
     {
         for (ASTNode *param : statementlist)
@@ -236,6 +286,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitDeclarationStmt(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~DeclarationStatement()
@@ -267,6 +322,11 @@ public:
         visitor->visitInitialiseAssignmentStmt(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ~InitialiseAssignmentStmt()
     {
         delete type_;
@@ -290,6 +350,12 @@ public:
     {
         visitor->visitFixedpointUntil(this);
     }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ASTNode *getstmtlist() const{ return stmtlist_; }
     ~FixedpointUntil()
     {
@@ -313,6 +379,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitParameterAssignment(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~ParameterAssignment()
@@ -340,6 +411,11 @@ public:
         visitor->visitTemplateDeclarationStmt(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ~TemplateDeclarationStatement()
     {
         delete type;
@@ -365,6 +441,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitForallStmt(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~ForallStatement()
@@ -397,6 +478,11 @@ public:
         visitor->visitIfStmt(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ~IfStatement()
     {
         delete expr;
@@ -422,6 +508,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitBoolExpr(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~BoolExpr()
@@ -454,6 +545,11 @@ public:
         visitor->visitIncandassignstmt(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ~Incandassignstmt()
     {
         delete identifier;
@@ -483,6 +579,11 @@ public:
         visitor->visitNumber(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     int getnumber() const { return number_; }
 
 private:
@@ -498,6 +599,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitReturnStmt(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~ReturnStmt()
@@ -528,6 +634,11 @@ public:
         visitor->visitFunction(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitFunction(this, symbolTable);
+    }
+
     ~Function()
     {
         delete functionname;
@@ -556,6 +667,11 @@ public:
         visitor->visitParamlist(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitParamlist(this, symbolTable);
+    }
+
     ~Paramlist()
     {
         for (Param *param : paramlist)
@@ -579,6 +695,11 @@ public:
         visitor->visitTemplateType(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     const GraphProperties *getGraphPropNode() const { return graphproperties_; }
     const TypeExpr *getType() const { return type_; }
 
@@ -595,6 +716,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitType(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~TypeExpr()
@@ -616,6 +742,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitMemberAccessAssignment(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~MemberAccessAssignment()
@@ -640,6 +771,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitKeyword(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
     }
 
     ~Keyword()
@@ -667,6 +803,11 @@ public:
         visitor->visitArg(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        // Do nothing.
+    }
+
     ~Arg()
     {
         delete type;
@@ -691,6 +832,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitArglist(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitArglist(this, symbolTable);
     }
 
     ~Arglist()
@@ -723,6 +869,10 @@ public:
         visitor->visitParam(this);
     }
 
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitParam(this, symbolTable);
+    }
 
 
     ~Param()
@@ -749,6 +899,11 @@ public:
     virtual void Accept(Visitor *visitor) const override
     {
         visitor->visitExpression(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitExpression(this, symbolTable);
     }
 
     const ASTNode *getExpression() const { return expr; }
