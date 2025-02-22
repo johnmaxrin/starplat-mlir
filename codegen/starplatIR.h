@@ -49,7 +49,20 @@ public:
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
             auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()));
-            symbolTable.insert(declare);
+            //symbolTable.insert(declare);
+
+            
+            if(symbolTable.lookup(identifier->getname()))
+            {
+                llvm::outs() << "error: " << identifier->getname() << " already declared.\n";
+                exit(1);
+            }
+            else
+            {
+                auto newDecl = declare->clone();
+                symbolTable.insert(newDecl);
+            }
+
         }
 
         else if (std::string(Type->getGraphPropNode()->getPropertyType()) == "propEdge")
@@ -58,7 +71,8 @@ public:
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
             auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()));
-            symbolTable.insert(declare);
+            //symbolTable.insert(declare);
+
         }
     }
 
@@ -204,6 +218,7 @@ public:
             {
                 if (std::string(arg->getType()->getType()) == "Graph")
                 {
+
                     argTypes.push_back(builder.getType<mlir::starplat::GraphType>());
                     auto GraphType = mlir::starplat::GraphType::get(builder.getContext());
                     auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), ::mlir::TypeAttr::get(GraphType), builder.getStringAttr(arg->getVarName()->getname()));
