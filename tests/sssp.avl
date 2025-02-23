@@ -5,7 +5,7 @@ function Compute_SSSP (Graph g,propNode<int> dist, propEdge<int> weight, Graph s
 
     g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
 
-    src.modified = True; 
+    soc.modified = True; 
 
     src.dist=0;
     int finished =False;
