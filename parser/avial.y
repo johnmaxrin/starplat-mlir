@@ -18,7 +18,7 @@
 
 
 %token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR EQUALS EDGE
-%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS
+%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS TRUE
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
 stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt memberaccessstmt
@@ -132,11 +132,11 @@ forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN blcstmt    {
                                                                   $$ = new ForallStatement(identifier, $5, $7);
                                                                 }
 
-expr :  IDENTIFIER              {$$ = new Identifier($1);} 
+expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1));} 
      |  boolexpr                {$$ = $1;}
-     |  NUMBER                  {$$ = new Number($1);}
+     |  NUMBER                  {$$ = new Expression( new Number($1));}
      |  memberaccess            {$$ = $1;}
-     |  KEYWORDS                {}
+     |  KEYWORDS                {$$ = new Expression ($1);}
      |  methodcall              {}
      |  addExpr                 {}
      ;
@@ -283,6 +283,10 @@ KEYWORDS : FALSE         {
           | INF          {
                                 $$ = new Keyword($1);
                          }
+
+          | TRUE        {
+                                $$ = new Keyword($1);
+                        }
           ;
 
 

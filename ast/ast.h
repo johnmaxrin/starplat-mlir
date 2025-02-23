@@ -20,6 +20,7 @@ public:
 
 
 
+
 class Identifier : public ASTNode
 {
 public:
@@ -894,7 +895,7 @@ private:
 class Expression : public ASTNode
 {
 public:
-    Expression() {}
+    Expression(ASTNode *node) : node_(node) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -906,10 +907,10 @@ public:
         visitor->visitExpression(this, symbolTable);
     }
 
-    const ASTNode *getExpression() const { return expr; }
+    const ASTNode *getExpression() const { return node_; }
 
 private:
-    ASTNode *expr;
+    ASTNode *node_;
 };
 
 #endif

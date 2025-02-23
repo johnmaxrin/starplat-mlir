@@ -1,11 +1,11 @@
-function Compute_SSSP (Graph g,propNode<int> dist, propEdge<int> weight, Graph src) {
+function Compute_SSSP (Graph g,propNode<int> dist, propEdge<int> weight, Node src) {
     
     propNode <int> modified;
     propNode <int> modified_nxt;
 
     g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
 
-    soc.modified = True; 
+    src.modified = True; 
 
     src.dist=0;
     int finished =False;

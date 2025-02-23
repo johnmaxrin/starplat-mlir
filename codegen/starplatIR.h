@@ -132,7 +132,6 @@ public:
 				llvm::errs() << methodcallnode->getIdentifier()->getname() << " is not implemented yet\n";
 			}
 		}
-
 	}
 
 	virtual void visitIfStmt(const IfStatement *ifStmt, mlir::SymbolTable *symbolTable) override
@@ -160,8 +159,6 @@ public:
 		Identifier *identifier = static_cast<Identifier *>(paramAssignment->getidentifier());
 		Keyword *keyword = static_cast<Keyword *>(paramAssignment->getkeyword());
 
-
-
 		if (!symbolTable->lookup(keyword->getKeyword()))
 		{
 			auto keywordVal = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(std::string(keyword->getKeyword())), builder.getStringAttr(keyword->getKeyword()));
@@ -180,7 +177,7 @@ public:
 			auto rhs = symbolTable->lookup(keyword->getKeyword());
 
 			auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
-			//symbolTable->rename(assign, builder.getStringAttr(identifier->getname()));
+			// symbolTable->rename(assign, builder.getStringAttr(identifier->getname()));
 		}
 		else
 		{
@@ -287,15 +284,47 @@ public:
 
 	virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment, mlir::SymbolTable *symbolTable)
 	{
-		const Memberaccess *memberAccess = static_cast<const Memberaccess *> (memberAccessAssignment->getMemberAccess());
-		memberAccess->Accept(this,symbolTable);
+		const Memberaccess *memberAccess = static_cast<const Memberaccess *>(memberAccessAssignment->getMemberAccess());
+		memberAccess->Accept(this, symbolTable);
+
+		const Expression *expr = static_cast<const Expression *>(memberAccessAssignment->getExpr());
+		expr->Accept(this, symbolTable);
+
+		const Identifier *identifier = memberAccess->getIdentifier();
+		const Identifier *identifier2 = memberAccess->getIdentifier2();
+
+		auto id1 = symbolTable->lookup(identifier->getname());
+		auto id2 = symbolTable->lookup(identifier2->getname());
+
+		if(!id1){
+			llvm::errs() << "Error: " << identifier->getname() << " not declared.\n";
+			return ;
+		}
+
+		if(!id2){
+			llvm::errs() << "Error: " << identifier2->getname() << " not declared.\n";
+			return ;
+		}
+
+		auto typeAttr = id1->getAttrOfType<mlir::TypeAttr>("type");
+		mlir::Type type = typeAttr.getValue();
+
+		if(type.isa<mlir::starplat::GraphType>()){
+			// Set Graph Property
+			
+		}
+
+
 	}
 
 	virtual void visitKeyword(const Keyword *keyword, mlir::SymbolTable *symbolTable) override
 	{
+
+		if(symbolTable->lookup(keyword->getKeyword()))
+			return;
+
 		auto keywrodSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()));
-		if(!symbolTable->lookup(keyword->getKeyword()))
-			symbolTable->insert(keywrodSSA);
+		symbolTable->insert(keywrodSSA);
 	}
 
 	virtual void visitGraphProperties(const GraphProperties *graphproperties, mlir::SymbolTable *symbolTable) override
@@ -311,20 +340,17 @@ public:
 	virtual void visitMemberaccess(const Memberaccess *memberaccess, mlir::SymbolTable *symbolTable) override
 	{
 
-		if(!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier()->getname())))
+		if (!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier()->getname())))
 		{
-			llvm::outs() << "Error: "<< memberaccess->getIdentifier()->getname() << " not defined!\n";
+			llvm::outs() << "Error: " << memberaccess->getIdentifier()->getname() << " not defined!\n";
 			exit(0);
 		}
 
-		if(!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier2()->getname())))
+		if (!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier2()->getname())))
 		{
-			llvm::outs() << "Error: "<< memberaccess->getIdentifier2()->getname() << " not defined!\n";
+			llvm::outs() << "Error: " << memberaccess->getIdentifier2()->getname() << " not defined!\n";
 			exit(0);
 		}
-
-
-
 	}
 
 	virtual void visitArglist(const Arglist *arglist, mlir::SymbolTable *symbolTable) override
@@ -353,10 +379,17 @@ public:
 
 	virtual void visitNumber(const Number *number, mlir::SymbolTable *symbolTable) override
 	{
+		// Create constant operation.
+		if(symbolTable->lookup(std::to_string(number->getnumber())))
+			return;
+
+		auto constant = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(std::to_string(number->getnumber())), builder.getStringAttr(std::to_string(number->getnumber())));
+		symbolTable->insert(constant);
 	}
 
 	virtual void visitExpression(const Expression *expr, mlir::SymbolTable *symbolTable) override
 	{
+		expr->getExpression()->Accept(this, symbolTable);
 	}
 
 	void print()

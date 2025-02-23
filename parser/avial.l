@@ -19,6 +19,7 @@
 "propNode"              {yylval.id = strdup(yytext); return PROPNODE; }
 "propEdge"              {yylval.id = strdup(yytext); return PROPEDGE; }
 "False"                 {yylval.id = strdup(yytext); return FALSE; }
+"True"                 { yylval.id = strdup(yytext); return TRUE; }
 "INF"                   {yylval.id = strdup(yytext); return INF; }
 "fixedPoint"            {yylval.id = strdup(yytext); return FIXEDPOINT; }
 "until"                 {yylval.id = strdup(yytext); return UNTIL; }
