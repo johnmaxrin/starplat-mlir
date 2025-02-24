@@ -17,7 +17,7 @@
 }
 
 
-%token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR EQUALS EDGE
+%token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR EQUALS EDGE NODE
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS TRUE
 
 %type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
@@ -132,11 +132,11 @@ forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN blcstmt    {
                                                                   $$ = new ForallStatement(identifier, $5, $7);
                                                                 }
 
-expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1));} 
+expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1), KIND_IDENTIFIER);} 
      |  boolexpr                {$$ = $1;}
-     |  NUMBER                  {$$ = new Expression( new Number($1));}
+     |  NUMBER                  {$$ = new Expression( new Number($1), KIND_NUMBER);}
      |  memberaccess            {$$ = $1;}
-     |  KEYWORDS                {$$ = new Expression ($1);}
+     |  KEYWORDS                {$$ = new Expression ($1, KIND_KEYWORD);}
      |  methodcall              {}
      |  addExpr                 {}
      ;
@@ -272,6 +272,9 @@ type : INT              {
                         }
 
      |  EDGE            {
+                                $$ = new TypeExpr($1);
+                        }
+     |  NODE            {
                                 $$ = new TypeExpr($1);
                         }
      ;

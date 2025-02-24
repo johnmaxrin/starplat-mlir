@@ -2,6 +2,8 @@
 // 1. Revmap the parser file. It's very messy.
 // 2. Think if we need to cast here or at parser file.
 // 3. Return String instead of const char *
+// 4. Remove ArgList Code gen from Funntion and write it in VisitArgList. 
+// 5. Check if the type is node propert inorder to do attachnode. 
 
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
@@ -221,6 +223,17 @@ public:
 					ops.push_back(declareArg.getOperation());
 					symbolTable->insert(declareArg);
 				}
+
+                else if(std::string(arg->getType()->getType()) == "Node")
+                {
+                    argTypes.push_back(builder.getType<mlir::starplat::NodeType>());
+                    auto NodeType = mlir::starplat::NodeType::get(builder.getContext());
+                    auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), ::mlir::TypeAttr::get(NodeType), builder.getStringAttr(arg->getVarName()->getname()));
+                    ops.push_back(declareArg.getOperation());
+                    symbolTable->insert(declareArg);
+                }
+
+                
 			}
 			else if (arg->getTemplateType() != nullptr)
 			{
@@ -309,8 +322,27 @@ public:
 		auto typeAttr = id1->getAttrOfType<mlir::TypeAttr>("type");
 		mlir::Type type = typeAttr.getValue();
 
-		if(type.isa<mlir::starplat::GraphType>()){
-			// Set Graph Property
+        llvm::outs() << "Setting Node Property\n";
+        type.dump();
+
+		if(type.isa<mlir::starplat::NodeType>()){
+			// Set Node Property
+            llvm::outs() << "Setting Node Property\n";
+
+            if(expr->getKind() == ExpressionKind::KIND_NUMBER)
+            {
+                const Number *number = static_cast<const Number *>(expr->getExpression());
+                auto numberVal = symbolTable->lookup(std::to_string(number->getnumber()));
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1->getResult(0), id2->getResult(0), numberVal->getResult(0));
+            }
+
+            else if(expr->getKind() == ExpressionKind::KIND_KEYWORD)
+            {
+                const Keyword *keyword = static_cast<const Keyword *>(expr->getExpression());
+                auto keywordVal = symbolTable->lookup(keyword->getKeyword());
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1->getResult(0), id2->getResult(0), keywordVal->getResult(0));
+            }
+
 			
 		}
 
@@ -342,13 +374,13 @@ public:
 
 		if (!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier()->getname())))
 		{
-			llvm::outs() << "Error: " << memberaccess->getIdentifier()->getname() << " not defined!\n";
+			llvm::outs() << "Error1: " << memberaccess->getIdentifier()->getname() << " not defined!\n";
 			exit(0);
 		}
 
 		if (!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier2()->getname())))
 		{
-			llvm::outs() << "Error: " << memberaccess->getIdentifier2()->getname() << " not defined!\n";
+			llvm::outs() << "Error2: " << memberaccess->getIdentifier2()->getname() << " not defined!\n";
 			exit(0);
 		}
 	}

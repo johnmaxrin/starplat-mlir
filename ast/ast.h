@@ -19,6 +19,12 @@ public:
 };
 
 
+enum ExpressionKind{
+    KIND_NUMBER,
+    KIND_IDENTIFIER,
+    KIND_KEYWORD
+};
+
 
 
 class Identifier : public ASTNode
@@ -895,7 +901,7 @@ private:
 class Expression : public ASTNode
 {
 public:
-    Expression(ASTNode *node) : node_(node) {}
+    Expression(ASTNode *node, ExpressionKind kind) : node_(node), kind_(kind) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -908,9 +914,12 @@ public:
     }
 
     const ASTNode *getExpression() const { return node_; }
+    const ExpressionKind getKind() const { return kind_; }
 
 private:
     ASTNode *node_;
+    ExpressionKind kind_;
+
 };
 
 #endif
