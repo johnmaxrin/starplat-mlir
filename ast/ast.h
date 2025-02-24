@@ -22,7 +22,8 @@ public:
 enum ExpressionKind{
     KIND_NUMBER,
     KIND_IDENTIFIER,
-    KIND_KEYWORD
+    KIND_KEYWORD,
+    KIND_BOOLEXPR
 };
 
 
@@ -514,10 +515,11 @@ private:
 class BoolExpr : public ASTNode
 {
 public:
-    BoolExpr(Identifier *identifier1, char *op, Identifier *identifier2)
-        : identifier1(identifier1), op(op), identifier2(identifier2) {}
+    BoolExpr(ASTNode *expr1, char *op, ASTNode *expr2)
+        : expr1_(expr1), op_(op), expr2_(expr2) {}
 
-    BoolExpr() {}
+    BoolExpr(ASTNode *expr1, char *op) 
+        : expr1_(expr1), op_(op), expr2_(nullptr) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -531,19 +533,19 @@ public:
 
     ~BoolExpr()
     {
-        delete identifier1;
-        delete identifier2;
-        delete op;
+        delete expr1_;
+        delete expr2_;
+        delete op_;
     }
 
-    Identifier *getIdentifier1() const { return identifier1; }
-    Identifier *getIdentifier2() const { return identifier2; }
-    char *getop() const { return op; }
+    ASTNode*getExpr1() const { return expr1_; }
+    ASTNode *getExpr2() const { return expr2_; }
+    char *getop() const { return op_; }
 
 private:
-    Identifier *identifier1;
-    Identifier *identifier2;
-    char *op;
+    ASTNode *expr1_;
+    ASTNode *expr2_;
+    char *op_;
 };
 
 class Incandassignstmt : public ASTNode

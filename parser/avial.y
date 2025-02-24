@@ -119,7 +119,7 @@ boolexpr : expr LT expr 		{}
 
          | expr EQUALS expr           {} 
 
-         | NOT expr                  {} 
+         | NOT expr                  {  $$ = new BoolExpr($2, "!");} 
          ;
 
 ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement($3, $5);}
@@ -135,7 +135,7 @@ forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN blcstmt    {
                                                                 }
 
 expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1), KIND_IDENTIFIER);} 
-     |  boolexpr                {$$ = $1;}
+     |  boolexpr                {$$ = new Expression ($1, KIND_BOOLEXPR);}
      |  NUMBER                  {$$ = new Expression( new Number($1), KIND_NUMBER);}
      |  memberaccess            {$$ = $1;}
      |  KEYWORDS                {$$ = new Expression ($1, KIND_KEYWORD);}

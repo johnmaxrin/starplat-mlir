@@ -289,12 +289,67 @@ public:
 
 	virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil, mlir::SymbolTable *symbolTable) override
 	{
+        // Create new region. 
+        // Create new symbol table. 
+        // Pass everything in symbol table to new symbol table. 
+        // Then Generate Code. 
+        
         Identifier *identifier = static_cast<Identifier *>(fixedpointuntil->getidentifier());
         Expression *expr = static_cast<Expression *>(fixedpointuntil->getexpr());
         Statementlist *stmtlist = static_cast<Statementlist *>(fixedpointuntil->getstmtlist());
 
+        if(!symbolTable->lookup(identifier->getname()))
+        {
+            llvm::errs() << "Error: " << identifier->getname() << " not declared.\n";
+            return ;
+        }
         
-	}
+        mlir::StringAttr opAttr;
+        const BoolExpr *boolExpr;
+        if(expr->getKind() == ExpressionKind::KIND_BOOLEXPR)
+        {
+            boolExpr =  static_cast<const BoolExpr *>(expr->getExpression());
+
+
+            if( strcmp(boolExpr->getop(), "!") == 0)
+                opAttr = builder.getStringAttr("NOT");
+        }
+
+        mlir::ArrayAttr condAttrArray = builder.getArrayAttr({opAttr});
+        mlir::Operation *lhs = symbolTable->lookup(identifier->getname());
+        if(!lhs)
+        {
+            llvm::errs() << "Error: " << identifier->getname() << " not declared.\n";
+            return ;
+        }   
+
+        const Expression *innerBoolExpr = static_cast<const Expression *>(boolExpr->getExpr1());
+        mlir::Operation *rhs;
+        if(innerBoolExpr->getKind() == ExpressionKind::KIND_IDENTIFIER)
+        {
+            rhs = symbolTable->lookup(static_cast<const Identifier *>(innerBoolExpr->getExpression())->getname());
+            if(!rhs)
+            {
+                llvm::errs() << "Error: " << static_cast<const Identifier *>(innerBoolExpr->getExpression())->getname() << " not declared.\n";
+                return ;
+            }
+        }
+
+
+
+        llvm::SmallVector<mlir::Value> condArgs = {lhs->getResult(0), rhs->getResult(0)};
+        auto fixedPointUntil = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc(),condArgs, condAttrArray);
+
+        // Change block.
+        auto &loopBlock = fixedPointUntil.getBody().emplaceBlock();
+        builder.setInsertionPointToStart(&loopBlock);
+
+        stmtlist->Accept(this, symbolTable);
+        
+        builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+        builder.setInsertionPointAfter(fixedPointUntil);
+
+    }
 
 	virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt, mlir::SymbolTable *symbolTable)
 	{
@@ -304,7 +359,6 @@ public:
 
         mlir::Type typeAttr;
 
-        cout << "Type: " << type->getType() << "\n";
 
         if(strcmp(type->getType(), "int") == 0) 
             typeAttr = builder.getI32Type();
