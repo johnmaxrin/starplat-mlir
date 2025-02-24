@@ -341,6 +341,10 @@ public:
         delete expr_;
     }
 
+    ASTNode *gettype() const { return type_; }
+    ASTNode *getidentifier() const { return identifier_; }
+    ASTNode *getexpr() const { return expr_; }
+
 private:
     ASTNode *type_;
     ASTNode *identifier_;

@@ -4,6 +4,7 @@
 // 3. Return String instead of const char *
 // 4. Remove ArgList Code gen from Funntion and write it in VisitArgList. 
 // 5. Check if the type is node propert inorder to do attachnode. 
+// 6. Add return to the Accept Function.
 
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
@@ -35,7 +36,6 @@ public:
 
 	virtual void visitDeclarationStmt(const DeclarationStatement *dclstmt, mlir::SymbolTable *symbolTable) override
 	{
-		llvm::outs() << "Declaration Statement\n";
 	}
 
 	virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt, mlir::SymbolTable *symbolTable) override
@@ -293,6 +293,33 @@ public:
 
 	virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt, mlir::SymbolTable *symbolTable)
 	{
+        const TypeExpr *type = static_cast<const TypeExpr *>(initialiseAssignmentStmt->gettype());
+        const Identifier *identifier = static_cast<const Identifier *>(initialiseAssignmentStmt->getidentifier());
+        const Expression *expr = static_cast<const Expression *>(initialiseAssignmentStmt->getexpr());
+
+        mlir::Type typeAttr;
+
+        cout << "Type: " << type->getType() << "\n";
+
+        if(strcmp(type->getType(), "int") == 0) 
+            typeAttr = builder.getI32Type();
+        
+        auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr , builder.getStringAttr(identifier->getname()));
+        symbolTable->insert(idDecl);
+
+        expr->Accept(this, symbolTable);
+
+        mlir::Operation *op;
+        if(expr->getKind() == ExpressionKind::KIND_KEYWORD)
+        {
+            const Keyword *keyword = static_cast<const Keyword *>(expr->getExpression());
+            if(symbolTable->lookup(keyword->getKeyword()))
+                op = symbolTable->lookup(keyword->getKeyword());
+            
+            auto asgOp = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), idDecl.getResult(), op->getResult(0));
+        }
+
+        
 	}
 
 	virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment, mlir::SymbolTable *symbolTable)
@@ -322,13 +349,9 @@ public:
 		auto typeAttr = id1->getAttrOfType<mlir::TypeAttr>("type");
 		mlir::Type type = typeAttr.getValue();
 
-        llvm::outs() << "Setting Node Property\n";
-        type.dump();
 
 		if(type.isa<mlir::starplat::NodeType>()){
 			// Set Node Property
-            llvm::outs() << "Setting Node Property\n";
-
             if(expr->getKind() == ExpressionKind::KIND_NUMBER)
             {
                 const Number *number = static_cast<const Number *>(expr->getExpression());
