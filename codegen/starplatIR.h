@@ -289,6 +289,11 @@ public:
 
 	virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil, mlir::SymbolTable *symbolTable) override
 	{
+        Identifier *identifier = static_cast<Identifier *>(fixedpointuntil->getidentifier());
+        Expression *expr = static_cast<Expression *>(fixedpointuntil->getexpr());
+        Statementlist *stmtlist = static_cast<Statementlist *>(fixedpointuntil->getstmtlist());
+
+        
 	}
 
 	virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt, mlir::SymbolTable *symbolTable)

@@ -7,7 +7,6 @@
 
 %%
 
-"//".*                  { /* Ignore single-line comments */ }
 
 "function"              {return FUNCTION;}
 "return"                {return RETURN;}        
@@ -43,6 +42,7 @@
 ":"                     {return COLON;}
 "=="                    {return EQUALS;}
 "+"                     {return PLUS;}
+"!"                     {return NOT;}
 
 [ \t\n]+                ;
 #.*                    { /* Ignore single-line comments */ }

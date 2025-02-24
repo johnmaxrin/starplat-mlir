@@ -368,6 +368,9 @@ public:
     }
 
     ASTNode *getstmtlist() const{ return stmtlist_; }
+    ASTNode *getidentifier() const{ return identifier_; }
+    ASTNode *getexpr() const{ return expr_; }
+
     ~FixedpointUntil()
     {
         delete stmtlist_;
