@@ -108,6 +108,8 @@ public:
                     return;
                 }
 
+                loopOperands.push_back(idSymbol->getResult(0));
+
                 const Methodcall *methodcall = static_cast<const Methodcall *>(nestedMemberaccess->getMethodCall());
                 const Identifier *methodcallIdentifier = methodcall->getIdentifier();
                 if(strcmp(methodcallIdentifier->getname(), "nodes")==0)
@@ -115,6 +117,7 @@ public:
                     loopVarType = mlir::starplat::NodeType::get(builder.getContext());
                     loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(),mlir::TypeAttr::get(loopVarType), builder.getStringAttr(loopVar->getname()));
                     symbolTable->insert(loopVarOp);
+                    loopOperands.push_back(loopVarOp->getResult(0));
 
                     loopAttr.push_back(builder.getStringAttr("nodes"));
 
@@ -152,7 +155,20 @@ public:
 
                                 if(lhs->getKind()==ExpressionKind::KIND_IDENTIFIER && rhs->getKind() == ExpressionKind::KIND_KEYWORD)
                                 {
-                                    llvm::outs()<<"Error: Not implemented. Syntax Error\n";
+                                    const Identifier *lhsIdentifier = static_cast<const Identifier *>(lhs->getExpression());
+                                    const Keyword *rhsKeyword = static_cast<const Keyword *>(rhs->getExpression());
+                                    
+                                    auto lhsidSymbol = symbolTable->lookup(lhsIdentifier->getname());
+                                    auto rhsKeywordSymbol = symbolTable->lookup(rhsKeyword->getKeyword());
+
+                                    if(!lhsidSymbol || !rhsKeywordSymbol)
+                                    {
+                                        llvm::outs() << "Error: Identifier '" << lhsIdentifier->getname() << "' or Keyword '" << rhsKeyword->getKeyword() << "' not declared.\n";
+                                        return;
+                                    }
+
+                                    loopOperands.push_back(lhsidSymbol->getResult(0));
+                                    loopOperands.push_back(rhsKeywordSymbol->getResult(0));
                                 }
 
                                 else
@@ -181,6 +197,8 @@ public:
 
 
         }
+
+        auto loop = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttr);
 	}
 
 	virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt, mlir::SymbolTable *symbolTable) override
