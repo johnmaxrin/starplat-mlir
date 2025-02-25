@@ -5,6 +5,8 @@
 // 4. Remove ArgList Code gen from Funntion and write it in VisitArgList. 
 // 5. Check if the type is node propert inorder to do attachnode. 
 // 6. Add return to the Accept Function.
+// 7. Rewrite visitForAllStmt. 
+// 8. Add switch instead of IF-ELSE. 
 
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
@@ -70,6 +72,115 @@ public:
 
 	virtual void visitForallStmt(const ForallStatement *forAllStmt, mlir::SymbolTable *symbolTable) override
 	{
+        Identifier *loopVar = static_cast<Identifier *>(forAllStmt->getLoopVar());
+        const Expression *expr = static_cast<const Expression *>(forAllStmt->getexpr());
+        const Statementlist *stmtlist = static_cast<const Statementlist *>(forAllStmt->getstmtlist());
+
+        auto loopVarSymbol = symbolTable->lookup(loopVar->getname());
+        mlir::Type loopVarType;
+        mlir::Operation *loopVarOp;
+        mlir::SmallVector<mlir::StringAttr> loopAttr;
+        mlir::SmallVector<mlir::Value> loopOperands;
+
+        if(loopVarSymbol)
+        {
+            llvm::outs() << "Error: Identifier '" << loopVar->getname() << "' already in declared.\n";
+            return;
+        }
+        
+
+
+        // get the type of expr inorder to get the type of loopVar.
+        if(expr->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+        {
+            const Memberaccess *memberaccess = static_cast<const Memberaccess *>(expr->getExpression());
+            
+            // Check if this is with nested access. 
+            // TODO: Do this recursively! 
+            if(memberaccess->getMemberAccessNode())
+            {
+                const Memberaccess *nestedMemberaccess = static_cast<const Memberaccess *>(memberaccess->getMemberAccessNode());
+                const Identifier *identifier = nestedMemberaccess->getIdentifier();
+                auto idSymbol = symbolTable->lookup(identifier->getname());
+                if(!idSymbol)
+                {
+                    llvm::outs() << "Error: Identifier '" << identifier->getname() << "' not declared.\n";
+                    return;
+                }
+
+                const Methodcall *methodcall = static_cast<const Methodcall *>(nestedMemberaccess->getMethodCall());
+                const Identifier *methodcallIdentifier = methodcall->getIdentifier();
+                if(strcmp(methodcallIdentifier->getname(), "nodes")==0)
+                {
+                    loopVarType = mlir::starplat::NodeType::get(builder.getContext());
+                    loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(),mlir::TypeAttr::get(loopVarType), builder.getStringAttr(loopVar->getname()));
+                    symbolTable->insert(loopVarOp);
+
+                    loopAttr.push_back(builder.getStringAttr("nodes"));
+
+                }
+                else{
+                    llvm::outs() << "Error: Methodcall '" << methodcallIdentifier->getname() << "' not Implemented.\n";
+                    return;
+                }
+
+                if(methodcall->getIsBuiltin())
+                {
+                    const Identifier *identifier1 = static_cast<const Identifier *> (methodcall->getIdentifier());
+                    if(strcmp(identifier1->getname(), "filter")==0)
+                    {
+                        const Paramlist *paramlist = static_cast<const Paramlist *>(methodcall->getParamLists());
+                        paramlist->Accept(this, symbolTable);
+
+                        vector<Param *> paramListVecvtor = paramlist->getParamList();
+                        for(Param * param: paramListVecvtor)
+                        {
+                            const Expression *expr = static_cast<const Expression *>(param->getExpr());
+                            if(expr->getKind() == ExpressionKind::KIND_BOOLEXPR)
+                            {
+                                const BoolExpr *boolExpr = static_cast<const BoolExpr *>(expr->getExpression());
+                                const Expression *lhs = static_cast<const Expression *>(boolExpr->getExpr1());
+                                const Expression *rhs = static_cast<const Expression *>(boolExpr->getExpr2());
+                                const char *op = boolExpr->getop();
+
+                                if(strcmp(op,"==") == 0)
+                                    loopAttr.push_back(builder.getStringAttr("EQS"));
+                                else{
+                                    llvm::outs()<<"Error: Operator not implemented.\n";
+                                    return;
+                                }
+
+                                if(lhs->getKind()==ExpressionKind::KIND_IDENTIFIER && rhs->getKind() == ExpressionKind::KIND_KEYWORD)
+                                {
+                                    llvm::outs()<<"Error: Not implemented. Syntax Error\n";
+                                }
+
+                                else
+                                {
+                                    llvm::outs()<<"Error: Not implemented. Syntax Error\n";
+                                    return;
+                                }
+
+
+                            }
+
+                            else
+                            {
+                                llvm::outs() << "Error:  Not implemented. Syntax Error\n";
+                                return;
+                            }
+
+                        }
+
+                    }
+                    
+
+                }
+
+            }
+
+
+        }
 	}
 
 	virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt, mlir::SymbolTable *symbolTable) override

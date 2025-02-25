@@ -56,7 +56,7 @@ public:
         std::cout <<"}\n";
 
         std::cout << "Loop Body: {\n\t";
-        forAllStmt->getblcstmt()->Accept(this);
+        //forAllStmt->getblcstmt()->Accept(this);
         std::cout <<"}\n";
 
         cout<<"}\n";

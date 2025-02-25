@@ -137,7 +137,7 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     );
  }
 
- def FixedPointUntilOp : StarplatBaseOp<"fixedPointUntil">
+ def FixedPointUntilOp : StarplatBaseOp<"fixedPointUntil", [SymbolTable]>
  {
     let summary = "Fixed-point operation for iterative graph processing";
     

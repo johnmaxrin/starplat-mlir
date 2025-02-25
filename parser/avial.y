@@ -20,7 +20,7 @@
 %token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR EQUALS EDGE NODE
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS TRUE NOT
 
-%type<astNode>  methodcall blcstmt memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
+%type<astNode>  methodcall memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
 stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt memberaccessstmt
 addExpr properties templateType templateDecl paramAssignment param memberaccessAssignment KEYWORDS 
 
@@ -67,8 +67,6 @@ stmt :  assignment SEMICLN                              {}
         |   tuppleAssignmentstmt                        {$$ = $1;}
         ;
 
-blcstmt : LCURLY stmtlist RCURLY        {$$ = $2;}
-        ;
 
 
 memberaccessAssignment : memberaccess EQUAL expr SEMICLN        {$$ = new MemberAccessAssignment($1, $3);}
@@ -117,29 +115,29 @@ boolexpr : expr LT expr 		{}
 
          | expr GT expr             {}
 
-         | expr EQUALS expr           {} 
+         | expr EQUALS expr           {$$ = new BoolExpr($1, "==", $3);} 
 
-         | NOT expr                  {  $$ = new BoolExpr($2, "!");} 
+         | NOT expr                   {$$ = new BoolExpr($2, "!");} 
          ;
 
 ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement($3, $5);}
-        | IF LPAREN expr RPAREN blcstmt     {$$ = new IfStatement($3, $5);}
+        | IF LPAREN expr RPAREN LCURLY stmtlist RCURLY     {$$ = new IfStatement($3, $6);}
         ;
 
 
-forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN blcstmt      { $$ = new ForallStatement();}
+forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY      { $$ = new ForallStatement(); }
 
-forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN blcstmt    { 
+forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY    { 
                                                                   Identifier* identifier = new Identifier($3);
-                                                                  $$ = new ForallStatement(identifier, $5, $7);
+                                                                  $$ = new ForallStatement(identifier, $5, $8);
                                                                 }
 
 expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1), KIND_IDENTIFIER);} 
      |  boolexpr                {$$ = new Expression ($1, KIND_BOOLEXPR);}
      |  NUMBER                  {$$ = new Expression( new Number($1), KIND_NUMBER);}
-     |  memberaccess            {$$ = $1;}
+     |  memberaccess            {$$ = new Expression ($1, KIND_MEMBERACCESS);}
      |  KEYWORDS                {$$ = new Expression ($1, KIND_KEYWORD);}
-     |  methodcall              {}
+     |  methodcall              {$$ = new Expression ($1, KIND_METHODCALL);}
      |  addExpr                 {}
      ;
 
@@ -175,7 +173,7 @@ memberaccess : IDENTIFIER DOT methodcall        {
                                                   Identifier* identifier = new Identifier($1);
                                                   $$ = new Memberaccess(identifier, $3);
                                                 }
-             | memberaccess DOT methodcall      {}
+             | memberaccess DOT methodcall      { $$ = new Memberaccess($1, $3);}
              | IDENTIFIER DOT IDENTIFIER        { 
                                                     Identifier* identifier_1 = new Identifier($1);    
                                                     Identifier* identifier_2 = new Identifier($3);

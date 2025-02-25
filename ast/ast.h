@@ -23,7 +23,9 @@ enum ExpressionKind{
     KIND_NUMBER,
     KIND_IDENTIFIER,
     KIND_KEYWORD,
-    KIND_BOOLEXPR
+    KIND_BOOLEXPR,
+    KIND_MEMBERACCESS,
+    KIND_METHODCALL
 };
 
 
@@ -147,7 +149,7 @@ private:
     static bool checkIfBuiltin(const Identifier *id)
     {
         static const std::set<std::string> builtins = {
-            "print", "attachNodeProperty" // Add more built-in methods
+            "print", "attachNodeProperty", "filter" // Add more built-in methods
         };
         return builtins.find(id->getname()) != builtins.end();
     }
@@ -221,10 +223,13 @@ class Memberaccess : public ASTNode
 {
 public:
     Memberaccess(Identifier *identifier1, ASTNode *methodcall)
-        : identifier1_(identifier1), methodcall_(methodcall), identifier2_(nullptr) {}
+        : identifier1_(identifier1), methodcall_(methodcall), identifier2_(nullptr), memberaccessNode_(nullptr) {}
 
     Memberaccess(Identifier *identifier1, Identifier *identifier2)
-        : identifier1_(identifier1), methodcall_(nullptr), identifier2_(identifier2) {}
+        : identifier1_(identifier1), methodcall_(nullptr), identifier2_(identifier2), memberaccessNode_(nullptr) {}
+
+    Memberaccess(ASTNode *memberaccessNode, ASTNode *methodcall)
+        : identifier1_(nullptr), methodcall_(methodcall), identifier2_(nullptr), memberaccessNode_(memberaccessNode) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -239,17 +244,21 @@ public:
     ~Memberaccess()
     {
         delete identifier1_;
+        delete identifier2_;
+        delete memberaccessNode_;
         delete methodcall_;
     }
 
     const Identifier *getIdentifier() const { return identifier1_; }
     const Identifier *getIdentifier2() const { return identifier2_; }
     const ASTNode *getMethodCall() const { return methodcall_; }
+    const ASTNode *getMemberAccessNode() const { return memberaccessNode_; }
 
 private:
     const Identifier *identifier1_;
     const Identifier *identifier2_;
     const ASTNode *methodcall_;
+    const ASTNode *memberaccessNode_;
 };
 
 class Statementlist : public ASTNode
@@ -448,8 +457,8 @@ private:
 class ForallStatement : public ASTNode
 {
 public:
-    ForallStatement(Identifier *loopVar, ASTNode *expr, ASTNode *blcstmt)
-        : loopVar(loopVar), expr(expr), blcstmt(blcstmt) {}
+    ForallStatement(Identifier *loopVar, ASTNode *expr, ASTNode *stmtlist)
+        : loopVar_(loopVar), expr_(expr), stmtlist_(stmtlist) {}
 
     ForallStatement() {}
 
@@ -465,19 +474,19 @@ public:
 
     ~ForallStatement()
     {
-        delete loopVar;
-        delete expr;
-        delete blcstmt;
+        delete loopVar_;
+        delete expr_;
+        delete stmtlist_;
     }
 
-    Identifier *getLoopVar() const { return loopVar; }
-    ASTNode *getexpr() const { return expr; }
-    ASTNode *getblcstmt() const { return blcstmt; }
+    Identifier *getLoopVar() const { return loopVar_; }
+    ASTNode *getexpr() const { return expr_; }
+    ASTNode *getstmtlist() const { return stmtlist_; }
 
 private:
-    Identifier *loopVar;
-    ASTNode *expr;
-    ASTNode *blcstmt;
+    Identifier *loopVar_;
+    ASTNode *expr_;
+    ASTNode *stmtlist_;
 };
 
 class IfStatement : public ASTNode
