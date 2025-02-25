@@ -79,7 +79,7 @@ public:
         auto loopVarSymbol = symbolTable->lookup(loopVar->getname());
         mlir::Type loopVarType;
         mlir::Operation *loopVarOp;
-        mlir::SmallVector<mlir::StringAttr> loopAttr;
+        mlir::SmallVector<mlir::Attribute> loopAttr;
         mlir::SmallVector<mlir::Value> loopOperands;
 
         if(loopVarSymbol)
@@ -198,7 +198,8 @@ public:
 
         }
 
-        auto loop = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttr);
+		mlir::ArrayAttr loopAttrArray = builder.getArrayAttr(loopAttr);
+        auto loop = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttrArray);
 	}
 
 	virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt, mlir::SymbolTable *symbolTable) override
