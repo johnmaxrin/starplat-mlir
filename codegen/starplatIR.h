@@ -7,6 +7,7 @@
 // 6. Add return to the Accept Function.
 // 7. Rewrite visitForAllStmt.
 // 8. Add switch instead of IF-ELSE.
+// 9. Change edge -> Edge type.
 
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
@@ -179,13 +180,19 @@ public:
                         llvm::outs() << "Error: Not implemented. Syntax Error\n";
                         return;
                     }
-                   
                 }
             }
         }
 
         mlir::ArrayAttr loopAttrArray = builder.getArrayAttr(loopAttr);
-        auto loop = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttrArray);
+        auto loopOp = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttrArray);
+
+        auto &loopBlock = loopOp.getBody().emplaceBlock();
+        builder.setInsertionPointToStart(&loopBlock);
+        stmtlist->Accept(this, symbolTable);
+
+        builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+        builder.setInsertionPointAfter(loopOp);
     }
 
     virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt, mlir::SymbolTable *symbolTable) override
@@ -469,6 +476,8 @@ public:
 
         if (strcmp(type->getType(), "int") == 0)
             typeAttr = builder.getI32Type();
+        else if (strcmp(type->getType(), "edge") == 0)
+            typeAttr = mlir::starplat::EdgeType::get(builder.getContext());
 
         auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr, builder.getStringAttr(identifier->getname()));
         symbolTable->insert(idDecl);
@@ -483,6 +492,11 @@ public:
                 op = symbolTable->lookup(keyword->getKeyword());
 
             auto asgOp = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), idDecl.getResult(), op->getResult(0));
+        }
+
+        else if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+        {
+            // llvm::outs() << "[DEBUG inside Member Access Check]\n";
         }
     }
 
@@ -563,10 +577,13 @@ public:
             exit(0);
         }
 
-        if (!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier2()->getname())))
+        if (memberaccess->getIdentifier2())
         {
-            llvm::outs() << "Error2: " << memberaccess->getIdentifier2()->getname() << " not defined!\n";
-            exit(0);
+            if (!symbolTable->lookup(builder.getStringAttr(memberaccess->getIdentifier2()->getname())))
+            {
+                llvm::outs() << "Error2: " << memberaccess->getIdentifier2()->getname() << " not defined!\n";
+                exit(0);
+            }
         }
     }
 
