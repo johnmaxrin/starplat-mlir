@@ -126,9 +126,31 @@ public:
 
                     loopAttr.push_back(builder.getStringAttr("nodes"));
                 }
+
                 else
                 {
                     llvm::outs() << "Error: Methodcall '" << innerMethodcallIdentifier->getname() << "' not Implemented.\n";
+                    return;
+                }
+            }
+
+            else if (memberaccess->getMethodCall())
+            {
+                const Methodcall *methodcallin = static_cast<const Methodcall *>(memberaccess->getMethodCall());
+                if (methodcallin->getIsBuiltin())
+                {
+                    if (strcmp(methodcallin->getIdentifier()->getname(), "neighbors") == 0)
+                    {
+                        loopVarType = mlir::starplat::NodesType::get(builder.getContext());
+                        loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(loopVarType), builder.getStringAttr(loopVar->getname()));
+                        symbolTable->insert(loopVarOp);
+                        loopOperands.push_back(loopVarOp->getResult(0));
+                        loopAttr.push_back(builder.getStringAttr("neighbours"));
+                    }
+                }
+                else
+                {
+                    llvm::outs() << "Undefined method call: " << methodcallin->getIdentifier()->getname();
                     return;
                 }
             }
@@ -496,7 +518,37 @@ public:
 
         else if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS)
         {
-            // llvm::outs() << "[DEBUG inside Member Access Check]\n";
+            const Memberaccess *memberAccessIn = static_cast<const Memberaccess *>(expr->getExpression());
+            const Identifier *identifierIn = static_cast<const Identifier *>(memberAccessIn->getIdentifier());
+            const Methodcall *methodcallIn = static_cast<const Methodcall *>(memberAccessIn->getMethodCall());
+
+            if (!symbolTable->lookup(identifierIn->getname()))
+            {
+                llvm::outs() << "Error: Undefined variable " << identifierIn->getname() << "\n";
+                return;
+            }
+            auto accessIdentifier = symbolTable->lookup(identifierIn->getname());
+
+            if (methodcallIn->getIsBuiltin())
+            {
+
+                if (strcmp(methodcallIn->getIdentifier()->getname(), "get_edge") == 0)
+                {
+                    // Visit ParamList
+                    const Paramlist *paramlist = static_cast<const Paramlist *>(methodcallIn->getParamLists());
+                    paramlist->Accept(this, symbolTable);
+
+                    vector<Param *> paramlistvector = paramlist->getParamList();
+                    const Identifier *node1 = static_cast<const Identifier *>(paramlistvector[0]->getExpr()->getExpression());
+                    const Identifier *node2 = static_cast<const Identifier *>(paramlistvector[1]->getExpr()->getExpression());
+
+                    auto node1Op = symbolTable->lookup(node1->getname());
+                    auto node2Op = symbolTable->lookup(node2->getname());
+
+                    // Create a get_edge Op.
+                    auto getedgeOp = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(), typeAttr, accessIdentifier->getResult(0), node1Op->getResult(0), node2Op->getResult(0));
+                }
+            }
         }
     }
 

@@ -154,7 +154,7 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
 
  }
 
- def ForAllOp : StarplatBaseOp<"forall">
+ def ForAllOp : StarplatBaseOp<"forall", [SymbolTable]>
  {
     let summary = "Forall loop";
     let description = [{"For all operation description."}];

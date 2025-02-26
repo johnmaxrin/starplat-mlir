@@ -149,7 +149,7 @@ private:
     static bool checkIfBuiltin(const Identifier *id)
     {
         static const std::set<std::string> builtins = {
-            "print", "attachNodeProperty", "filter" // Add more built-in methods
+            "print", "attachNodeProperty", "filter", "get_edge", "neighbors", "nodes" // Add more built-in methods
         };
         return builtins.find(id->getname()) != builtins.end();
     }
