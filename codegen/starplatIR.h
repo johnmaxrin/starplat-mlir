@@ -344,6 +344,14 @@ public:
 
     virtual void visitTupleAssignment(const TupleAssignment *tupleAssignment, mlir::SymbolTable *symbolTable)
     {
+       // <nbr.dist,nbr.modified_nxt> = 
+	    //      <Min (nbr.dist, v.dist + e.weight), True>;
+
+        // 4 Expressions
+        // 1 - Member Access
+        // 2 - Member Access
+        // 3 - Method Call
+        // 4 - Keyword
     }
 
     virtual void visitFunction(const Function *function, mlir::SymbolTable *symbolTable) override
