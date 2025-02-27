@@ -352,6 +352,51 @@ public:
         // 2 - Member Access
         // 3 - Method Call
         // 4 - Keyword
+
+        const Expression *lhsexpr1 = static_cast<const Expression *>(tupleAssignment->getlhsexpr1());
+        const Expression *lhsexpr2 = static_cast<const Expression *>(tupleAssignment->getlhsexpr2());
+        const Expression *rhsexpr1 = static_cast<const Expression *>(tupleAssignment->getrhsexpr1());
+        const Expression *rhsexpr2 = static_cast<const Expression *>(tupleAssignment->getrhsexpr2());
+
+        mlir::Operation *operand1;
+        mlir::Operation *operand2;
+        mlir::Operation *operand3;
+        mlir::Operation *operand4;
+
+        if(lhsexpr1->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+        {
+            const Memberaccess *lhs1MemberAccess = static_cast<const Memberaccess*>(lhsexpr1->getExpression());
+            if(lhs1MemberAccess->getIdentifier() && lhs1MemberAccess->getIdentifier2())
+            {
+                if(symbolTable->lookup(lhs1MemberAccess->getIdentifier2()->getname()))
+                {
+                    if(symbolTable->lookup(lhs1MemberAccess->getIdentifier()->getname()))
+                    {
+                        mlir::Operation *propOp = symbolTable->lookup(lhs1MemberAccess->getIdentifier2()->getname());
+                        mlir::Operation *varOp = symbolTable->lookup(lhs1MemberAccess->getIdentifier()->getname());
+                        operand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                        
+                    }
+                    else
+                    {
+                        llvm::outs() << "Error: Undefined Var `"<<lhs1MemberAccess->getIdentifier()->getname() <<"'/n.";
+                        return ;    
+                    }
+                }
+                else
+                {
+                    llvm::outs() << "Error: Undefined Property `"<<lhs1MemberAccess->getIdentifier2()->getname() <<"'/n.";
+                    return ;
+                }
+            }
+            else
+            {
+                llvm::outs() << "Error: Tuple Assignment failed.\n";
+                return ;
+            }
+
+        }
+        
     }
 
     virtual void visitFunction(const Function *function, mlir::SymbolTable *symbolTable) override
