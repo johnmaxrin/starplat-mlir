@@ -15,6 +15,7 @@ class Identifier;
 class ReturnStmt;
 class Function;
 class Param;
+class Add;
 class Paramlist;
 class Arglist;
 class Arg;
@@ -60,6 +61,7 @@ class Visitor
         virtual void visitTemplateType(const TemplateType *templatetype) = 0;
         virtual void visitParameterAssignment(const ParameterAssignment *parameterAssignment) = 0;
         virtual void visitParam(const Param *param) = 0;
+        virtual void visitAdd(const Add *add) = 0;
         virtual void visitType(const TypeExpr *type) = 0;
         virtual void visitKeyword(const Keyword *keyword) = 0;
         virtual void visitGraphProperties(const GraphProperties *graphproperties) = 0;
@@ -97,6 +99,7 @@ class MLIRVisitor
         virtual void visitTemplateType(const TemplateType *templatetype, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitParameterAssignment(const ParameterAssignment *parameterAssignment, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitParam(const Param *param, mlir::SymbolTable *symbolTable) = 0;
+        virtual void visitAdd(const Add *add, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitType(const TypeExpr *type, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitKeyword(const Keyword *keyword, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitGraphProperties(const GraphProperties *graphproperties, mlir::SymbolTable *symbolTable) = 0;

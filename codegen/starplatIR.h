@@ -8,6 +8,8 @@
 // 7. Rewrite visitForAllStmt.
 // 8. Add switch instead of IF-ELSE.
 // 9. Change edge -> Edge type.
+// 10. Handle all the special function seperately.
+// 11. Rewrite Add to Arithematic OP
 
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
@@ -141,7 +143,7 @@ public:
                 {
                     if (strcmp(methodcallin->getIdentifier()->getname(), "neighbors") == 0)
                     {
-                        loopVarType = mlir::starplat::NodesType::get(builder.getContext());
+                        loopVarType = mlir::starplat::NodeType::get(builder.getContext());
                         loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(loopVarType), builder.getStringAttr(loopVar->getname()));
                         symbolTable->insert(loopVarOp);
                         loopOperands.push_back(loopVarOp->getResult(0));
@@ -344,8 +346,8 @@ public:
 
     virtual void visitTupleAssignment(const TupleAssignment *tupleAssignment, mlir::SymbolTable *symbolTable)
     {
-       // <nbr.dist,nbr.modified_nxt> = 
-	    //      <Min (nbr.dist, v.dist + e.weight), True>;
+        // <nbr.dist,nbr.modified_nxt> =
+        //      <Min (nbr.dist, v.dist + e.weight), True>;
 
         // 4 Expressions
         // 1 - Member Access
@@ -363,40 +365,173 @@ public:
         mlir::Operation *operand3;
         mlir::Operation *operand4;
 
-        if(lhsexpr1->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+        if (lhsexpr1->getKind() == ExpressionKind::KIND_MEMBERACCESS)
         {
-            const Memberaccess *lhs1MemberAccess = static_cast<const Memberaccess*>(lhsexpr1->getExpression());
-            if(lhs1MemberAccess->getIdentifier() && lhs1MemberAccess->getIdentifier2())
+            const Memberaccess *lhs1MemberAccess = static_cast<const Memberaccess *>(lhsexpr1->getExpression());
+            if (lhs1MemberAccess->getIdentifier() && lhs1MemberAccess->getIdentifier2())
             {
-                if(symbolTable->lookup(lhs1MemberAccess->getIdentifier2()->getname()))
+                if (symbolTable->lookup(lhs1MemberAccess->getIdentifier2()->getname()))
                 {
-                    if(symbolTable->lookup(lhs1MemberAccess->getIdentifier()->getname()))
+                    if (symbolTable->lookup(lhs1MemberAccess->getIdentifier()->getname()))
                     {
                         mlir::Operation *propOp = symbolTable->lookup(lhs1MemberAccess->getIdentifier2()->getname());
                         mlir::Operation *varOp = symbolTable->lookup(lhs1MemberAccess->getIdentifier()->getname());
-                        operand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(),builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
-                        
+                        operand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
                     }
                     else
                     {
-                        llvm::outs() << "Error: Undefined Var `"<<lhs1MemberAccess->getIdentifier()->getname() <<"'/n.";
-                        return ;    
+                        llvm::outs() << "Error: Undefined Var `" << lhs1MemberAccess->getIdentifier()->getname() << "'/n.";
+                        return;
                     }
                 }
                 else
                 {
-                    llvm::outs() << "Error: Undefined Property `"<<lhs1MemberAccess->getIdentifier2()->getname() <<"'/n.";
-                    return ;
+                    llvm::outs() << "Error: Undefined Property `" << lhs1MemberAccess->getIdentifier2()->getname() << "'/n.";
+                    return;
                 }
             }
             else
             {
                 llvm::outs() << "Error: Tuple Assignment failed.\n";
-                return ;
+                return;
+            }
+        }
+
+        else
+        {
+            llvm::outs() << "Error: Tuple Assignment failed.\n";
+            return;
+        }
+
+        if (lhsexpr2->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+        {
+            const Memberaccess *lhs2MemberAccess = static_cast<const Memberaccess *>(lhsexpr2->getExpression());
+            if (lhs2MemberAccess->getIdentifier() && lhs2MemberAccess->getIdentifier2())
+            {
+                if (symbolTable->lookup(lhs2MemberAccess->getIdentifier2()->getname()))
+                {
+                    if (symbolTable->lookup(lhs2MemberAccess->getIdentifier()->getname()))
+                    {
+                        mlir::Operation *propOp = symbolTable->lookup(lhs2MemberAccess->getIdentifier2()->getname());
+                        mlir::Operation *varOp = symbolTable->lookup(lhs2MemberAccess->getIdentifier()->getname());
+                        operand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                    }
+                    else
+                    {
+                        llvm::outs() << "Error: Undefined Var `" << lhs2MemberAccess->getIdentifier()->getname() << "'/n.";
+                        return;
+                    }
+                }
+                else
+                {
+                    llvm::outs() << "Error: Undefined Property `" << lhs2MemberAccess->getIdentifier2()->getname() << "'/n.";
+                    return;
+                }
+            }
+            else
+            {
+                llvm::outs() << "Error: Tuple Assignment failed.\n";
+                return;
+            }
+        }
+        else
+        {
+            llvm::outs() << "Error: Tuple Assignment failed.\n";
+            return;
+        }
+
+        if (rhsexpr1->getKind() == ExpressionKind::KIND_METHODCALL)
+        {
+            const Methodcall *rhsMethodCall = static_cast<const Methodcall *>(rhsexpr1->getExpression());
+            if (rhsMethodCall->getIsBuiltin() && strcmp(rhsMethodCall->getIdentifier()->getname(), "Min") == 0)
+            {
+                // Visit Min Method.
+                const Paramlist *rhsParamList = static_cast<const Paramlist *>(rhsMethodCall->getParamLists());
+                rhsParamList->Accept(this, symbolTable);
+
+                const Expression *operand1 = static_cast<const Expression *>(rhsParamList->getParamList()[0]->getExpr());
+                const Expression *operand2 = static_cast<const Expression *>(rhsParamList->getParamList()[1]->getExpr());
+
+                // Handle Operand1
+                if (operand1->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+                {
+                    const Memberaccess *operand1MemAccess = static_cast<const Memberaccess *>(operand1->getExpression());
+                    const Identifier *id1 = static_cast<const Identifier *>(operand1MemAccess->getIdentifier());
+                    const Identifier *id2 = static_cast<const Identifier *>(operand1MemAccess->getIdentifier2());
+
+                    if (id1 && id2)
+                    {
+                        if (!symbolTable->lookup(id1->getname()))
+                        {
+                            llvm::outs() << id1->getname() << " not defined.\n";
+                            exit(0);
+                        }
+                        if (!symbolTable->lookup(id2->getname()))
+                        {
+                            llvm::outs() << id2->getname() << " not defined.\n";
+                            exit(0);
+                        }
+
+                        auto id1Op = symbolTable->lookup(id1->getname());
+                        auto id2Op = symbolTable->lookup(id2->getname());
+
+                        auto typeAttr = id1Op->getAttrOfType<mlir::TypeAttr>("type");
+                        mlir::Type id1Optype = typeAttr.getValue();
+
+                        if (id1Optype.isa<mlir::starplat::NodeType>())
+                        {
+                            // Generate get node property.
+                            llvm::StringRef nameRef(id2->getname());
+                            auto getnbrdist = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op->getResult(0), builder.getStringAttr(nameRef));
+                        }
+                    }
+                    else
+                    {
+                        llvm::outs() << "Error: Tuple Assignment Error.\n";
+                        return;
+                    }
+                }
+                else
+                {
+                    llvm::outs() << "Error: Not implemented @ Tuple Assignment.\n";
+                    return;
+                }
+
+                if (operand2->getKind() == ExpressionKind::KIND_ADDOP)
+                {
+                    const Add *add = static_cast<const Add *>(operand2->getExpression());
+                    const Expression *addop1 = static_cast<const Expression *>(add->getOperand1());
+                    const Expression *addop2 = static_cast<const Expression *>(add->getOperand2());
+
+                    // Start from here tomomrow. You're in the Min(x, >> Here <<); 2nd operand.
+                }
+                else
+                {
+                    llvm::outs() << "Error: Not implemented @ Tuple Assignment.\n";
+                    return;
+                }
+            }
+            else
+            {
+                llvm::outs() << rhsMethodCall->getIdentifier()->getname() << " Not implemented yet.\n";
+                return;
             }
 
         }
-        
+        else
+        {
+            llvm::outs() << "Error: Tuple Assignment failed.\n";
+            return;
+        }
+
+        if (rhsexpr2->getKind() == ExpressionKind::KIND_KEYWORD)
+        {
+            llvm::outs() << "Inside Keyword\n";
+        }
+    }
+
+    virtual void visitAdd(const Add *add, mlir::SymbolTable *symbolTable)
+    {
     }
 
     virtual void visitFunction(const Function *function, mlir::SymbolTable *symbolTable) override

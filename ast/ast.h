@@ -25,7 +25,8 @@ enum ExpressionKind{
     KIND_KEYWORD,
     KIND_BOOLEXPR,
     KIND_MEMBERACCESS,
-    KIND_METHODCALL
+    KIND_METHODCALL,
+    KIND_ADDOP
 };
 
 
@@ -149,7 +150,7 @@ private:
     static bool checkIfBuiltin(const Identifier *id)
     {
         static const std::set<std::string> builtins = {
-            "print", "attachNodeProperty", "filter", "get_edge", "neighbors", "nodes" // Add more built-in methods
+            "print", "attachNodeProperty", "filter", "get_edge", "neighbors", "nodes", "Min" // Add more built-in methods
         };
         return builtins.find(id->getname()) != builtins.end();
     }
@@ -556,6 +557,42 @@ private:
     ASTNode *expr2_;
     char *op_;
 };
+
+
+class Add : public ASTNode
+{
+public:
+
+    Add(ASTNode *operand1, char *op, ASTNode *operand2) 
+        : operand1_(operand1), op_(op), operand2_(operand2_) {}
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitAdd(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitAdd(this, symbolTable);
+    }
+
+    ~Add()
+    {
+        delete operand1_;
+        delete operand2_;
+        delete op_;
+    }
+
+    ASTNode *getOperand1() const { return operand1_; }
+    ASTNode *getOperand2() const { return operand2_; }
+    char *getop() const { return op_; }
+
+private:
+    ASTNode *operand1_;
+    ASTNode *operand2_;
+    char *op_;
+};
+
 
 class Incandassignstmt : public ASTNode
 {

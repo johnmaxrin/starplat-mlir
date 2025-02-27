@@ -138,10 +138,10 @@ expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1), KIND_I
      |  memberaccess            {$$ = new Expression ($1, KIND_MEMBERACCESS);}
      |  KEYWORDS                {$$ = new Expression ($1, KIND_KEYWORD);}
      |  methodcall              {$$ = new Expression ($1, KIND_METHODCALL);}
-     |  addExpr                 {}
+     |  addExpr                 {$$ = new Expression ($1, KIND_ADDOP);}
      ;
 
-addExpr : expr PLUS expr      {}
+addExpr : expr PLUS expr      {$$ = new Add($1, "+", $3);}
 
 incandassignstmt : IDENTIFIER PLUSEQUAL expr SEMICLN  {
                                                         Identifier* identifier = new Identifier($1);
