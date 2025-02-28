@@ -200,6 +200,23 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
 
  }
 
+
+ def AddOp : StarplatBaseOp<"add">
+ {
+  let summary = "Add Op";
+
+  let arguments = (
+                    ins 
+                    AnyType : $operand1,
+                    AnyType : $operand2
+  );
+
+  let results = ( outs 
+                   AnyType : $result
+                );
+ }
+
+
  def endOp : StarplatBaseOp<"end", [Terminator]>
  {
     let summary = "End of the operation";

@@ -141,7 +141,7 @@ expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1), KIND_I
      |  addExpr                 {$$ = new Expression ($1, KIND_ADDOP);}
      ;
 
-addExpr : expr PLUS expr      {$$ = new Add($1, "+", $3);}
+addExpr : expr PLUS expr      {$$ = new Add($1, $3);}
 
 incandassignstmt : IDENTIFIER PLUSEQUAL expr SEMICLN  {
                                                         Identifier* identifier = new Identifier($1);

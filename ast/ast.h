@@ -563,8 +563,8 @@ class Add : public ASTNode
 {
 public:
 
-    Add(ASTNode *operand1, char *op, ASTNode *operand2) 
-        : operand1_(operand1), op_(op), operand2_(operand2_) {}
+    Add(ASTNode *operand1, ASTNode *operand2) 
+        : operand1_(operand1), operand2_(operand2) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -580,17 +580,14 @@ public:
     {
         delete operand1_;
         delete operand2_;
-        delete op_;
     }
 
     ASTNode *getOperand1() const { return operand1_; }
     ASTNode *getOperand2() const { return operand2_; }
-    char *getop() const { return op_; }
 
 private:
     ASTNode *operand1_;
     ASTNode *operand2_;
-    char *op_;
 };
 
 

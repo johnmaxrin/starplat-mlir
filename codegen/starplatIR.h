@@ -360,10 +360,10 @@ public:
         const Expression *rhsexpr1 = static_cast<const Expression *>(tupleAssignment->getrhsexpr1());
         const Expression *rhsexpr2 = static_cast<const Expression *>(tupleAssignment->getrhsexpr2());
 
-        mlir::Operation *operand1;
-        mlir::Operation *operand2;
-        mlir::Operation *operand3;
-        mlir::Operation *operand4;
+        mlir::Operation *gOperand1;
+        mlir::Operation *gOperand2;
+        mlir::Operation *gOperand3;
+        mlir::Operation *gOperand4;
 
         if (lhsexpr1->getKind() == ExpressionKind::KIND_MEMBERACCESS)
         {
@@ -376,7 +376,7 @@ public:
                     {
                         mlir::Operation *propOp = symbolTable->lookup(lhs1MemberAccess->getIdentifier2()->getname());
                         mlir::Operation *varOp = symbolTable->lookup(lhs1MemberAccess->getIdentifier()->getname());
-                        operand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
                     }
                     else
                     {
@@ -414,7 +414,7 @@ public:
                     {
                         mlir::Operation *propOp = symbolTable->lookup(lhs2MemberAccess->getIdentifier2()->getname());
                         mlir::Operation *varOp = symbolTable->lookup(lhs2MemberAccess->getIdentifier()->getname());
-                        operand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
                     }
                     else
                     {
@@ -482,7 +482,7 @@ public:
                         {
                             // Generate get node property.
                             llvm::StringRef nameRef(id2->getname());
-                            auto getnbrdist = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op->getResult(0), builder.getStringAttr(nameRef));
+                            gOperand2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op->getResult(0), builder.getStringAttr(nameRef));
                         }
                     }
                     else
@@ -503,7 +503,93 @@ public:
                     const Expression *addop1 = static_cast<const Expression *>(add->getOperand1());
                     const Expression *addop2 = static_cast<const Expression *>(add->getOperand2());
 
-                    // Start from here tomomrow. You're in the Min(x, >> Here <<); 2nd operand.
+                    // Create an Add Op
+                    mlir::Operation *op1;
+                    mlir::Operation *op2;
+
+                    if (addop1->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+                    {
+                        const Memberaccess *op1MemberAccess = static_cast<const Memberaccess *>(addop1->getExpression());
+                        const Identifier *op1Id1 = static_cast<const Identifier *>(op1MemberAccess->getIdentifier());
+                        const Identifier *op1Id2 = static_cast<const Identifier *>(op1MemberAccess->getIdentifier2());
+
+                        if (symbolTable->lookup(op1Id1->getname()) && symbolTable->lookup(op1Id2->getname()))
+                        {
+                            auto op1id1op = symbolTable->lookup(op1Id1->getname());
+                            auto op1id2op = symbolTable->lookup(op1Id2->getname());
+
+                            auto typeAttr = op1id1op->getAttrOfType<mlir::TypeAttr>("type");
+                            mlir::Type type = typeAttr.getValue();
+
+                            if (type.isa<mlir::starplat::NodeType>())
+                            {
+                                // Generate getNodeProp
+                                auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
+                                op1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op1id1op->getResult(0), getProp);
+                            }
+
+                            else
+                            {
+                                llvm::outs() << "Error: Type error in Min Fucn";
+                                exit(0);
+                            }
+                        }
+
+                        else
+                        {
+                            llvm::outs() << "Error: Undefined variables in Add Operation in methodcall in Min funciton ;>\n";
+                            exit(0);
+                        }
+                    }
+                    else
+                    {
+                        llvm::outs() << "Error: Add Op Not Implemented.\n";
+                        exit(0);
+                    }
+
+                    // // ---- //
+                    if (addop2->getKind() == ExpressionKind::KIND_MEMBERACCESS)
+                    {
+                        const Memberaccess *op2MemberAccess = static_cast<const Memberaccess *>(addop2->getExpression());
+                        const Identifier *op2Id1 = static_cast<const Identifier *>(op2MemberAccess->getIdentifier());
+                        const Identifier *op2Id2 = static_cast<const Identifier *>(op2MemberAccess->getIdentifier2());
+
+                        if (symbolTable->lookup(op2Id1->getname()) && symbolTable->lookup(op2Id2->getname()))
+                        {
+                            auto op2id1op = symbolTable->lookup(op2Id1->getname());
+                            auto op2id2op = symbolTable->lookup(op2Id2->getname());
+
+                            auto typeAttr = op2id1op->getAttrOfType<mlir::TypeAttr>("type");
+                            mlir::Type type = typeAttr.getValue();
+
+                            if (type.isa<mlir::starplat::EdgeType>())
+                            {
+                                // Generate getNodeProp
+                                auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
+                                op2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op2id1op->getResult(0), getProp);
+                            }
+
+                            else
+                            {
+                                llvm::outs() << "Error: Type error in Min Fucn";
+                                exit(0);
+                            }
+                        }
+
+                        else
+                        {
+                            llvm::outs() << "Error: Undefined variables " << op2Id1->getname() << " or " << op2Id2->getname() << "\n";
+                            exit(0);
+                        }
+                    }
+                    else
+                    {
+                        llvm::outs() << "Error: Add Op Not Implemented.\n";
+                        exit(0);
+                    }
+
+                    // Create add OP
+                    gOperand3 = builder.create<mlir::starplat::AddOp>(builder.getUnknownLoc(), builder.getI32Type(), op1->getResult(0), op2->getResult(0));
                 }
                 else
                 {
@@ -517,16 +603,28 @@ public:
                 return;
             }
 
+            if (rhsexpr2->getKind() == ExpressionKind::KIND_KEYWORD)
+            {
+                const Keyword *rhsKeyword = static_cast<const Keyword *>(rhsexpr2->getExpression());
+                if (symbolTable->lookup(rhsKeyword->getKeyword()))
+                {
+                    gOperand4 = symbolTable->lookup(rhsKeyword->getKeyword());
+                }
+                else
+                {
+                    llvm::outs() << "Error: Add this to Symbol Table and Pass the operation.\n";
+                    exit(0);
+                }
+            }
+
+            // Create the Min Tupple
+            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(),builder.getI32Type(), gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4->getResult(0));
+
         }
         else
         {
             llvm::outs() << "Error: Tuple Assignment failed.\n";
             return;
-        }
-
-        if (rhsexpr2->getKind() == ExpressionKind::KIND_KEYWORD)
-        {
-            llvm::outs() << "Inside Keyword\n";
         }
     }
 
@@ -569,6 +667,15 @@ public:
             else if (arg->getTemplateType() != nullptr)
             {
                 if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propNode")
+                {
+                    argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type()));
+                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
+                    auto typeAttr = ::mlir::TypeAttr::get(type);
+                    auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr, builder.getStringAttr(arg->getVarName()->getname()));
+                    ops.push_back(declareArg.getOperation());
+                    symbolTable->insert(declareArg);
+                }
+                else if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propEdge")
                 {
                     argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type()));
                     auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
