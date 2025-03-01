@@ -31,7 +31,7 @@
 "}"                     {return RCURLY;}
 "("                     {return LPAREN;}
 ")"                     {return RPAREN;} 
-"<"                     {return LT;}
+"<"                     {return LTxx;}
 ">"                     {return GT;}
 "="                     {return EQUAL;}
 ";"                     {return SEMICLN;}

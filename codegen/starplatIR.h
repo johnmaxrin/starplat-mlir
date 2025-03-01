@@ -984,6 +984,16 @@ public:
         return &globalSymbolTable;
     }
 
+    mlir::MLIRContext *getContext()
+    {
+        return &context;
+    }
+
+    mlir::ModuleOp *getModule()
+    {
+        return &module;
+    }
+
 private:
     mlir::MLIRContext context;
     mlir::OpBuilder builder;

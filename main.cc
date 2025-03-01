@@ -14,6 +14,9 @@
 
 #include "tblgen2/StarPlatOps.cpp.inc"
 
+#include "mlir/Pass/PassManager.h"
+#include "transforms/reachingDef.h"
+
 extern int yyparse();
 extern FILE *yyin;
 ASTNode* root;
@@ -49,7 +52,17 @@ int main(int argc, char *argv[])
     if(root!= nullptr)
         root->Accept(starplatcodegen, starplatcodegen->getSymbolTable());
 
-    starplatcodegen->print();
+    //starplatcodegen->print();
+
+    PassManager pm(starplatcodegen->getContext());
+
+    pm.addPass(mlir::starplat::createReachDef());
+    if (failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
+        llvm::errs() << "Failed to run passes\n";
+        return 1;
+    }
+
+    
 
     // MLIRCodeGen *MLIRgen = new MLIRCodeGen;
 

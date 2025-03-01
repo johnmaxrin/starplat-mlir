@@ -2,6 +2,8 @@
 #include "mlir/Pass/PassManager.h"
 
 #include "includes/StarPlatDialect.h"
+#include "includes/StarPlatOps.h"
+
 
 #include "../transforms/reachingDef.h"
 
@@ -25,6 +27,14 @@ struct ReachDef : public mlir::starplat::impl::ReachDefBase<ReachDef>
     void runOnOperation() override
     {
         auto mod = getOperation();
+
+        llvm::outs() << "Hello\n";
+        mod->walk([&](mlir::starplat::DeclareOp declop)
+            {
+                declop.dump();
+                llvm::outs() << "Hello\n";
+            }   
+        );
 
     
     }

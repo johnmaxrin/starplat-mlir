@@ -16,3 +16,4 @@ namespace mlir
 #include "tblgen2/Passes.h.inc"
     }
 }
+

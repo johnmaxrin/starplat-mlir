@@ -17,7 +17,7 @@
 }
 
 
-%token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LT GT FORALL FOR EQUALS EDGE NODE
+%token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LTxx GT FORALL FOR EQUALS EDGE NODE
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS TRUE NOT
 
 %type<astNode>  methodcall memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
@@ -109,9 +109,9 @@ fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stm
                                                                                                                 $$ = new FixedpointUntil(identifier, $6, $9);
                                                                                                         }
 
-tuppleAssignmentstmt : LT expr COMMA expr GT EQUAL LT expr COMMA expr GT SEMICLN               {$$ = new TupleAssignment($2, $4, $8, $10);}
+tuppleAssignmentstmt : LTxx expr COMMA expr GT EQUAL LTxx expr COMMA expr GT SEMICLN               {$$ = new TupleAssignment($2, $4, $8, $10);}
 
-boolexpr : expr LT expr 		{}
+boolexpr : expr LTxx expr 		{}
 
          | expr GT expr             {}
 
@@ -249,7 +249,7 @@ paramlist : param                                          {
                                                            }
           ;
 
-templateType : properties LT type GT   {
+templateType : properties LTxx type GT   {
                                                 GraphProperties *graphproperties = static_cast<GraphProperties *>($1);
                                                 TypeExpr *type = static_cast<TypeExpr *>($3);
                                                 $$ = new TemplateType(graphproperties, type);
