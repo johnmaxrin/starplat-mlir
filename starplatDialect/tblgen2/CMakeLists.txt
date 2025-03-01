@@ -11,6 +11,7 @@ mlir_tablegen(StarPlatOps.h.inc -gen-op-decls)
 mlir_tablegen(StarPlatOps.cpp.inc -gen-op-defs)
 mlir_tablegen(StarPlatTypes.h.inc -gen-typedef-decls )
 mlir_tablegen(StarPlatTypes.cpp.inc -gen-typedef-defs )
+mlir_tablegen(Passes.h.inc -gen-pass-decls)
   
 add_public_tablegen_target(MLIRStarPlatIncGen)
 

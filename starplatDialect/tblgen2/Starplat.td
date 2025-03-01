@@ -6,6 +6,7 @@ include "mlir/IR/AttrTypeBase.td"
 include "mlir/IR/SymbolInterfaces.td"
 include "mlir/IR/OpBase.td"
 include "mlir/IR/BuiltinAttributes.td"
+include "mlir/Pass/PassBase.td"
 
 def StarPlatDialect : Dialect {
     let summary = "Starplat dialect";
@@ -264,6 +265,16 @@ def PropEdgeType : StarPlatDialectType<"PropEdge", "propEdge">{
 }
 
 // End of types
+
+
+// Passes
+
+def ReachDef : Pass<"analyse-reach-def", "mlir::ModuleOp"> {
+    let summary = "Reaching Definition Analysis";
+    let dependentDialects = ["mlir::starplat::StarPlatDialect"];
+}
+
+// End of Passes
 
 
 
