@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     if(root!= nullptr)
         root->Accept(starplatcodegen, starplatcodegen->getSymbolTable());
 
-    //starplatcodegen->print();
+    starplatcodegen->print();
 
     PassManager pm(starplatcodegen->getContext());
 
