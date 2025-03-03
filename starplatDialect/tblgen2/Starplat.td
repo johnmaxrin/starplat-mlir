@@ -274,6 +274,12 @@ def ReachDef : Pass<"analyse-reach-def", "mlir::ModuleOp"> {
     let dependentDialects = ["mlir::starplat::StarPlatDialect"];
 }
 
+def VertexToEdge : Pass<"vertex-to-edge", "mlir::ModuleOp"> {
+    let summary = "Vertex to Edge Transformation";
+    let dependentDialects = ["mlir::starplat::StarPlatDialect"];
+}
+
+
 // End of Passes
 
 

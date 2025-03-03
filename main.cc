@@ -16,6 +16,7 @@
 
 #include "mlir/Pass/PassManager.h"
 #include "transforms/reachingDef.h"
+#include "transforms/vertexToEdge.h"
 
 extern int yyparse();
 extern FILE *yyin;
@@ -56,7 +57,7 @@ int main(int argc, char *argv[])
 
     PassManager pm(starplatcodegen->getContext());
 
-    pm.addPass(mlir::starplat::createReachDef());
+    pm.addPass(mlir::starplat::createVertexToEdge());
     if (failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
         llvm::errs() << "Failed to run passes\n";
         return 1;

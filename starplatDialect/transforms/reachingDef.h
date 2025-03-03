@@ -10,6 +10,7 @@ namespace mlir
     namespace starplat
     {
 #define GEN_PASS_DECL_REACHDEF 
+#define GEN_PASS_DECL_VERTEXTOEDGE
 #include "tblgen2/Passes.h.inc"
 
 #define GEN_PASS_REGISTRATION

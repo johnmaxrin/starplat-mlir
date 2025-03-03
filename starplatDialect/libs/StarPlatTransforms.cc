@@ -15,6 +15,7 @@ namespace mlir
     namespace starplat
     {
 #define GEN_PASS_DEF_REACHDEF
+
 #include "tblgen2/Passes.h.inc"
     } // namespace starplat
 } // namespace mlir
@@ -50,3 +51,4 @@ struct ReachDef : public mlir::starplat::impl::ReachDefBase<ReachDef>
             udef.dump();
     }
 };
+
