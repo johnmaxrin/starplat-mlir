@@ -276,6 +276,21 @@ def ReachDef : Pass<"analyse-reach-def", "mlir::ModuleOp"> {
 
 def VertexToEdge : Pass<"vertex-to-edge", "mlir::ModuleOp"> {
     let summary = "Vertex to Edge Transformation";
+    let description = [{
+      Conditions to trigger this transformation / Applying Vertex to Edge
+        - Figure of that this is vertex based algorithm
+          - Check for loops which goes to all nodes in a graph.
+        - If yes and if we are going to all their neighbours and doing the computation on node and it's neighbor
+        - It is a candidate for Transformation 
+
+      Transformatiom
+        - Change the outer forall loop to iterate over all the edges. 
+        - it there is an inner forall loop which itereates over all it's neighbors
+          - Remove it and instead, get the src and dst from the edge. 
+        - v will be src, nbr will be src
+        
+    }];
+
     let dependentDialects = ["mlir::starplat::StarPlatDialect"];
 }
 
