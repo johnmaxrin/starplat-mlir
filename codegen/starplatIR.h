@@ -217,6 +217,7 @@ public:
 
         builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
         builder.setInsertionPointAfter(loopOp);
+
     }
 
     virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt, mlir::SymbolTable *symbolTable) override
