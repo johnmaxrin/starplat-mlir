@@ -24,6 +24,7 @@ namespace mlir
             void runOnOperation() override
             {
                 auto mod = getOperation();
+                bool isPossible = false;
                 mod->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op) {
                    if(llvm::isa<mlir::starplat::ForAllOp>(op))
                    {
@@ -54,6 +55,7 @@ namespace mlir
                                                             {
                                                                 llvm::outs() << "We have another forall loop which iterates over all neighbours of a node.\n";
                                                                 llvm::outs() << "Vertex to edge transformation is feasible.\n";
+                                                                isPossible = true;
                                                             }
                                                         }
                                                     }
@@ -73,6 +75,30 @@ namespace mlir
                    }
 
                 });
+
+                // To do the transformation
+                if(isPossible)
+                {
+                    mod->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
+                    {
+                        if(mlir::isa<mlir::starplat::ForAllOp>(op))
+                        {
+                            OpBuilder builder(op);
+                            builder.setInsertionPoint(op);
+                            mlir::SmallVector<mlir::Value> operands = op->getOperands();
+                            ArrayAttr loopAttributes = op->getAttrOfType<mlir::ArrayAttr>("loopattributes");
+                            mlir::SmallVector<mlir::Attribute> attributes(loopAttributes.begin(), loopAttributes.end());
+
+                            auto edgeForall = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(),operands,builder.getArrayAttr(attributes));
+                            auto &loopBlock = edgeForall.getBody().emplaceBlock();
+                            builder.setInsertionPointToStart(&loopBlock);
+                            builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+
+
+
+                        }
+                    });
+                }
 
                 llvm::outs() << "Finished Vertex to Edge Transform\n";
             }
