@@ -567,7 +567,7 @@ public:
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
-                                op2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op2id1op->getResult(0), getProp);
+                                op2 = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op2id1op->getResult(0), getProp);
                             }
 
                             else

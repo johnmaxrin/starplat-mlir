@@ -24,6 +24,8 @@ namespace mlir
             {
                 auto mod = getOperation();
                 bool isPossible = false;
+
+
                 mod->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
                                                      {
                                                          if (llvm::isa<mlir::starplat::ForAllOp>(op))
@@ -113,7 +115,7 @@ namespace mlir
                                                 
 
 
-                                                op->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
+                                                op->getRegion(0).walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
                                                     {
                                                         if(mlir::isa<mlir::starplat::DeclareOp>(op))
                                                         {
@@ -128,16 +130,51 @@ namespace mlir
                                                         {
                                                            for(mlir::Value opr : op->getOperands())
                                                            {
-                                                            if(opr == oldV || opr == oldNbr)
+                                                            if(opr == oldV)
                                                             {
-                                                                llvm::outs() << "Rewrite this\n";
-                                                                op->dump();
+
+                                                                if(mlir::isa<mlir::starplat::GetNodePropertyOp>(op))
+                                                                {   
+                                                                    auto propertyAttr = op->getAttrOfType<StringAttr>("property");
+                                                                    auto useSrc = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), src->getResult(0), propertyAttr);
+                                                                
+                                                                }
+
 
                                                                 llvm::outs() << "\n\n";
 
                                                                 break;
                                                             }
-                                                           } 
+
+                                                            else if(opr == oldNbr)
+                                                            {
+                                                                if(mlir::isa<mlir::starplat::GetNodePropertyOp>(op))
+                                                                {   
+                                                                    auto propertyAttr = op->getAttrOfType<StringAttr>("property");
+                                                                    auto useDst = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), dst->getResult(0), propertyAttr);
+                                                                
+                                                                }
+
+
+                                                                llvm::outs() << "\n\n";
+
+                                                                break;
+                                                            }
+
+                                                            
+                                                           }
+                                                           if(mlir::isa<mlir::starplat::GetEdgePropertyOp>(op))
+                                                            {
+                                                                auto propertyAttr = op->getAttrOfType<StringAttr>("property");
+                                                                auto edgeProp = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), edgeVar->getResult(0), propertyAttr);
+                                                            }
+
+                                                            // Add all the newly created op and map it to the old op and substitute
+                                                            // Whenever we encounter old values with new ones.
+                                                            // YOu can make this an alogorithm.
+
+
+                                                           
                                                         });
                                                         }
 
