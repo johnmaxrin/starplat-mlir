@@ -180,6 +180,7 @@ namespace mlir
                                                                 mlir::Value op1 = op->getOperand(0);
                                                                 mlir::Value op2 = op->getOperand(1);
 
+
                                                                 mlir::Value newOp1 = op1;
                                                                 mlir::Value newOp2 = op2;
 
@@ -193,19 +194,40 @@ namespace mlir
                                                                 }
 
                                                                 auto addop = builder.create<mlir::starplat::AddOp>(builder.getUnknownLoc(), builder.getI32Type(), newOp1, newOp2);
+                                                                operandMapping[op->getResult(0)]= addop->getResult(0);
                                                             }
 
                                                             if(mlir::isa<mlir::starplat::MinOp>(op))
                                                             {
+                                                                mlir::Value op1 = op->getOperand(0);
+                                                                mlir::Value op2 = op->getOperand(1);
+                                                                mlir::Value op3 = op->getOperand(2);
+                                                                mlir::Value op4 = op->getOperand(3);
+
+                                                                mlir::Value newOp1 = op1;
+                                                                mlir::Value newOp2 = op2;
+                                                                mlir::Value newOp3 = op3;
+                                                                mlir::Value newOp4 = op4;
+
                                                                 if(operationContainsOldValues(op,operandMapping))
                                                                 {
-                                                                    llvm::outs() << "Min contains old value\n";
-                                                                }
-                                                            }
+                                                                    if(operandMapping.contains(op1))
+                                                                        newOp1 = operandMapping[op1];
+                                                                    
+                                                                    if(operandMapping.contains(op2))
+                                                                        newOp2 = operandMapping[op2];
 
-                                                            // Add all the newly created op and map it to the old op and substitute
-                                                            // Whenever we encounter old values with new ones.
-                                                            // YOu can make this an alogorithm.
+                                                                    if(operandMapping.contains(op3))
+                                                                        newOp3 = operandMapping[op3];
+
+                                                                    
+                                                                    if(operandMapping.contains(op4))
+                                                                        newOp4 = operandMapping[op4];
+                                                                }
+                                                            
+                                                                auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(), newOp1, newOp2, newOp3, newOp4); 
+                                                            
+                                                            }
 
 
                                                            
