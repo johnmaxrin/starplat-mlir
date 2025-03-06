@@ -3,6 +3,8 @@
 
 #include "includes/StarPlatDialect.h"
 
+bool operationContainsOldValues(mlir::Operation *op, const llvm::DenseMap<mlir::Value, mlir::Value> &operandMapping);
+
 namespace mlir
 {
     namespace starplat
@@ -24,7 +26,7 @@ namespace mlir
             {
                 auto mod = getOperation();
                 bool isPossible = false;
-
+                llvm::DenseMap<mlir::Value, mlir::Value> operandMapping;
 
                 mod->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
                                                      {
@@ -137,6 +139,7 @@ namespace mlir
                                                                 {   
                                                                     auto propertyAttr = op->getAttrOfType<StringAttr>("property");
                                                                     auto useSrc = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), src->getResult(0), propertyAttr);
+                                                                    operandMapping[op->getResult(0)]= useSrc->getResult(0);
                                                                 
                                                                 }
 
@@ -152,7 +155,8 @@ namespace mlir
                                                                 {   
                                                                     auto propertyAttr = op->getAttrOfType<StringAttr>("property");
                                                                     auto useDst = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), dst->getResult(0), propertyAttr);
-                                                                
+                                                                    operandMapping[op->getResult(0)]= useDst->getResult(0);
+
                                                                 }
 
 
@@ -167,6 +171,36 @@ namespace mlir
                                                             {
                                                                 auto propertyAttr = op->getAttrOfType<StringAttr>("property");
                                                                 auto edgeProp = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), edgeVar->getResult(0), propertyAttr);
+                                                                operandMapping[op->getResult(0)]= edgeProp->getResult(0);
+
+                                                            }
+
+                                                            if(mlir::isa<mlir::starplat::AddOp>(op))
+                                                            {
+                                                                mlir::Value op1 = op->getOperand(0);
+                                                                mlir::Value op2 = op->getOperand(1);
+
+                                                                mlir::Value newOp1 = op1;
+                                                                mlir::Value newOp2 = op2;
+
+                                                                if(operationContainsOldValues(op,operandMapping))
+                                                                {
+                                                                    if(operandMapping.contains(op1))
+                                                                        newOp1 = operandMapping[op1];
+                                                                    
+                                                                    if(operandMapping.contains(op2))
+                                                                        newOp2 = operandMapping[op2];
+                                                                }
+
+                                                                auto addop = builder.create<mlir::starplat::AddOp>(builder.getUnknownLoc(), builder.getI32Type(), newOp1, newOp2);
+                                                            }
+
+                                                            if(mlir::isa<mlir::starplat::MinOp>(op))
+                                                            {
+                                                                if(operationContainsOldValues(op,operandMapping))
+                                                                {
+                                                                    llvm::outs() << "Min contains old value\n";
+                                                                }
                                                             }
 
                                                             // Add all the newly created op and map it to the old op and substitute
@@ -199,4 +233,16 @@ namespace mlir
         };
 
     }
+}
+
+bool operationContainsOldValues(mlir::Operation *op, const llvm::DenseMap<mlir::Value, mlir::Value> &operandMapping)
+{
+    for (mlir::Value operand : op->getOperands())
+    {
+        if (operandMapping.count(operand))
+        {
+            return true;
+        }
+    }
+    return false;
 }
