@@ -58,13 +58,16 @@ int main(int argc, char *argv[])
     PassManager pm(starplatcodegen->getContext());
 
     pm.addPass(mlir::starplat::createVertexToEdge());
+    pm.addPass(mlir::starplat::createReachDef());
+
     if (failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
         llvm::errs() << "Failed to run passes\n";
         return 1;
     }
 
-    
     starplatcodegen->print();
+
+    
 
     // MLIRCodeGen *MLIRgen = new MLIRCodeGen;
 
