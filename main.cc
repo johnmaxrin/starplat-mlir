@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
     starplatcodegen->print();
 
     // Work on Conversion of OMP
-    // Working on Generating a hello world program in LLVM
+    // Working on Generating a hello world program in LLVM - Done 
+    // Workign on generating OMP - Done 
 
     // MLIRCodeGen *MLIRgen = new MLIRCodeGen;
 
