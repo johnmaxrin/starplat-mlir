@@ -11,6 +11,7 @@ namespace mlir
     {
 #define GEN_PASS_DECL_REACHDEF 
 #define GEN_PASS_DECL_VERTEXTOEDGE
+#define GEN_PASS_DECL_CONVERTSTARTPLATIRTOOMPPASS
 #include "tblgen2/Passes.h.inc"
 
 #define GEN_PASS_REGISTRATION

@@ -7,6 +7,7 @@ include "mlir/IR/SymbolInterfaces.td"
 include "mlir/IR/OpBase.td"
 include "mlir/IR/BuiltinAttributes.td"
 include "mlir/Pass/PassBase.td"
+include "mlir/Dialect/OpenMP/OpenMPDialect.td"
 
 def StarPlatDialect : Dialect {
     let summary = "Starplat dialect";
@@ -292,6 +293,13 @@ def VertexToEdge : Pass<"vertex-to-edge", "mlir::ModuleOp"> {
     }];
 
     let dependentDialects = ["mlir::starplat::StarPlatDialect"];
+}
+
+def ConvertStartPlatIRToOMPPass : Pass<"starplatir-to-omp">{
+  let summary = "StarPlat IR to OMP";
+
+  let dependentDialects = ["mlir::starplat::StarPlatDialect", "::mlir::omp::OpenMPDialect"];
+
 }
 
 

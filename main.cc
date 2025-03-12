@@ -18,6 +18,9 @@
 #include "transforms/reachingDef.h"
 #include "transforms/vertexToEdge.h"
 
+
+#include "lowerings/startplat2omp.h"
+
 extern int yyparse();
 extern FILE *yyin;
 ASTNode* root;

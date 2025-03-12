@@ -5,6 +5,7 @@
 #include "includes/StarPlatOps.h"
 
 #include "../transforms/reachingDef.h"
+#include "../lowerings/startplat2omp.h"
 
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/DialectImplementation.h"
@@ -19,6 +20,8 @@ namespace mlir
 #include "tblgen2/Passes.h.inc"
     } // namespace starplat
 } // namespace mlir
+
+
 
 struct ReachDef : public mlir::starplat::impl::ReachDefBase<ReachDef>
 {
