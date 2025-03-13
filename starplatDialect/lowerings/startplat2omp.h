@@ -17,7 +17,16 @@ namespace mlir
 
             void runOnOperation() override
             {
-
+                auto mod = getOperation();
+                mod->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
+                {
+                    op->getContext()->getOrLoadDialect<mlir::LLVM::LLVMDialect>();
+                    if(llvm::isa<mlir::starplat::DeclareOp>(op))
+                    {
+                        // I think we have to learn about pointers, memalloc and all. 
+                        // Bye for now. 
+                    }
+                });
             }
         };
     }

@@ -60,15 +60,17 @@ int main(int argc, char *argv[])
 
     PassManager pm(starplatcodegen->getContext());
 
-    pm.addPass(mlir::starplat::createVertexToEdge());
-    pm.addPass(mlir::starplat::createReachDef());
+    //pm.addPass(mlir::starplat::createVertexToEdge());
+    //pm.addPass(mlir::starplat::createReachDef());
+
+    pm.addPass(mlir::starplat::createConvertStartPlatIRToOMPPass());
 
     if (failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
         llvm::errs() << "Failed to run passes\n";
         return 1;
     }
 
-    starplatcodegen->print();
+    //starplatcodegen->print();
 
     // Work on Conversion of OMP
     // Working on Generating a hello world program in LLVM - Done 

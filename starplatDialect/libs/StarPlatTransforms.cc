@@ -5,11 +5,12 @@
 #include "includes/StarPlatOps.h"
 
 #include "../transforms/reachingDef.h"
-#include "../lowerings/startplat2omp.h"
 
 #include "mlir/IR/OpImplementation.h"
 #include "mlir/IR/DialectImplementation.h"
 #include "llvm/ADT/TypeSwitch.h"
+
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 
 namespace mlir
 {
@@ -36,6 +37,8 @@ struct ReachDef : public mlir::starplat::impl::ReachDefBase<ReachDef>
                   { defs.push_back(declareOp->getResult(0)); });
 
         llvm::outs() << "Total Defs: " << defs.size();
+
+        
 
         mod->walk([&](mlir::Operation *op)
                   {
