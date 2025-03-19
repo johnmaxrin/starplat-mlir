@@ -102,13 +102,13 @@ namespace mlir
                                                 
                                                 attributes[i] = builder.getStringAttr("edges");
                                                 char *edgeVarName = "v_e";
-                                                auto edgeVar = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(mlir::starplat::EdgeType::get(builder.getContext())), builder.getStringAttr(edgeVarName));
+                                                auto edgeVar = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(mlir::starplat::EdgeType::get(builder.getContext())), builder.getStringAttr(edgeVarName), builder.getStringAttr("public"));
                                                 mlir::Value oldV = operands[1];
                                                 mlir::Value oldNbr;
                                                 operands[1] = edgeVar.getResult(); // Second variable is always the loop variable.
                                                 
                     
-                                                auto edgeForall = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(),operands,builder.getArrayAttr(attributes));
+                                                auto edgeForall = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(),operands,builder.getArrayAttr(attributes), builder.getStringAttr("sampleLoop"));
                                                 auto &loopBlock = edgeForall.getBody().emplaceBlock();
                                                 builder.setInsertionPointToStart(&loopBlock);
 

@@ -22,7 +22,7 @@ function Compute_SSSP (Graph g,propNode<int> dist, propEdge<int> weight, Node sr
         
                }
 
-          modified = modified_nxt;
+          #modified = modified_nxt;
           g.attachNodeProperty(modified_nxt = False);
         }
     
