@@ -58,7 +58,10 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
                           and it returns an SSA value representing the declared variable. 
   }];
 
-  let arguments = (ins TypeAttr :$type, SymbolNameAttr:$sym_name);
+  let arguments = (ins TypeAttr :$type, 
+                                SymbolNameAttr:$sym_name,
+                                SymbolNameAttr:$sym_visibility
+                                );
 
   let results = (outs AnyType);
 
@@ -83,7 +86,9 @@ def ConstOp : StarplatBaseOp<"const", [Symbol]>
 {
   let summary = "Const Operaiton";
   let arguments = (ins
-                    TypedAttrInterface:$value, SymbolNameAttr:$sym_name
+                    TypedAttrInterface:$value, 
+                    SymbolNameAttr:$sym_name,
+                    SymbolNameAttr:$sym_visibility
                   );
 
   let results = (outs AnyType:$retValue);
@@ -139,7 +144,7 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     );
  }
 
- def FixedPointUntilOp : StarplatBaseOp<"fixedPointUntil", [SymbolTable]>
+ def FixedPointUntilOp : StarplatBaseOp<"fixedPointUntil", [SymbolTable, Symbol]>
  {
     let summary = "Fixed-point operation for iterative graph processing";
     
@@ -149,21 +154,23 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     }];
 
     let arguments = ( ins Variadic<AnyType> : $argumets,
-                          OptionalAttr<ArrayAttr> : $terminationCondition
+                          OptionalAttr<ArrayAttr> : $terminationCondition,
+                          SymbolNameAttr:$sym_name
     );
     
     let regions = (region AnyRegion:$body);
 
  }
 
- def ForAllOp : StarplatBaseOp<"forall", [SymbolTable]>
+ def ForAllOp : StarplatBaseOp<"forall", [SymbolTable, Symbol]>
  {
     let summary = "Forall loop";
     let description = [{"For all operation description."}];
 
     let arguments = ( ins 
                       Variadic<AnyType> : $arguments,
-                      OptionalAttr<ArrayAttr> : $loopattributes 
+                      OptionalAttr<ArrayAttr> : $loopattributes,
+                      SymbolNameAttr:$sym_name
                     );
     
     let regions = (region AnyRegion:$body);
