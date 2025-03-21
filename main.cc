@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    //starplatcodegen->print();
+    starplatcodegen->print();
 
     // Work on Conversion of OMP
     // Working on Generating a hello world program in LLVM - Done 
