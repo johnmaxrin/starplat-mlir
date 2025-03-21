@@ -67,6 +67,18 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
 
 }
 
+def ArgOp : StarplatBaseOp<"arg", [Symbol]>
+{
+  let summary = "For handling the argument.";
+
+  let arguments = (ins TypeAttr :$type, 
+                                SymbolNameAttr:$sym_name,
+                                SymbolNameAttr:$sym_visibility
+                                );
+  let results = (outs AnyType);
+
+}
+
 def AssignmentOp : StarplatBaseOp<"assign", []>
 {
   let summary = "The AssignmentOp assigns a value to a variable";

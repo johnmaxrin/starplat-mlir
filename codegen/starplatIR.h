@@ -10,6 +10,8 @@
 // 9. Change edge -> Edge type.
 // 10. Handle all the special function seperately.
 // 11. Rewrite Add to Arithematic OP
+// 12. For now creating a new operation for argument. Later make use og block arguments.
+
 
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
@@ -762,8 +764,8 @@ public:
         for(auto argItr : args)
         {
 
-            auto declOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++], builder.getStringAttr(argItr->getVarName()->getname()), builder.getStringAttr("public"));
-            funcSymbolTable.insert(declOp);
+            auto argOp = builder.create<mlir::starplat::ArgOp>(builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++], builder.getStringAttr(argItr->getVarName()->getname()), builder.getStringAttr("public"));
+            funcSymbolTable.insert(argOp);
         }
 
         
