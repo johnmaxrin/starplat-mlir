@@ -25,6 +25,10 @@ namespace mlir
                     {
                         // I think we have to learn about pointers, memalloc and all. 
                         // Bye for now. 
+
+                        // CSR For Vertex based.
+                        // COO for Edge based.
+                        // File handling in LLVM.
                     }
                 });
             }
