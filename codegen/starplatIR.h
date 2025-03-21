@@ -735,7 +735,7 @@ public:
 
 
 
-        auto funcType = builder.getFunctionType(arg4Builder, {});
+        auto funcType = builder.getFunctionType(argTypes, {});
         mlir::ArrayAttr argNamesAttr = builder.getArrayAttr(argNames);
 
         auto func = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNamesAttr);
@@ -754,7 +754,6 @@ public:
         mlir::SymbolTable funcSymbolTable(func);
         symbolTables.push_back(&funcSymbolTable);
 
-        func.getArgNames();
         
         
         int idx = 0;
@@ -762,9 +761,6 @@ public:
 
         for(auto argItr : args)
         {
-
-
-            //auto declareArg = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), ::mlir::TypeAttr::get(GraphType), builder.getStringAttr(arg->getVarName()->getname()), builder.getStringAttr("public"));
 
             auto declOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++], builder.getStringAttr(argItr->getVarName()->getname()), builder.getStringAttr("public"));
             funcSymbolTable.insert(declOp);
