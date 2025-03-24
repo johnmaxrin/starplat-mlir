@@ -31,19 +31,20 @@ namespace mlir
                 auto mod = getOperation();
                 mod->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::FuncOp funcOp)
                                                      {
-                    funcOp->getContext()->getOrLoadDialect<mlir::LLVM::LLVMDialect>();
-                    mlir::IRRewriter rewriter(funcOp->getContext());
-                    mlir::OpBuilder::InsertionGuard guard(rewriter);
+                                                         funcOp->getContext()->getOrLoadDialect<mlir::LLVM::LLVMDialect>();
+                                                         mlir::IRRewriter rewriter(funcOp->getContext());
+                                                         mlir::OpBuilder::InsertionGuard guard(rewriter);
 
-                    auto &entryBlock = funcOp.getBody().getBlocks().front();
-                    rewriter.setInsertionPointToStart(&entryBlock);
-                    // CSR For Vertex based.
-                    // COO for Edge based.
+                                                         auto &entryBlock = funcOp.getBody().getBlocks().front();
+                                                         rewriter.setInsertionPointToStart(&entryBlock);
+                                                         auto const1 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
+                                                         // CSR For Vertex based.
+                                                         // COO for Edge based.
 
-                    // Check arg ops and declare structs. Eg Graph, Nodes etc
-                    llvm::SmallVector<mlir::Operation *, 4> toErase;
-                    funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::ArgOp arg)
-                    {
+                                                         // Check arg ops and declare structs. Eg Graph, Nodes etc
+                                                         llvm::SmallVector<mlir::Operation *, 4> toErase;
+                                                         funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::ArgOp arg)
+                                                                                                 {
                             if (auto typeAttr = arg->getAttrOfType<mlir::TypeAttr>("type")) {
                                 mlir::Type argType = typeAttr.getValue();
                     
@@ -51,7 +52,7 @@ namespace mlir
                                 if (argType.isa<mlir::starplat::GraphType>()) {
 
                                     auto graphStruct = createGraphStruct(&rewriter, funcOp->getContext());
-                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), graphStruct, rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1)));
+                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), graphStruct,const1);
 
                                     if(arg->hasAttr("sym_name")){
                                         auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
@@ -60,18 +61,14 @@ namespace mlir
                                         }
                                     }
 
-                                    if (arg->use_empty()) {
-                                        toErase.push_back(arg);
-                                    } else {
                                         arg->replaceAllUsesWith(alloc);
                                         toErase.push_back(arg);
-                                    }
 
                                 }
 
-                                if(argType.isa<mlir::starplat::NodeType>()) {
+                                else if(argType.isa<mlir::starplat::NodeType>()) {
                                     auto nodeStruct = createNodeStruct(&rewriter, funcOp->getContext());
-                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), nodeStruct, rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1)));
+                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), nodeStruct, const1);
                                     
                                     if (arg->hasAttr("sym_name")) {
                                         auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
@@ -80,22 +77,119 @@ namespace mlir
                                         }
                                     }
 
-                                    if (arg->use_empty()) {
-                                        toErase.push_back(arg);
-                                    } else {
                                         arg->replaceAllUsesWith(alloc);
                                         toErase.push_back(arg);
-                                    }
                                     
                                 }
-                            }}); 
-                        
-                            for (mlir::Operation *op : toErase) {
-                                op->erase();
+
+                                else if(argType.isa<mlir::starplat::PropNodeType>()){
+
+                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
+
+                                    if (arg->hasAttr("sym_name")) {
+                                        auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
+                                        if (symNameAttr) {
+                                            alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                        }
+                                    }
+                                    arg->replaceAllUsesWith(alloc);
+                                    toErase.push_back(arg);
+
+                                }
+
+
+                            } });
+
+                                                         funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::DeclareOp declOp)
+                                                        {
+                                                            if (auto typeAttr = declOp->getAttrOfType<mlir::TypeAttr>("type"))
+                                                            {
+                                                                mlir::Type argType = typeAttr.getValue();
+
+                                                                if (argType.isa<mlir::starplat::PropNodeType>())
+                                                                {
+                                                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
+
+                                                                    if (declOp->hasAttr("sym_name"))
+                                                                    {
+                                                                        auto symNameAttr = declOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                                                        if (symNameAttr)
+                                                                        {
+                                                                            alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                                                        }
+                                                                    }
+                                                                    declOp->replaceAllUsesWith(alloc);
+                                                                    toErase.push_back(declOp);
+                                                                }
+
+                                                                else if(argType.isa<mlir::IntegerType>())
+                                                                {
+                                                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
+
+                                                                    if (declOp->hasAttr("sym_name"))
+                                                                    {
+                                                                        auto symNameAttr = declOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                                                        if (symNameAttr)
+                                                                        {
+                                                                            alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                                                        }
+                                                                    }
+                                                                    declOp->replaceAllUsesWith(alloc);
+                                                                    toErase.push_back(declOp);
+                                                                }
+                                                            }
+                                                        });
+
+                            funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::ConstOp constOp)
+                            {
+
+                            if (auto typeAttr = constOp->getAttrOfType<mlir::StringAttr>("value")) {
+                            
+                            string constType = typeAttr.str();
+
+                            if(constType == "INF")
+                            {
+                            auto inf = rewriter.getI32IntegerAttr(2147483647);
+                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI32Type(), inf);
+                            // auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), inf);
+
+                            if (constOp->hasAttr("sym_name")) {
+                                auto symNameAttr = constOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                if (symNameAttr) {
+                                    alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                }
                             }
-                        
-                        
-                });
+                            constOp->replaceAllUsesWith(alloc);
+                            toErase.push_back(constOp);
+                            }
+                            
+                        } });
+
+                        funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::AssignmentOp assignOp)
+                            {
+
+                                
+                                llvm::outs() << assignOp->getOperand(0) << "\n";
+                                llvm::outs() << assignOp->getOperand(0).getType() << "\n\n";
+                                Value ptr = assignOp->getOperand(0);
+                                Value value = assignOp->getOperand(1);
+                            auto alloc = rewriter.create<LLVM::StoreOp>(rewriter.getUnknownLoc(), value, ptr);
+
+                            if (assignOp->hasAttr("sym_name")) {
+                                auto symNameAttr = assignOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                if (symNameAttr) {
+                                    alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                }
+                            }
+                            assignOp->replaceAllUsesWith(alloc);
+                            toErase.push_back(assignOp);
+                            
+                            
+                         });
+
+                                                         for (mlir::Operation *op : toErase)
+                                                             op->erase();
+                                                     });
             }
         };
     }
