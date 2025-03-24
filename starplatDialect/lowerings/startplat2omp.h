@@ -175,6 +175,23 @@ namespace mlir
                             constOp->replaceAllUsesWith(alloc);
                             toErase.push_back(constOp);
                             }
+
+                            else if(constType == "False")
+                            {
+                            auto falseAttr = rewriter.getI32IntegerAttr(0);
+                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI32Type(), falseAttr);
+                            // auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), inf);
+
+                            if (constOp->hasAttr("sym_name")) {
+                                auto symNameAttr = constOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                if (symNameAttr) {
+                                    alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                    alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
+                                }
+                            }
+                            constOp->replaceAllUsesWith(alloc);
+                            toErase.push_back(constOp);   
+                            }
                             
                         } 
                     }
@@ -190,8 +207,8 @@ namespace mlir
 
                         auto assign = rewriter.create<LLVM::StoreOp>(rewriter.getUnknownLoc(), ptr, value);
                         
-                        assignOp->replaceAllUsesWith(assign);
-                        toErase.push_back(assign);
+                        //assignOp->replaceAllUsesWith(assign);
+                        toErase.push_back(assignOp);
 
 
                     }
@@ -213,8 +230,9 @@ namespace mlir
 
            
 
-                        for (mlir::Operation *op : toErase)
-                            op->erase();
+                for (mlir::Operation *op : toErase)
+                    op->erase();
+
 
                 mod->dump();
             });
