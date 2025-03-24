@@ -30,41 +30,45 @@ namespace mlir
             {
                 auto mod = getOperation();
                 mod->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::FuncOp funcOp)
-                                                     {
-                                                         funcOp->getContext()->getOrLoadDialect<mlir::LLVM::LLVMDialect>();
-                                                         mlir::IRRewriter rewriter(funcOp->getContext());
-                                                         mlir::OpBuilder::InsertionGuard guard(rewriter);
+                {
+                    funcOp->getContext()->getOrLoadDialect<mlir::LLVM::LLVMDialect>();
+                    mlir::IRRewriter rewriter(funcOp->getContext());
+                    mlir::OpBuilder::InsertionGuard guard(rewriter);
 
-                                                         auto &entryBlock = funcOp.getBody().getBlocks().front();
-                                                         rewriter.setInsertionPointToStart(&entryBlock);
-                                                         auto const1 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
-                                                         // CSR For Vertex based.
-                                                         // COO for Edge based.
+                    auto &entryBlock = funcOp.getBody().getBlocks().front();
+                    rewriter.setInsertionPointToStart(&entryBlock);
+                    auto const1 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
+                    // CSR For Vertex based.
+                    // COO for Edge based.
 
-                                                         // Check arg ops and declare structs. Eg Graph, Nodes etc
-                                                         llvm::SmallVector<mlir::Operation *, 4> toErase;
-                                                         funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::ArgOp arg)
-                                                                                                 {
-                            if (auto typeAttr = arg->getAttrOfType<mlir::TypeAttr>("type")) {
-                                mlir::Type argType = typeAttr.getValue();
+                    // Check arg ops and declare structs. Eg Graph, Nodes etc
+                    llvm::SmallVector<mlir::Operation *, 4> toErase;
                     
-                                // Check if argType is the specific Starplat type
-                                if (argType.isa<mlir::starplat::GraphType>()) {
+                    funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
+                    {
+                    
+                    
+                    if(llvm::isa<mlir::starplat::ArgOp>(op))
+                    {
+                        auto arg = llvm::cast<mlir::starplat::ArgOp>(op);
+                    if (auto typeAttr = arg->getAttrOfType<mlir::TypeAttr>("type")) {
+                        mlir::Type argType = typeAttr.getValue();
+                    
+                        // Check if argType is the specific Starplat type
+                        if (argType.isa<mlir::starplat::GraphType>()) {
 
-                                    auto graphStruct = createGraphStruct(&rewriter, funcOp->getContext());
-                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), graphStruct,const1);
+                            auto graphStruct = createGraphStruct(&rewriter, funcOp->getContext());
+                            auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), graphStruct,const1);
 
-                                    if(arg->hasAttr("sym_name")){
-                                        auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
-                                        if(symNameAttr){
-                                            alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
-                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
+                            if(arg->hasAttr("sym_name")){
+                                auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
+                                if(symNameAttr){
+                                    alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                    alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
                                         }
                                     }
-
                                         arg->replaceAllUsesWith(alloc);
                                         toErase.push_back(arg);
-
                                 }
 
                                 else if(argType.isa<mlir::starplat::NodeType>()) {
@@ -101,54 +105,56 @@ namespace mlir
                                 }
 
 
-                            } });
+                            } 
+                        }
 
-                                                         funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::DeclareOp declOp)
-                                                        {
-                                                            if (auto typeAttr = declOp->getAttrOfType<mlir::TypeAttr>("type"))
-                                                            {
-                                                                mlir::Type argType = typeAttr.getValue();
 
-                                                                if (argType.isa<mlir::starplat::PropNodeType>())
-                                                                {
-                                                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
-
-                                                                    if (declOp->hasAttr("sym_name"))
-                                                                    {
-                                                                        auto symNameAttr = declOp->getAttrOfType<mlir::StringAttr>("sym_name");
-                                                                        if (symNameAttr)
-                                                                        {
-                                                                            alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
-                                                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
-
-                                                                        }
-                                                                    }
-                                                                    declOp->replaceAllUsesWith(alloc);
-                                                                    toErase.push_back(declOp);
-                                                                }
-
-                                                                else if(argType.isa<mlir::IntegerType>())
-                                                                {
-                                                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
-
-                                                                    if (declOp->hasAttr("sym_name"))
-                                                                    {
-                                                                        auto symNameAttr = declOp->getAttrOfType<mlir::StringAttr>("sym_name");
-                                                                        if (symNameAttr)
-                                                                        {
-                                                                            alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
-                                                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
-                                                                        }
-                                                                    }
-                                                                    declOp->replaceAllUsesWith(alloc);
-                                                                    toErase.push_back(declOp);
-                                                                }
-                                                            }
-                                                        });
-
-                            funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::ConstOp constOp)
+                    else if(llvm::isa<mlir::starplat::DeclareOp>(op))
+                    {
+                        auto declOp = llvm::cast<mlir::starplat::DeclareOp>(op);
+                        if (auto typeAttr = declOp->getAttrOfType<mlir::TypeAttr>("type"))
+                        {
+                            mlir::Type argType = typeAttr.getValue();
+                            if (argType.isa<mlir::starplat::PropNodeType>())
                             {
+                                auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
 
+                                if (declOp->hasAttr("sym_name"))
+                                {
+                                    auto symNameAttr = declOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                    if (symNameAttr)
+                                    {
+                                        alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                        alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
+                                    }
+                                }
+                                declOp->replaceAllUsesWith(alloc);
+                                toErase.push_back(declOp);
+                            }
+
+                            else if(argType.isa<mlir::IntegerType>())
+                            {
+                                auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
+
+                                if (declOp->hasAttr("sym_name"))
+                                {
+                                    auto symNameAttr = declOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                    if (symNameAttr)
+                                    {
+                                        alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                        alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
+                                    }
+                                }
+                                declOp->replaceAllUsesWith(alloc);
+                                toErase.push_back(declOp);
+                            }
+                        }
+                    }
+
+                    else if(llvm::isa<mlir::starplat::ConstOp>(op))
+                    {
+
+                            auto constOp = llvm::cast<mlir::starplat::ConstOp>(op);
                             if (auto typeAttr = constOp->getAttrOfType<mlir::StringAttr>("value")) {
                             
                             string constType = typeAttr.str();
@@ -170,7 +176,33 @@ namespace mlir
                             toErase.push_back(constOp);
                             }
                             
-                        } });
+                        } 
+                    }
+
+
+                    else if(llvm::isa<mlir::starplat::AssignmentOp>(op))
+                    {
+
+                        llvm::outs() << "Hi\n\n";
+                        auto assignOp = llvm::cast<mlir::starplat::AssignmentOp>(op);
+                        mlir::Value value = assignOp->getOperand(0);
+                        mlir::Value ptr = assignOp->getOperand(1);
+
+                        auto assign = rewriter.create<LLVM::StoreOp>(rewriter.getUnknownLoc(), ptr, value);
+                        
+                        assignOp->replaceAllUsesWith(assign);
+                        toErase.push_back(assign);
+
+
+                    }
+
+
+
+
+
+                    });
+
+
 
                     
                      
