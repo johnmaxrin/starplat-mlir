@@ -58,6 +58,7 @@ namespace mlir
                                         auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
                                         if(symNameAttr){
                                             alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
                                         }
                                     }
 
@@ -74,6 +75,7 @@ namespace mlir
                                         auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
                                         if (symNameAttr) {
                                             alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
                                         }
                                     }
 
@@ -90,6 +92,7 @@ namespace mlir
                                         auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
                                         if (symNameAttr) {
                                             alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
                                         }
                                     }
                                     arg->replaceAllUsesWith(alloc);
@@ -116,6 +119,8 @@ namespace mlir
                                                                         if (symNameAttr)
                                                                         {
                                                                             alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
+
                                                                         }
                                                                     }
                                                                     declOp->replaceAllUsesWith(alloc);
@@ -132,6 +137,7 @@ namespace mlir
                                                                         if (symNameAttr)
                                                                         {
                                                                             alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                                                            alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
                                                                         }
                                                                     }
                                                                     declOp->replaceAllUsesWith(alloc);
@@ -157,6 +163,7 @@ namespace mlir
                                 auto symNameAttr = constOp->getAttrOfType<mlir::StringAttr>("sym_name");
                                 if (symNameAttr) {
                                     alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                    alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
                                 }
                             }
                             constOp->replaceAllUsesWith(alloc);
@@ -165,32 +172,30 @@ namespace mlir
                             
                         } });
 
-                        funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::starplat::AssignmentOp assignOp)
-                            {
+                    
+                     
 
-                                
-                                llvm::outs() << assignOp->getOperand(0) << "\n";
-                                llvm::outs() << assignOp->getOperand(0).getType() << "\n\n";
-                                Value ptr = assignOp->getOperand(0);
-                                Value value = assignOp->getOperand(1);
-                            auto alloc = rewriter.create<LLVM::StoreOp>(rewriter.getUnknownLoc(), value, ptr);
+                       
 
-                            if (assignOp->hasAttr("sym_name")) {
-                                auto symNameAttr = assignOp->getAttrOfType<mlir::StringAttr>("sym_name");
-                                if (symNameAttr) {
-                                    alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
-                                }
-                            }
-                            assignOp->replaceAllUsesWith(alloc);
-                            toErase.push_back(assignOp);
-                            
-                            
-                         });
+                       
 
-                                                         for (mlir::Operation *op : toErase)
-                                                             op->erase();
-                                                     });
+           
+
+                        for (mlir::Operation *op : toErase)
+                            op->erase();
+
+                mod->dump();
+            });
+
+            
+                
+            
+
+
             }
+
+            
+
         };
     }
 }
