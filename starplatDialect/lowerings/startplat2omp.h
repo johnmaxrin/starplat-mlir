@@ -289,9 +289,9 @@ mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::ML
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Node");
     
     // Create a ptr type
-    auto ptr = mlir::LLVM::LLVMPointerType::get(rewriter->getI32Type());
+    // auto ptr = mlir::LLVM::LLVMPointerType::get(rewriter->getI32Type());
     
-    structType.setBody({rewriter->getI32Type(), ptr}, false);
+    //structType.setBody({rewriter->getI32Type(), ptr}, false);
 
     return structType;
 }

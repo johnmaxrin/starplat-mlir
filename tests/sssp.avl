@@ -1,15 +1,17 @@
-function Compute_SSSP (Graph g,propNode<int> dist, propEdge<int> weight, Node src) {
+function Compute_SSSP (Graph g,propNode<int,g> dist, propEdge<int,g> weight, Node src) {
     
-    propNode <int> modified;
-    propNode <int> modified_nxt;
+    
+    
+    propNode <int,g> modified_nxt;
+    propNode <int,g> modified;
 
     g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
 
-    src.modified = True; 
 
     src.dist=0;
     int finished =False;
     
+    src.modified = True; 
     fixedPoint until (finished:!modified) {
         
           forall (v in g.nodes().filter(modified == True)) {
