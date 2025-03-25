@@ -268,9 +268,15 @@ public:
         const Paramlist *paramlist = static_cast<const Paramlist *>(methodcallnode->getParamLists());
 
         methodcallnode->Accept(this, symbolTable);
-        vector<Param *> paramListVecvtor = paramlist->getParamList();
+        std::vector<Param *> paramListVecvtor = paramlist->getParamList();
+        llvm::SmallVector<mlir::Value> operandsForAttachNodeProperty;
 
         const Identifier *identifier1 = memberaccessnode->getIdentifier();
+        auto graph = globalLookupOp(identifier1->getname());
+        if(!graph)
+            llvm::outs() << "Error: Graph not defined!\n";
+        operandsForAttachNodeProperty.push_back(graph->getResult(0));
+
         const Identifier *identifier2 = memberaccessnode->getIdentifier2();
 
         if (methodcallnode && methodcallnode->getIsBuiltin())
@@ -279,7 +285,6 @@ public:
             {
                 // Create attachNodeProperty operation.
 
-                llvm::SmallVector<mlir::Value> operandsForAttachNodeProperty;
 
                 for (Param *param : paramListVecvtor)
                 {
@@ -314,6 +319,7 @@ public:
                     else
                         return; // Handle errors gracefully
                 }
+
 
                 auto attachNodeProp = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operandsForAttachNodeProperty);
             }
@@ -905,7 +911,7 @@ public:
                     const Paramlist *paramlist = static_cast<const Paramlist *>(methodcallIn->getParamLists());
                     paramlist->Accept(this, symbolTable);
 
-                    vector<Param *> paramlistvector = paramlist->getParamList();
+                    std::vector<Param *> paramlistvector = paramlist->getParamList();
                     const Identifier *node1 = static_cast<const Identifier *>(paramlistvector[0]->getExpr()->getExpression());
                     const Identifier *node2 = static_cast<const Identifier *>(paramlistvector[1]->getExpr()->getExpression());
 

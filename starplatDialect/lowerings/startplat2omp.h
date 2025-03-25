@@ -38,6 +38,7 @@ namespace mlir
                     auto &entryBlock = funcOp.getBody().getBlocks().front();
                     rewriter.setInsertionPointToStart(&entryBlock);
                     auto const1 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
+                    auto const0 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
                     // CSR For Vertex based.
                     // COO for Edge based.
 
@@ -192,6 +193,23 @@ namespace mlir
                             constOp->replaceAllUsesWith(alloc);
                             toErase.push_back(constOp);   
                             }
+
+                            else if(constType == "True")
+                            {
+                            auto falseAttr = rewriter.getI32IntegerAttr(1);
+                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI32Type(), falseAttr);
+                            // auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), inf);
+
+                            if (constOp->hasAttr("sym_name")) {
+                                auto symNameAttr = constOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                                if (symNameAttr) {
+                                    alloc->setAttr("sym_name", rewriter.getStringAttr(symNameAttr.getValue()));
+                                    alloc->setAttr("sym_visibility", rewriter.getStringAttr("nested"));
+                                }
+                            }
+                            constOp->replaceAllUsesWith(alloc);
+                            toErase.push_back(constOp);   
+                            }
                             
                         } 
                     }
@@ -200,7 +218,6 @@ namespace mlir
                     else if(llvm::isa<mlir::starplat::AssignmentOp>(op))
                     {
 
-                        llvm::outs() << "Hi\n\n";
                         auto assignOp = llvm::cast<mlir::starplat::AssignmentOp>(op);
                         mlir::Value value = assignOp->getOperand(0);
                         mlir::Value ptr = assignOp->getOperand(1);
@@ -252,8 +269,17 @@ namespace mlir
 
 mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context)
 {
+
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Graph");
-    structType.setBody({rewriter->getI32Type()}, false);
+    // Create Node struct type
+    mlir::LLVM::LLVMStructType nodeType = createNodeStruct(rewriter,context);
+
+
+    // Define Graph struct body with (Node*, int)
+    structType.setBody({nodeType, rewriter->getI32Type()}, /*isPacked=*/false);
+
+
+    //structType.setBody({rewriter->getI32Type()}, false);
 
     return structType;
 }
@@ -261,7 +287,20 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::M
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context)
 {
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Node");
-    structType.setBody({rewriter->getI32Type()}, false);
+    
+    // Create a ptr type
+    auto ptr = mlir::LLVM::LLVMPointerType::get(rewriter->getI32Type());
+    
+    structType.setBody({rewriter->getI32Type(), ptr}, false);
 
     return structType;
+}
+
+
+void attachNodeProp()
+{
+    // Add Grahp at first Param followed by props :done
+    // Add Node * nodes to graph struct
+    // Add Void ** props to node struct. 
+
 }
