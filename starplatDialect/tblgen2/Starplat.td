@@ -273,15 +273,15 @@ def EdgeType : StarPlatDialectType<"Edge", "edge">
 
 def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{
   let summary = "Property of Node";
-  let parameters = (ins "Type":$parameter);
-  let assemblyFormat = "`<` $parameter `>`";
+  let parameters = (ins "Type":$parameter, StringRefParameter<"Graph Identifier">:$graphId);
+  let assemblyFormat = "`<` $parameter `,` $graphId `>`";
 
 }
 
 def PropEdgeType : StarPlatDialectType<"PropEdge", "propEdge">{
   let summary = "Property of Edge";
-  let parameters = (ins "Type":$parameter);
-  let assemblyFormat = "`<` $parameter `>`";
+  let parameters = (ins "Type":$parameter, StringRefParameter<"Graph Identifier">:$graphId);
+  let assemblyFormat = "`<` $parameter `,` $graphId `>`";
 }
 
 // End of types

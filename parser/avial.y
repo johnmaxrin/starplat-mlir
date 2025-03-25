@@ -252,7 +252,8 @@ paramlist : param                                          {
 templateType : properties LTxx type COMMA IDENTIFIER GT   {
                                                 GraphProperties *graphproperties = static_cast<GraphProperties *>($1);
                                                 TypeExpr *type = static_cast<TypeExpr *>($3);
-                                                $$ = new TemplateType(graphproperties, type);
+                                                Identifier *graphName = new Identifier($5);
+                                                $$ = new TemplateType(graphproperties, type, graphName);
 
 
                                         }

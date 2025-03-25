@@ -747,7 +747,8 @@ private:
 class TemplateType : public ASTNode
 {
 public:
-    TemplateType(GraphProperties *graphprop, TypeExpr *type) : graphproperties_(graphprop), type_(type) {}
+    TemplateType(GraphProperties *graphprop, TypeExpr *type, Identifier *graphName) : 
+        graphproperties_(graphprop), type_(type), graphName_(graphName) {}
 
     virtual void Accept(Visitor *visitor) const override
     {
@@ -761,10 +762,12 @@ public:
 
     const GraphProperties *getGraphPropNode() const { return graphproperties_; }
     const TypeExpr *getType() const { return type_; }
+    const Identifier *getGraphName() const { return graphName_; }
 
 private:
     GraphProperties *graphproperties_;
     TypeExpr *type_;
+    Identifier *graphName_;
 };
 
 class TypeExpr : public ASTNode

@@ -52,10 +52,18 @@ public:
         TemplateType *Type = static_cast<TemplateType *>(templateDeclStmt->gettype());
         Identifier *identifier = static_cast<Identifier *>(templateDeclStmt->getvarname());
 
+        const Identifier *graphName = Type->getGraphName();
+        llvm::StringRef graphId = graphName->getname();
+
         // TODO: Change the function name to getGraphProp().
         if (std::string(Type->getGraphPropNode()->getPropertyType()) == "propNode")
         {
-            auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
+            
+        
+
+
+
+            auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(),graphId);
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
 
@@ -69,7 +77,8 @@ public:
 
         else if (std::string(Type->getGraphPropNode()->getPropertyType()) == "propEdge")
         {
-            auto type = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type());
+
+            auto type = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type(), graphId);
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
             auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()),builder.getStringAttr("public"));
@@ -724,16 +733,18 @@ public:
             }
             else if (arg->getTemplateType() != nullptr)
             {
+                llvm::StringRef graphId = arg->getTemplateType()->getGraphName()->getname();
+                
                 if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propNode")
                 {
-                    argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type()));
-                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
+                    argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId));
+                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(),graphId);
                     auto typeAttr = ::mlir::TypeAttr::get(type);
                 }
                 else if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propEdge")
                 {
-                    argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type()));
-                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type());
+                    argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId));
+                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
                     auto typeAttr = ::mlir::TypeAttr::get(type);
                 }
             }
