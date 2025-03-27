@@ -302,5 +302,6 @@ void attachNodeProp()
     // Add Grahp at first Param followed by props :done
     // Add Node * nodes to graph struct
     // Add Void ** props to node struct. 
+    // Get element pointer.
 
 }
