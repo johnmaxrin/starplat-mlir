@@ -12,7 +12,6 @@
 // 11. Rewrite Add to Arithematic OP
 // 12. For now creating a new operation for argument. Later make use og block arguments.
 
-
 #include "includes/StarPlatDialect.h"
 #include "includes/StarPlatOps.h"
 #include "includes/StarPlatTypes.h"
@@ -58,19 +57,17 @@ public:
         // TODO: Change the function name to getGraphProp().
         if (std::string(Type->getGraphPropNode()->getPropertyType()) == "propNode")
         {
-            
-        
 
-
-
-            auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(),graphId);
+            auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
 
             auto visibility = builder.getStringAttr("public");
             auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()), visibility);
 
-            if(globalLookupOp(identifier->getname())) {}
+            if (globalLookupOp(identifier->getname()))
+            {
+            }
             else
                 symbolTable->insert(declare);
         }
@@ -81,9 +78,8 @@ public:
             auto type = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type(), graphId);
             auto typeAttr = ::mlir::TypeAttr::get(type);
             auto resType = builder.getI32Type();
-            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()),builder.getStringAttr("public"));
+            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"));
             symbolTable->insert(declare);
-
         }
     }
 
@@ -99,7 +95,7 @@ public:
         const Statementlist *stmtlist = static_cast<const Statementlist *>(forAllStmt->getstmtlist());
         std::vector<mlir::Operation *> ops; // For new SymbolTable
 
-        auto loopVarSymbol =  globalLookupOp(loopVar->getname());
+        auto loopVarSymbol = globalLookupOp(loopVar->getname());
         mlir::Type loopVarType;
         mlir::Operation *loopVarOp;
         mlir::SmallVector<mlir::Attribute> loopAttr;
@@ -235,39 +231,32 @@ public:
 
         auto loopOp = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttrArray, loopa);
 
-                loopOp.setNested();
+        loopOp.setNested();
 
         auto &loopBlock = loopOp.getBody().emplaceBlock();
 
-/*
-// Visit the function body.
-        mlir::SymbolTable funcSymbolTable(func);
+        /*
+        // Visit the function body.
+                mlir::SymbolTable funcSymbolTable(func);
 
-        for (auto op : ops)
-            funcSymbolTable.insert(op->clone());
+                for (auto op : ops)
+                    funcSymbolTable.insert(op->clone());
 
-        stmtlist->Accept(this, &funcSymbolTable);
+                stmtlist->Accept(this, &funcSymbolTable);
 
-*/
+        */
 
-        
         // Copy Everything from Symbol table to forAllSymbolTable.
 
-        
-
-        
         builder.setInsertionPointToStart(&loopBlock);
 
         mlir::SymbolTable forAllSymbolTable(loopOp);
         symbolTables.push_back(&forAllSymbolTable);
 
-
-
         stmtlist->Accept(this, &forAllSymbolTable);
 
         builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
         builder.setInsertionPointAfter(loopOp);
-
     }
 
     virtual void visitMemberaccessStmt(const MemberacceessStmt *MemberacceessStmt, mlir::SymbolTable *symbolTable) override
@@ -282,7 +271,7 @@ public:
 
         const Identifier *identifier1 = memberaccessnode->getIdentifier();
         auto graph = globalLookupOp(identifier1->getname());
-        if(!graph)
+        if (!graph)
             llvm::outs() << "Error: Graph not defined!\n";
         operandsForAttachNodeProperty.push_back(graph->getResult(0));
 
@@ -293,7 +282,6 @@ public:
             if (std::strcmp(methodcallnode->getIdentifier()->getname(), "attachNodeProperty") == 0)
             {
                 // Create attachNodeProperty operation.
-
 
                 for (Param *param : paramListVecvtor)
                 {
@@ -314,8 +302,8 @@ public:
                         exit(1);
                     }
 
-                    auto *idSymbol =  globalLookupOp(identifier->getname()); // globalLookupOp(identifier->getname());
-                    auto *kwSymbol =  globalLookupOp(keyword->getKeyword()); //globalLookupOp(keyword->getKeyword());
+                    auto *idSymbol = globalLookupOp(identifier->getname()); // globalLookupOp(identifier->getname());
+                    auto *kwSymbol = globalLookupOp(keyword->getKeyword()); // globalLookupOp(keyword->getKeyword());
 
                     if (!kwSymbol)
                         llvm::outs() << "Error: Keyword '" << keyword->getKeyword() << "' not declared.\n";
@@ -324,11 +312,13 @@ public:
                         llvm::outs() << "Error: Identifier '" << identifier->getname() << "' not declared.\n";
 
                     if (idSymbol && kwSymbol)
+                    {
                         operandsForAttachNodeProperty.push_back(idSymbol->getResult(0));
+                        operandsForAttachNodeProperty.push_back(kwSymbol->getResult(0));
+                    }
                     else
                         return; // Handle errors gracefully
                 }
-
 
                 auto attachNodeProp = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operandsForAttachNodeProperty);
             }
@@ -365,7 +355,6 @@ public:
         Identifier *identifier = static_cast<Identifier *>(paramAssignment->getidentifier());
         Keyword *keyword = static_cast<Keyword *>(paramAssignment->getkeyword());
 
-
         if (!globalLookupOp(keyword->getKeyword()))
         {
             auto keywordVal = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(std::string(keyword->getKeyword())), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
@@ -383,17 +372,17 @@ public:
             auto lhs = globalLookupOp(identifier->getname());
             auto rhs = globalLookupOp(keyword->getKeyword());
 
-            auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
+            // auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
             // symbolTable->rename(assign, builder.getStringAttr(identifier->getname()));
         }
 
-        else if(globalLookupOp(identifier->getname()) != nullptr)
+        else if (globalLookupOp(identifier->getname()) != nullptr)
         {
 
             auto lhs = globalLookupOp(identifier->getname());
             auto rhs = globalLookupOp(keyword->getKeyword());
 
-            auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
+            // auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
             // symbolTable->rename(assign, builder.getStringAttr(identifier->getname()));
         }
         else
@@ -686,8 +675,7 @@ public:
             }
 
             // Create the Min Tupple
-            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(),builder.getI32Type(), gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4->getResult(0));
-
+            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(), gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4->getResult(0));
         }
         else
         {
@@ -709,10 +697,7 @@ public:
 
         std::vector<mlir::Operation *> ops;
 
-
-
         auto args = function->getparams()->getArgList();
-
 
         for (auto arg : args)
         {
@@ -734,11 +719,11 @@ public:
             else if (arg->getTemplateType() != nullptr)
             {
                 llvm::StringRef graphId = arg->getTemplateType()->getGraphName()->getname();
-                
+
                 if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propNode")
                 {
                     argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId));
-                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(),graphId);
+                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
                     auto typeAttr = ::mlir::TypeAttr::get(type);
                 }
                 else if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propEdge")
@@ -752,8 +737,6 @@ public:
             argNames.push_back(builder.getStringAttr(arg->getVarName()->getname()));
         }
 
-
-
         auto funcType = builder.getFunctionType(argTypes, {});
         mlir::ArrayAttr argNamesAttr = builder.getArrayAttr(argNames);
 
@@ -766,26 +749,22 @@ public:
         for (auto arg : funcType.getInputs())
             auto argval = entryBlock.addArgument(arg, builder.getUnknownLoc());
 
-
         // Visit the function body.
         Statementlist *stmtlist = static_cast<Statementlist *>(function->getstmtlist());
 
         mlir::SymbolTable funcSymbolTable(func);
         symbolTables.push_back(&funcSymbolTable);
 
-        
-        
         int idx = 0;
         builder.setInsertionPointToStart(&entryBlock);
 
-        for(auto argItr : args)
+        for (auto argItr : args)
         {
 
             auto argOp = builder.create<mlir::starplat::ArgOp>(builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++], builder.getStringAttr(argItr->getVarName()->getname()), builder.getStringAttr("public"));
             funcSymbolTable.insert(argOp);
         }
 
-        
         stmtlist->Accept(this, &funcSymbolTable);
 
         // Create end operation.
@@ -799,14 +778,14 @@ public:
         for (Param *param : paramListVecvtor)
             param->Accept(this, symbolTable);
     }
-    
+
     virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil, mlir::SymbolTable *symbolTable) override
     {
         // Create new region.
         // Create new symbol table.
         // Pass everything in symbol table to new symbol table.
         // Then Generate Code.
-        
+
         Identifier *identifier = static_cast<Identifier *>(fixedpointuntil->getidentifier());
         Expression *expr = static_cast<Expression *>(fixedpointuntil->getexpr());
         Statementlist *stmtlist = static_cast<Statementlist *>(fixedpointuntil->getstmtlist());
@@ -828,7 +807,7 @@ public:
         }
 
         mlir::ArrayAttr condAttrArray = builder.getArrayAttr({opAttr});
-        
+
         mlir::Operation *lhs = globalLookupOp(identifier->getname());
         if (!lhs)
         {
@@ -851,16 +830,12 @@ public:
         llvm::SmallVector<mlir::Value> condArgs = {lhs->getResult(0), rhs->getResult(0)};
         mlir::StringAttr fixPntAttr = builder.getStringAttr("FixedPnt");
         auto fixedPointUntil = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc(), condArgs, condAttrArray, fixPntAttr);
-       
-        fixedPointUntil.setNested();
-        
 
+        fixedPointUntil.setNested();
 
         // Change block.
         auto &loopBlock = fixedPointUntil.getBody().emplaceBlock();
         builder.setInsertionPointToStart(&loopBlock);
-        
-
 
         mlir::SymbolTable fixedSymbolTable(fixedPointUntil);
         symbolTables.push_back(&fixedSymbolTable);
@@ -885,7 +860,7 @@ public:
             typeAttr = mlir::starplat::EdgeType::get(builder.getContext());
 
         auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr, builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"));
-        
+
         symbolTable->insert(idDecl);
 
         expr->Accept(this, symbolTable);
@@ -1012,18 +987,22 @@ public:
 
         if (!globalLookupOp(builder.getStringAttr(memberaccess->getIdentifier()->getname())))
         {
-            if(globalLookupOp(memberaccess->getIdentifier()->getname()) == nullptr)
-                {llvm::outs() << "Error1: " << memberaccess->getIdentifier()->getname() << " not defined!\n";
-            exit(0);}
+            if (globalLookupOp(memberaccess->getIdentifier()->getname()) == nullptr)
+            {
+                llvm::outs() << "Error1: " << memberaccess->getIdentifier()->getname() << " not defined!\n";
+                exit(0);
+            }
         }
 
         if (memberaccess->getIdentifier2())
         {
             if (!globalLookupOp(builder.getStringAttr(memberaccess->getIdentifier2()->getname())))
             {
-            if(globalLookupOp(memberaccess->getIdentifier()->getname()) == nullptr)
-                {llvm::outs() << "Error2: " << memberaccess->getIdentifier2()->getname() << " not defined!\n";
-                exit(0);}
+                if (globalLookupOp(memberaccess->getIdentifier()->getname()) == nullptr)
+                {
+                    llvm::outs() << "Error2: " << memberaccess->getIdentifier2()->getname() << " not defined!\n";
+                    exit(0);
+                }
             }
         }
     }
@@ -1067,8 +1046,6 @@ public:
         expr->getExpression()->Accept(this, symbolTable);
     }
 
-
-
     void print()
     {
         verify(module);
@@ -1084,8 +1061,7 @@ public:
     {
         return &context;
     }
-    
-    
+
     mlir::ModuleOp *getModule()
     {
         return &module;
@@ -1099,9 +1075,6 @@ private:
 
     std::vector<mlir::SymbolTable *> symbolTables;
 
-
-
-
     mlir::Operation *globalLookupOp(llvm::StringRef name)
     {
         for (auto symbolTable : symbolTables)
@@ -1111,7 +1084,4 @@ private:
         }
         return nullptr;
     }
-
 };
-
-

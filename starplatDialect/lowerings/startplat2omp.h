@@ -14,6 +14,7 @@
 
 mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
+void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter);
 
 namespace mlir
 {
@@ -230,6 +231,11 @@ namespace mlir
 
                     }
 
+                    else if(llvm::isa<mlir::starplat::AttachNodePropertyOp>(op))
+                    {
+                        lowerAttachNodePropOp(op,&rewriter);
+                    }
+
 
 
 
@@ -272,11 +278,10 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::M
 
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Graph");
     // Create Node struct type
-    mlir::LLVM::LLVMStructType nodeType = createNodeStruct(rewriter,context);
 
-
+    auto ptrType = LLVM::LLVMPointerType::get(context);
     // Define Graph struct body with (Node*, int)
-    structType.setBody({nodeType, rewriter->getI32Type()}, /*isPacked=*/false);
+    structType.setBody({ptrType, rewriter->getI32Type()}, /*isPacked=*/false);
 
 
     //structType.setBody({rewriter->getI32Type()}, false);
@@ -297,11 +302,21 @@ mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::ML
 }
 
 
-void attachNodeProp()
+void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter)
 {
-    // Add Grahp at first Param followed by props :done
-    // Add Node * nodes to graph struct
-    // Add Void ** props to node struct. 
-    // Get element pointer.
+    // So, we have graph[0] and numofnodes[1]
+    // Get Numofnodes from graph
+    // use it to allocate memory for each props
+
+    auto graph =  attachNodePropOp->getOperand(0); // We got the Graph. 
+    auto graphStruct = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(),createGraphStruct(rewriter, rewriter->getContext()), graph);
+
+    auto int32Type = rewriter->getI32Type();
+   
+    auto numOfNodes = rewriter->create<LLVM::ExtractValueOp>(rewriter->getUnknownLoc(), int32Type, graphStruct, rewriter->getDenseI64ArrayAttr({1}));
+    // Use numOfNodes to allocate.
+
+
+   
 
 }
