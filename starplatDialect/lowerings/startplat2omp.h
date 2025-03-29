@@ -16,6 +16,7 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::M
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter, mlir::Operation *numOfNodes);
 void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
+void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter);
 
 namespace mlir
 {
@@ -341,20 +342,18 @@ void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewrit
     auto prop = setNodePropOp->getOperand(1);
     auto value = setNodePropOp->getOperand(2);
 
-    node.dump();
-    prop.dump();
-    value.dump();
-
     // Extract the node value. 
     auto loadnode = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), createNodeStruct(rewriter, rewriter->getContext()), node);
-
-
     auto nodeVal = rewriter->create<LLVM::ExtractValueOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), loadnode, rewriter->getDenseI64ArrayAttr({0}));
-    
-
     auto assign = rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), value, prop);
 
-    setNodePropOp->erase();
-
-    
+    setNodePropOp->erase();    
 }
+
+void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,mlir::Operation *funcOp)
+{
+    auto llvm = LLVM::
+}
+
+
+
