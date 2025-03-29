@@ -15,6 +15,7 @@
 mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter, mlir::Operation *numOfNodes);
+void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
 
 namespace mlir
 {
@@ -167,7 +168,7 @@ namespace mlir
 
                             if(constType == "INF")
                             {
-                            auto inf = rewriter.getI8IntegerAttr(2147483647);
+                            auto inf = rewriter.getI8IntegerAttr(100); // Will think about this later [TODO!]
                             auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI8Type(), inf);
                             // auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), inf);
 
@@ -215,6 +216,12 @@ namespace mlir
                             constOp->replaceAllUsesWith(alloc);
                             toErase.push_back(constOp);   
                             }
+
+                            else if(constType == "0")
+                            {
+                                constOp->replaceAllUsesWith(const0);
+                                toErase.push_back(constOp);
+                            }
                             
                         } 
                     }
@@ -236,24 +243,12 @@ namespace mlir
                     }
 
                     else if(llvm::isa<mlir::starplat::AttachNodePropertyOp>(op))
-                    {
                         lowerAttachNodePropOp(op,&rewriter, numofNodes);
-                    }
 
-
-
-
+                    else if(llvm::isa<mlir::starplat::SetNodePropertyOp>(op))
+                        lowerSetNodePropOp(op, &rewriter);
 
                     });
-
-
-
-                    
-                     
-
-                       
-
-                       
 
            
 
@@ -300,7 +295,7 @@ mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::ML
     // Create a ptr type
     // auto ptr = mlir::LLVM::LLVMPointerType::get(rewriter->getI32Type());
     
-    //structType.setBody({rewriter->getI32Type(), ptr}, false);
+    structType.setBody({rewriter->getI32Type()}, false);
 
     return structType;
 }
@@ -337,4 +332,29 @@ void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *
     attachNodePropOp->erase();
    
 
+}
+
+
+void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter)
+{
+    auto node = setNodePropOp->getOperand(0);
+    auto prop = setNodePropOp->getOperand(1);
+    auto value = setNodePropOp->getOperand(2);
+
+    node.dump();
+    prop.dump();
+    value.dump();
+
+    // Extract the node value. 
+    auto loadnode = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), createNodeStruct(rewriter, rewriter->getContext()), node);
+
+
+    auto nodeVal = rewriter->create<LLVM::ExtractValueOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), loadnode, rewriter->getDenseI64ArrayAttr({0}));
+    
+
+    auto assign = rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), value, prop);
+
+    setNodePropOp->erase();
+
+    
 }
