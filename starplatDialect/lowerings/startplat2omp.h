@@ -14,7 +14,7 @@
 
 mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
-void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter);
+void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter, mlir::Operation *numOfNodes);
 
 namespace mlir
 {
@@ -38,8 +38,9 @@ namespace mlir
 
                     auto &entryBlock = funcOp.getBody().getBlocks().front();
                     rewriter.setInsertionPointToStart(&entryBlock);
-                    auto const1 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
-                    auto const0 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
+                    auto const1 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI8Type(), rewriter.getI8IntegerAttr(1));
+                    auto const0 = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI8Type(), rewriter.getI8IntegerAttr(0));
+                    mlir::Operation *numofNodes = nullptr;
                     // CSR For Vertex based.
                     // COO for Edge based.
 
@@ -49,7 +50,7 @@ namespace mlir
                     funcOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
                     {
                     
-                    
+                     
                     if(llvm::isa<mlir::starplat::ArgOp>(op))
                     {
                         auto arg = llvm::cast<mlir::starplat::ArgOp>(op);
@@ -61,7 +62,10 @@ namespace mlir
 
                             auto graphStruct = createGraphStruct(&rewriter, funcOp->getContext());
                             auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), graphStruct,const1);
+                            auto graphStructVal = rewriter.create<LLVM::LoadOp>(rewriter.getUnknownLoc(),createGraphStruct(&rewriter, rewriter.getContext()), alloc);
 
+                            numofNodes = rewriter.create<LLVM::ExtractValueOp>(rewriter.getUnknownLoc(), rewriter.getI32Type(), graphStructVal,rewriter.getDenseI64ArrayAttr({1}));
+                            
                             if(arg->hasAttr("sym_name")){
                                 auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
                                 if(symNameAttr){
@@ -92,7 +96,7 @@ namespace mlir
 
                                 else if(argType.isa<mlir::starplat::PropNodeType>()){
 
-                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
+                                    auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), numofNodes->getResult(0));
 
                                     if (arg->hasAttr("sym_name")) {
                                         auto symNameAttr = arg->getAttrOfType<mlir::StringAttr>("sym_name");
@@ -119,7 +123,7 @@ namespace mlir
                             mlir::Type argType = typeAttr.getValue();
                             if (argType.isa<mlir::starplat::PropNodeType>())
                             {
-                                auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), const1);
+                                auto alloc = rewriter.create<LLVM::AllocaOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), numofNodes->getResult(0));
 
                                 if (declOp->hasAttr("sym_name"))
                                 {
@@ -163,8 +167,8 @@ namespace mlir
 
                             if(constType == "INF")
                             {
-                            auto inf = rewriter.getI32IntegerAttr(2147483647);
-                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI32Type(), inf);
+                            auto inf = rewriter.getI8IntegerAttr(2147483647);
+                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI8Type(), inf);
                             // auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), inf);
 
                             if (constOp->hasAttr("sym_name")) {
@@ -180,8 +184,8 @@ namespace mlir
 
                             else if(constType == "False")
                             {
-                            auto falseAttr = rewriter.getI32IntegerAttr(0);
-                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI32Type(), falseAttr);
+                            auto falseAttr = rewriter.getI8IntegerAttr(0);
+                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI8Type(), falseAttr);
                             // auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), inf);
 
                             if (constOp->hasAttr("sym_name")) {
@@ -197,8 +201,8 @@ namespace mlir
 
                             else if(constType == "True")
                             {
-                            auto falseAttr = rewriter.getI32IntegerAttr(1);
-                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI32Type(), falseAttr);
+                            auto falseAttr = rewriter.getI8IntegerAttr(1);
+                            auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), rewriter.getI8Type(), falseAttr);
                             // auto alloc = rewriter.create<LLVM::ConstantOp>(rewriter.getUnknownLoc(), LLVM::LLVMPointerType::get(funcOp->getContext()), rewriter.getI32Type(), inf);
 
                             if (constOp->hasAttr("sym_name")) {
@@ -233,7 +237,7 @@ namespace mlir
 
                     else if(llvm::isa<mlir::starplat::AttachNodePropertyOp>(op))
                     {
-                        lowerAttachNodePropOp(op,&rewriter);
+                        lowerAttachNodePropOp(op,&rewriter, numofNodes);
                     }
 
 
@@ -302,19 +306,32 @@ mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::ML
 }
 
 
-void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter)
+void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter, mlir::Operation *numOfNodes)
 {
     // So, we have graph[0] and numofnodes[1]
     // Get Numofnodes from graph
     // use it to allocate memory for each props
 
-    auto graph =  attachNodePropOp->getOperand(0); // We got the Graph. 
-    auto graphStruct = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(),createGraphStruct(rewriter, rewriter->getContext()), graph);
+    // Use numOfNodes to initialize values.
+    // Loop through all the operands. 
+    
+    auto numOfOperands = attachNodePropOp->getNumOperands(); 
+    auto numNodesI64 = rewriter->create<LLVM::ZExtOp>(
+        rewriter->getUnknownLoc(),
+        rewriter->getI64Type(),  // Convert to i64
+        numOfNodes->getResult(0)
+    );
 
-    auto int32Type = rewriter->getI32Type();
-   
-    auto numOfNodes = rewriter->create<LLVM::ExtractValueOp>(rewriter->getUnknownLoc(), int32Type, graphStruct, rewriter->getDenseI64ArrayAttr({1}));
-    // Use numOfNodes to allocate.
+    auto elementSize = rewriter->create<LLVM::ConstantOp>(
+        rewriter->getUnknownLoc(), 
+        rewriter->getI64Type(), 
+        rewriter->getI64IntegerAttr(4) // Size of i32 = 4 bytes
+    );
+
+    auto totalSize = rewriter->create<LLVM::MulOp>(rewriter->getUnknownLoc(), numNodesI64, elementSize);
+
+    for(int i=1; i<numOfOperands; i+=2)
+        rewriter->create<LLVM::MemsetOp>(rewriter->getUnknownLoc(), attachNodePropOp->getOperand(i), attachNodePropOp->getOperand(i+1), totalSize, false);
 
 
    
