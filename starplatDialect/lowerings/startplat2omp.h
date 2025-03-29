@@ -334,6 +334,7 @@ void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *
         rewriter->create<LLVM::MemsetOp>(rewriter->getUnknownLoc(), attachNodePropOp->getOperand(i), attachNodePropOp->getOperand(i+1), totalSize, false);
 
 
+    attachNodePropOp->erase();
    
 
 }
