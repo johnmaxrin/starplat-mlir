@@ -16,7 +16,7 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::M
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter, mlir::Operation *numOfNodes);
 void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
-void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter);
+void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, mlir::Operation *parentOp);
 
 namespace mlir
 {
@@ -249,6 +249,9 @@ namespace mlir
                     else if(llvm::isa<mlir::starplat::SetNodePropertyOp>(op))
                         lowerSetNodePropOp(op, &rewriter);
 
+                    else if(llvm::isa<mlir::starplat::FixedPointUntilOp>(op))
+                        lowerFixedPoint(op, &rewriter, funcOp);
+
                     });
 
            
@@ -352,7 +355,17 @@ void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewrit
 
 void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,mlir::Operation *funcOp)
 {
-    auto llvm = LLVM::
+    // Get the coditionals predicate operands
+    // Create 2 blocks. 
+
+    mlir::Attribute attr = fixedPointOp->getAttr("terminationCondition");
+    llvm::outs() << attr.dyn_cast<mlir::ArrayAttr>()[0];
+
+    mlir::Value lhs = fixedPointOp->getOperands()[0];
+    mlir::Value rhs = fixedPointOp->getOperands()[1];
+
+    
+
 }
 
 
