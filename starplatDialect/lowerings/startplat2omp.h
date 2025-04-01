@@ -419,22 +419,40 @@ void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewri
         entryBlock->addArgument(argType, rewriter->getUnknownLoc());
     }
 
-    auto const1 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI8IntegerAttr(0));
+    auto const0 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI8IntegerAttr(0));
+    auto const1 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI8IntegerAttr(1));
+    
     auto index = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType,i32Type, const1);
+    rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), const0, index);
+
     auto result = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType, i1Type,const1);
 
     auto n = func.getArgument(1); // i32, total numbre of nodes. 
+    auto ptrArray = func.getArgument(0); // Array pointer. 
 
     auto loopCond = func.addBlock();
     auto loopBody = func.addBlock();
     auto loopExit = func.addBlock();
 
     auto brOp = rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond);
+    
+    // Loop Cond
     rewriter->setInsertionPointToStart(loopCond);
+    auto i = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), i32Type, index);
+    auto cond = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), LLVM::ICmpPredicate::slt, i, n);
+    rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), cond, loopBody, loopExit);
 
-    auto cond = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), `);
+    // Loop Body
+    rewriter->setInsertionPointToStart(loopBody);
+    // OR 
+    // Increment index
+    
+    rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), );
+
+
 
     // Return the result
+    rewriter->setInsertionPointToStart(loopExit);
     rewriter->create<LLVM::ReturnOp>(rewriter->getUnknownLoc(), result);
     rewriter->setInsertionPointToStart(prevPoint);
 }
