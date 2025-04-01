@@ -16,7 +16,8 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::M
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter, mlir::Operation *numOfNodes);
 void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
-void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, mlir::Operation *parentOp);
+void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,mlir::Operation *funcOp, mlir::Operation *moduleOp, mlir::Operation *numOfNodes);
+void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint);
 
 namespace mlir
 {
@@ -250,7 +251,7 @@ namespace mlir
                         lowerSetNodePropOp(op, &rewriter);
 
                     else if(llvm::isa<mlir::starplat::FixedPointUntilOp>(op))
-                        lowerFixedPoint(op, &rewriter, funcOp);
+                        lowerFixedPoint(op, &rewriter, funcOp, mod, numofNodes);
 
                     });
 
@@ -353,19 +354,89 @@ void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewrit
     setNodePropOp->erase();    
 }
 
-void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,mlir::Operation *funcOp)
+void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,mlir::Operation *funcOp, mlir::Operation *moduleOp, mlir::Operation *numOfNodes)
 {
     // Get the coditionals predicate operands
-    // Create 2 blocks. 
+    // Create 3 blocks. 
+    // loopCond:
+    // loopBody:
+    // loopExit:
+
 
     mlir::Attribute attr = fixedPointOp->getAttr("terminationCondition");
-    llvm::outs() << attr.dyn_cast<mlir::ArrayAttr>()[0];
 
     mlir::Value lhs = fixedPointOp->getOperands()[0];
     mlir::Value rhs = fixedPointOp->getOperands()[1];
 
     
+    mlir::Region &region = funcOp->getRegion(0);
+    mlir::Block *loopCond = new mlir::Block();
+    region.push_back(loopCond);
 
+    rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond); 
+    rewriter->setInsertionPointToStart(loopCond);
+
+    // Check the  termination Condition
+    auto terminationStr = attr.dyn_cast<mlir::ArrayAttr>()[0].dyn_cast<mlir::StringAttr>();
+    if( terminationStr.getValue() == "NOT")
+    {
+        //rewriter->create<LLVM::OrOp>();
+        createLLVMReductionFunction(funcOp, rewriter, loopCond);
+
+    }
+
+
+
+    
+}
+
+
+void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint) {
+
+    // Think about the return type after --> This could be a potential bug! 
+
+    auto context = modOp->getContext();
+
+
+    // Set up function type: (i32, i32) -> i32
+    Type i32Type = IntegerType::get(context, 32);
+    Type ptrType = LLVM::LLVMPointerType::get(context);
+    Type i1Type =  IntegerType::get(context, 1);
+
+    LLVM::LLVMFunctionType funcType = LLVM::LLVMFunctionType::get(i1Type,  {ptrType, i32Type}, false);
+
+    rewriter->setInsertionPoint(modOp);
+    // Create an LLVM-style function
+    auto func = rewriter->create<LLVM::LLVMFuncOp>(
+        rewriter->getUnknownLoc(), "reduceOr", funcType);
+
+    // Add an entry block
+    auto *entryBlock = rewriter->createBlock(&func.getBody());
+    rewriter->setInsertionPointToStart(entryBlock);
+    
+    ArrayRef<Type> argTypes = funcType.getParams();
+    for (Type argType : argTypes) {
+        entryBlock->addArgument(argType, rewriter->getUnknownLoc());
+    }
+
+    auto const1 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI8IntegerAttr(0));
+    auto index = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType,i32Type, const1);
+    auto result = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType, i1Type,const1);
+
+    auto n = func.getArgument(1); // i32, total numbre of nodes. 
+
+    auto loopCond = func.addBlock();
+    auto loopBody = func.addBlock();
+    auto loopExit = func.addBlock();
+
+    auto brOp = rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond);
+    rewriter->setInsertionPointToStart(loopCond);
+
+    auto cond = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), `);
+
+    // Return the result
+    rewriter->create<LLVM::ReturnOp>(rewriter->getUnknownLoc(), result);
+    rewriter->setInsertionPointToStart(prevPoint);
 }
 
 
