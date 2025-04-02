@@ -17,7 +17,7 @@ mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::ML
 void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *rewriter, mlir::Operation *numOfNodes);
 void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
 void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,mlir::Operation *funcOp, mlir::Operation *moduleOp, mlir::Operation *numOfNodes);
-void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint);
+LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint);
 
 namespace mlir
 {
@@ -373,17 +373,35 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,
     mlir::Block *loopCond = new mlir::Block();
     region.push_back(loopCond);
 
+    mlir::Block *loopBody = new mlir::Block();
+    region.push_back(loopBody);
+
+    mlir::Block *loopExit = new mlir::Block();
+    region.push_back(loopExit);
+    
     rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond); 
     rewriter->setInsertionPointToStart(loopCond);
+
+    auto const1 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI1Type(), rewriter->getBoolAttr(true));
 
     // Check the  termination Condition
     auto terminationStr = attr.dyn_cast<mlir::ArrayAttr>()[0].dyn_cast<mlir::StringAttr>();
     if( terminationStr.getValue() == "NOT")
     {
         //rewriter->create<LLVM::OrOp>();
-        createLLVMReductionFunction(funcOp, rewriter, loopCond);
 
+        auto reduceFunc = createLLVMReductionFunction(funcOp, rewriter, loopCond);
+        auto redVal = rewriter->create<LLVM::CallOp>(rewriter->getUnknownLoc(), reduceFunc, ArrayRef<mlir::Value>{lhs, rhs});
+        auto cond = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), LLVM::ICmpPredicate::ne, redVal->getResult(0), const1);
+        rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), cond, loopBody, loopExit);
     }
+
+    // Loop Body
+    rewriter->setInsertionPointToStart(loopBody);
+    // Parse the remaning things here. 
+
+    // Loop Exit
+    rewriter->setInsertionPointToStart(loopExit);
 
 
 
@@ -391,7 +409,7 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,
 }
 
 
-void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint) {
+LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint) {
 
     // Think about the return type after --> This could be a potential bug! 
 
@@ -407,7 +425,7 @@ void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewri
 
     rewriter->setInsertionPoint(modOp);
     // Create an LLVM-style function
-    auto func = rewriter->create<LLVM::LLVMFuncOp>(
+    LLVM::LLVMFuncOp func = rewriter->create<LLVM::LLVMFuncOp>(
         rewriter->getUnknownLoc(), "reduceOr", funcType);
 
     // Add an entry block
@@ -472,7 +490,10 @@ void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewri
     rewriter->setInsertionPointToStart(loopExit);
     auto resultFin = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), i1Type, resultPtr);
     rewriter->create<LLVM::ReturnOp>(rewriter->getUnknownLoc(), resultFin);
-    rewriter->setInsertionPointToStart(prevPoint);
+    rewriter->setInsertionPointToEnd(prevPoint);
+
+
+    return func;
 }
 
 
