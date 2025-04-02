@@ -399,6 +399,14 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,
     // Loop Body
     rewriter->setInsertionPointToStart(loopBody);
     // Parse the remaning things here. 
+    fixedPointOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
+    {
+
+        if(llvm::isa<mlir::starplat::ForAllOp>(op))
+        {
+            llvm::outs() << "Control For All \n";
+        }
+    });
 
     // Loop Exit
     rewriter->setInsertionPointToStart(loopExit);
