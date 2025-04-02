@@ -421,14 +421,18 @@ void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewri
 
     auto const0 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI8IntegerAttr(0));
     auto const1 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI8IntegerAttr(1));
+    auto constFalse = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), i1Type, rewriter->getBoolAttr(0));
     
     auto index = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType,i32Type, const1);
     rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), const0, index);
 
-    auto result = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType, i1Type,const1);
+    auto resultPtr = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType, i1Type,const1);
+    rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), constFalse, resultPtr);
 
     auto n = func.getArgument(1); // i32, total numbre of nodes. 
     auto ptrArray = func.getArgument(0); // Array pointer. 
+
+    
 
     auto loopCond = func.addBlock();
     auto loopBody = func.addBlock();
@@ -445,15 +449,29 @@ void createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewri
     // Loop Body
     rewriter->setInsertionPointToStart(loopBody);
     // OR 
+    auto eoiptr = rewriter->create<LLVM::GEPOp>(rewriter->getUnknownLoc(),ptrType, i1Type, ptrArray, ArrayRef<Value>{
+        rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), 0),  // First index (base)
+    }); 
+
+    auto eoi = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), i1Type, eoiptr);
+
+    auto result = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), i1Type, resultPtr);
+    auto orVal = rewriter->create<LLVM::OrOp>(rewriter->getUnknownLoc(),i1Type, eoi, result);
+    rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), orVal, resultPtr);
+
+
     // Increment index
     
-    rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), );
+    auto newi = rewriter->create<LLVM::AddOp>(rewriter->getUnknownLoc(), i32Type, i, const1);
+    rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), newi, index);
+    rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond);
 
 
 
     // Return the result
     rewriter->setInsertionPointToStart(loopExit);
-    rewriter->create<LLVM::ReturnOp>(rewriter->getUnknownLoc(), result);
+    auto resultFin = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), i1Type, resultPtr);
+    rewriter->create<LLVM::ReturnOp>(rewriter->getUnknownLoc(), resultFin);
     rewriter->setInsertionPointToStart(prevPoint);
 }
 
