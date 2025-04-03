@@ -3,6 +3,9 @@
 
 #include "includes/StarPlatDialect.h"
 
+// TODO: 
+// 1. I have simply added true for filter in forall. Change it! 
+
 bool operationContainsOldValues(mlir::Operation *op, const llvm::DenseMap<mlir::Value, mlir::Value> &operandMapping);
 
 namespace mlir
@@ -108,7 +111,8 @@ namespace mlir
                                                 operands[1] = edgeVar.getResult(); // Second variable is always the loop variable.
                                                 
                     
-                                                auto edgeForall = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(),operands,builder.getArrayAttr(attributes), builder.getStringAttr("sampleLoop"));
+                                                auto edgeForall = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(),operands,builder.getArrayAttr(attributes), builder.getBoolAttr(0), builder.getStringAttr("sampleLoop"));
+
                                                 auto &loopBlock = edgeForall.getBody().emplaceBlock();
                                                 builder.setInsertionPointToStart(&loopBlock);
 

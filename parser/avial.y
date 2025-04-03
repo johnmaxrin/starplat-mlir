@@ -127,7 +127,7 @@ ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement($3, $5);}
 
 forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY      { $$ = new ForallStatement(); }
 
-forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY    { 
+forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY    {
                                                                   Identifier* identifier = new Identifier($3);
                                                                   $$ = new ForallStatement(identifier, $5, $8);
                                                                 }
@@ -158,10 +158,10 @@ methodcall : IDENTIFIER LPAREN paramlist RPAREN {
                                                   $$ = new Methodcall(identifier, $3);
                                                 }
 
-            | IDENTIFIER LPAREN expr RPAREN     {
+             | IDENTIFIER LPAREN expr RPAREN     {
                                                   Identifier* identifier = new Identifier($1);
                                                   $$ = new Methodcall(identifier, $3);
-                                                }
+                                                } 
 
             | IDENTIFIER LPAREN RPAREN          {
                                                   Identifier* identifier = new Identifier($1);
@@ -222,6 +222,12 @@ arglist : arg                   {
 
 param : expr                    {       Expression *expr = static_cast<Expression *>($1);
                                         $$ = new Param(expr);
+
+                                        if(expr->getKind() == KIND_IDENTIFIER) {
+                                                const Identifier *identifier = static_cast<const Identifier *>(expr->getExpression());
+                                                printf("Param: %s\n", identifier->getname());
+                                        }
+                                                
                                 }
 
          | paramAssignment      {
@@ -231,7 +237,7 @@ param : expr                    {       Expression *expr = static_cast<Expressio
          ;
 
 
-paramlist : param                                          {
+paramlist :   param                                          {
                                                                 Paramlist *paramlist = new Paramlist();
                                                                 Param *param = static_cast<Param *>($1);
                                                                 paramlist->addparam(param);

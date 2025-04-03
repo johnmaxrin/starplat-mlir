@@ -100,6 +100,7 @@ public:
         mlir::Operation *loopVarOp;
         mlir::SmallVector<mlir::Attribute> loopAttr;
         mlir::SmallVector<mlir::Value> loopOperands;
+        mlir::BoolAttr filter = builder.getBoolAttr(0);
 
         if (loopVarSymbol)
         {
@@ -160,6 +161,31 @@ public:
                 {
                     if (strcmp(methodcallin->getIdentifier()->getname(), "neighbors") == 0)
                     {
+                        const Expression *idExpr = static_cast<const Expression *>(methodcallin->getParamLists());
+
+                        if (idExpr->getKind() == ExpressionKind::KIND_IDENTIFIER)
+                        {
+                            const Identifier *idParam = static_cast<const Identifier *>(idExpr->getExpression());
+                            llvm::outs() << "Symbol: " << idParam->getname() << "\n";
+                            
+                            auto idSymbol = globalLookupOp(idParam->getname());
+
+                            if (idSymbol)
+                                loopOperands.push_back(idSymbol->getResult(0));
+
+                            else
+                            {
+                                llvm::errs() << "Symbol not found at neighnours.\n";
+                                exit(0);
+                            }
+                        }
+
+                        else
+                        {
+                            llvm::errs() << "Error: at Neighbours\n";
+                            exit(0);
+                        }
+
                         loopVarType = mlir::starplat::NodeType::get(builder.getContext());
                         loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(loopVarType), builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
                         ops.push_back(loopVarOp);
@@ -182,7 +208,8 @@ public:
                 if (strcmp(identifier1->getname(), "filter") == 0)
                 {
 
-                    loopAttr.push_back(builder.getStringAttr("filter"));
+                    // loopAttr.push_back(builder.getStringAttr("filter"));
+                    filter = builder.getBoolAttr(1);
 
                     const Expression *outer = static_cast<const Expression *>(outermethodcall->getParamLists());
                     const BoolExpr *outerBoolExpr = static_cast<const BoolExpr *>(outer->getExpression());
@@ -229,7 +256,7 @@ public:
         mlir::ArrayAttr loopAttrArray = builder.getArrayAttr(loopAttr);
         mlir::StringAttr loopa = builder.getStringAttr("loopa");
 
-        auto loopOp = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttrArray, loopa);
+        auto loopOp = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttrArray, filter, loopa);
 
         loopOp.setNested();
 

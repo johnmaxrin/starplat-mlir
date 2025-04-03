@@ -182,6 +182,7 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     let arguments = ( ins 
                       Variadic<AnyType> : $arguments,
                       OptionalAttr<ArrayAttr> : $loopattributes,
+                      BoolAttr : $filter,
                       SymbolNameAttr:$sym_name
                     );
     

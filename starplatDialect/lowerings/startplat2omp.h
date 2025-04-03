@@ -18,6 +18,7 @@ void lowerAttachNodePropOp(mlir::Operation *attachNodePropOp, mlir::IRRewriter *
 void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
 void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,mlir::Operation *funcOp, mlir::Operation *moduleOp, mlir::Operation *numOfNodes);
 LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint);
+void lowerForAll(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
 
 namespace mlir
 {
@@ -403,9 +404,7 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,
     {
 
         if(llvm::isa<mlir::starplat::ForAllOp>(op))
-        {
-            llvm::outs() << "Control For All \n";
-        }
+            lowerForAll(op, rewriter);
     });
 
     // Loop Exit
@@ -416,6 +415,12 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter ,
     
 }
 
+
+
+void lowerForAll(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter)
+{
+       
+}
 
 LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint) {
 

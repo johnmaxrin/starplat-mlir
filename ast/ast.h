@@ -288,11 +288,11 @@ public:
             delete param;
     }
 
-    const vector<ASTNode *> getStatementList() const { return statementlist; }
+    const std::vector<ASTNode *> getStatementList() const { return statementlist; }
     void addstmt(ASTNode *param) { statementlist.push_back(param); }
 
 private:
-    vector<ASTNode *> statementlist;
+    std::vector<ASTNode *> statementlist;
 };
 
 class DeclarationStatement : public ASTNode
@@ -737,11 +737,11 @@ public:
             delete param;
     }
 
-    const vector<Param *> getParamList() const { return paramlist; }
+    const std::vector<Param *> getParamList() const { return paramlist; }
     void addparam(Param *param) { paramlist.push_back(param); }
 
 private:
-    vector<Param *> paramlist;
+    std::vector<Param *> paramlist;
 };
 
 class TemplateType : public ASTNode
@@ -907,11 +907,11 @@ public:
             delete arg;
     }
 
-    const vector<Arg *> getArgList() const { return arglist; }
+    const std::vector<Arg *> getArgList() const { return arglist; }
     void addarg(Arg *arg) { arglist.push_back(arg); }
 
 private:
-    vector<Arg *> arglist;
+    std::vector<Arg *> arglist;
 };
 
 
