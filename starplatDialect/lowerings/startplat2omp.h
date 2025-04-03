@@ -397,7 +397,19 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, 
 
 void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter)
 {
-    //
+    // Check if filter is there. 
+    // If yes, 
+        // Check the first [0] attribute.
+        // if it is nodes, get total number of nodes for arg [0]
+            // create 3 blocks. And iterate over all the nodes. With filter
+            // Cond; Body; Exit
+
+    // If No,
+        // Check the first [0] attribute
+        // if it is neighbours, get the neighbours of operand[0] and iterate over them!
+            // Create 3 blocks. And iterate over all nodes present as neighbours of operand[0]
+            // Cond; Body; Exit; 
+
 }
 
 void lowerDeclareOp(mlir::Operation *declareOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1)
