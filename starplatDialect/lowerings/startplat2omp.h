@@ -19,7 +19,7 @@ void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewrit
 void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, mlir::Operation *funcOp, mlir::Operation *moduleOp, mlir::Operation *numOfNodes, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
 LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint);
 void lowerForAll(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter);
-void lowerDeclareOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter,llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1);
+void lowerDeclareOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1);
 
 namespace mlir
 {
@@ -397,24 +397,101 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, 
 
 void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter)
 {
-    // Check if filter is there. 
-    // If yes, 
-        // Check the first [0] attribute.
-        // if it is nodes, get total number of nodes for arg [0]
-            // create 3 blocks. And iterate over all the nodes. With filter
-            // Cond; Body; Exit
+    // Check if filter is there.
+    // If yes,
+    // Check the first [0] attribute.
+    // if it is nodes, get total number of nodes for arg [0]
+    // create 3 blocks. And iterate over all the nodes. With filter
+    // Cond; Body; Exit
 
     // If No,
-        // Check the first [0] attribute
-        // if it is neighbours, get the neighbours of operand[0] and iterate over them!
-            // Create 3 blocks. And iterate over all nodes present as neighbours of operand[0]
-            // Cond; Body; Exit; 
+    // Check the first [0] attribute
+    // if it is neighbours, get the neighbours of operand[0] and iterate over them!
+    // Create 3 blocks. And iterate over all nodes present as neighbours of operand[0]
+    // Cond; Body; Exit;
 
+    auto filter = forAllOp->getAttrOfType<BoolAttr>("filter");
+    if (filter.getValue())
+    {
+
+
+        auto loopAttr = forAllOp->getAttrOfType<ArrayAttr>("loopattributes");
+
+        if (dyn_cast<StringAttr>(loopAttr[0]).getValue() == "nodes")
+        {
+            mlir::Region &region = forAllOp->getRegion(0);
+            mlir::Block *loopCond = new mlir::Block();
+            region.push_back(loopCond);
+
+            mlir::Block *loopBody = new mlir::Block();
+            region.push_back(loopBody);
+
+            mlir::Block *loopExit = new mlir::Block();
+            region.push_back(loopExit);
+
+            rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond);
+            rewriter->setInsertionPointToStart(loopCond);
+
+            if(dyn_cast<StringAttr>(loopAttr[1]).getValue() == "EQS")
+            {
+                // Iterate over V
+
+                // Modified == True
+                // True is already there in the operand3. 
+                // For Modified, as it is a propNode
+                auto condRes = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), LLVM::ICmpPredicate::eq, forAllOp->getOperand(2), forAllOp->getOperand(3));
+                rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), condRes, loopBody, loopExit);
+            }
+
+            else
+            {
+                llvm::outs() << "Error: Not Implemented at LowerForAll!\n";
+                exit(0);
+            }
+
+
+
+        }
+
+        else 
+        {
+            llvm::errs() << "Error : Not Implemented at ForAll Starplat IR to LLVM Lowerign";
+            exit(0);
+        }
+    }
+
+    else
+    {
+        auto loopAttr = forAllOp->getAttrOfType<ArrayAttr>("loopattributes");
+        if((dyn_cast<StringAttr>(loopAttr[0]).getValue() == "neighbours")){
+            
+            mlir::Region &region = forAllOp->getRegion(0);
+            mlir::Block *loopCond = new mlir::Block();
+            region.push_back(loopCond);
+
+            mlir::Block *loopBody = new mlir::Block();
+            region.push_back(loopBody);
+
+            mlir::Block *loopExit = new mlir::Block();
+            region.push_back(loopExit);
+
+            rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond);
+            rewriter->setInsertionPointToStart(loopCond);
+
+
+        }
+
+        else 
+        {
+            llvm::errs() << "Error : Not Implemented at ForAll Starplat IR to LLVM Lowerign 2";
+            exit(0);
+        }
+    }
 }
 
 void lowerDeclareOp(mlir::Operation *declareOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1)
 {
-    
+
     auto declOp = llvm::cast<mlir::starplat::DeclareOp>(declareOp);
     if (auto typeAttr = declOp->getAttrOfType<mlir::TypeAttr>("type"))
     {
