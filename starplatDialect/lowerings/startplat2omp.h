@@ -438,9 +438,18 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter)
 
                 // Modified == True
                 // True is already there in the operand3. 
-                // For Modified, as it is a propNode
+                // For Modified, as it is a propNode, load modified for each node v. 
+
+                // 1. load index.
+
+                // 2. Check if index < numofnodes 
+                // 3. if not exit, if yes enter 
+                
+
                 auto condRes = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), LLVM::ICmpPredicate::eq, forAllOp->getOperand(2), forAllOp->getOperand(3));
                 rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), condRes, loopBody, loopExit);
+
+                
             }
 
             else
@@ -448,8 +457,6 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter)
                 llvm::outs() << "Error: Not Implemented at LowerForAll!\n";
                 exit(0);
             }
-
-
 
         }
 
@@ -463,8 +470,9 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter)
     else
     {
         auto loopAttr = forAllOp->getAttrOfType<ArrayAttr>("loopattributes");
-        if((dyn_cast<StringAttr>(loopAttr[0]).getValue() == "neighbours")){
-            
+        if((dyn_cast<StringAttr>(loopAttr[0]).getValue() == "neighbours"))
+        {
+
             mlir::Region &region = forAllOp->getRegion(0);
             mlir::Block *loopCond = new mlir::Block();
             region.push_back(loopCond);
