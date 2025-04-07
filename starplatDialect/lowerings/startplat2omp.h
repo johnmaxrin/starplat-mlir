@@ -382,14 +382,20 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, 
     // Loop Body
     rewriter->setInsertionPointToStart(loopBody);
     // Parse the remaning things here.
-    fixedPointOp->walk<mlir::WalkOrder::PreOrder>([&](mlir::Operation *op)
-                                                  {
+
+    mlir::Region &fixedPointRegion = fixedPointOp->getRegion(0);
+    mlir::Block &fixedPointBlock = fixedPointRegion.front();
+
+
+
+    for(mlir::Operation &op : fixedPointBlock.getOperations())
+    {
 
         if(llvm::isa<mlir::starplat::ForAllOp>(op))
-            lowerForAll(op, rewriter, numOfNodes->getResult(0));
+            lowerForAll(&op, rewriter, numOfNodes->getResult(0));
         
         else if(llvm::isa<mlir::starplat::DeclareOp>(op))
-            lowerDeclareOp(op, rewriter, toErase, const1); });
+            lowerDeclareOp(&op, rewriter, toErase, const1); }
 
     // Loop Exit
     rewriter->setInsertionPointToStart(loopExit);
@@ -424,10 +430,8 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
     rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), loopCond);
     rewriter->setInsertionPointToStart(loopCond);
 
-    // Operand 0 will always be graph and operand 1 will be a ptr to a node. what kind of node (neighbours, getnode etc) 
-    // depends  on the condtion inside the forAll. 
-
-
+    // Operand 0 will always be graph and operand 1 will be a ptr to a node. what kind of node (neighbours, getnode etc)
+    // depends  on the condtion inside the forAll.
 
     if (filter.getValue())
     {
@@ -436,40 +440,32 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
 
         if (dyn_cast<StringAttr>(loopAttr[0]).getValue() == "nodes")
         {
-            // If it is nodes, we will take operand 0 and operand 1. 
-            // operand zero will be graph and operand 1 will be the iterant. 
-            // Basically you've to loop through 0 to num of nodes. 
-            
+            // If it is nodes, we will take operand 0 and operand 1.
+            // operand zero will be graph and operand 1 will be the iterant.
+            // Basically you've to loop through 0 to num of nodes.
+
             // Initialize v (operand[1]) to 0;
             auto const0 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI32IntegerAttr(0));
             rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), forAllOp->getOperand(1), const0);
 
             auto cond = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), LLVM::ICmpPredicate::slt, forAllOp->getOperand(1), numofnodes);
+            mlir::Operation *condRes;
 
-
-            if (dyn_cast<StringAttr>(loopAttr[1]).getValue() == "EQS")
-            {
-                // Iterate over V
-
-                // Modified == True
-                // True is already there in the operand3.
-                // For Modified, as it is a propNode, load modified for each node v.
-
-                // 1. load index.
-                
-
-                // 2. Check if index < numofnodes
-                // 3. if not exit, if yes enter
-
-                auto condRes = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), LLVM::ICmpPredicate::eq, forAllOp->getOperand(2), forAllOp->getOperand(3));
-                rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), condRes, loopBody, loopExit);
-            }
+            if (dyn_cast<StringAttr>(loopAttr[1]).getValue() == "EQS") // Change this later. 
+                condRes = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), LLVM::ICmpPredicate::eq, forAllOp->getOperand(2), forAllOp->getOperand(3));
 
             else
             {
                 llvm::outs() << "Error: Not Implemented at LowerForAll!\n";
                 exit(0);
             }
+
+            auto condAnd = rewriter->create<LLVM::AndOp>(rewriter->getUnknownLoc(), rewriter->getI8Type(), condRes->getResult(0), cond->getResult(0));
+            rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), condAnd, loopBody, loopExit);
+
+            // Enter the Body
+            rewriter->setInsertionPointToStart(loopBody);
+            
         }
 
         else
@@ -484,7 +480,6 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
         auto loopAttr = forAllOp->getAttrOfType<ArrayAttr>("loopattributes");
         if ((dyn_cast<StringAttr>(loopAttr[0]).getValue() == "neighbours"))
         {
-
         }
 
         else
