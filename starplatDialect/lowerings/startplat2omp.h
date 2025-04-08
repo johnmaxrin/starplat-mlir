@@ -524,6 +524,24 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
             auto const1 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), i32Type, rewriter->getI32IntegerAttr(1));
             auto vplus1 = rewriter->create<LLVM::AddOp>(rewriter->getUnknownLoc(), i32Type, const1, vvalue);
 
+            auto edgelistofvplus1 = rewriter->create<LLVM::GEPOp>(rewriter->getUnknownLoc(), ptrType, i32Type, edgelist, ArrayRef<Value>{vplus1});
+            auto vpusl1value = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), i32Type, edgelistofvplus1);
+
+            auto numofneigh = rewriter->create<LLVM::SubOp>(rewriter->getUnknownLoc(), i32Type, vpusl1value, vvalue);
+            
+            auto loopIndexPtr = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType, i32Type, const1);
+            rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), vvalue, loopIndexPtr);
+
+
+            auto cond = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), LLVM::ICmpPredicate::slt, loopIndexPtr, numofneigh);
+
+            rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), cond, loopBody, loopExit );
+
+
+            // Start from vvalue till vplus1value
+
+
+
         }
 
         else
