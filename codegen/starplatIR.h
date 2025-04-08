@@ -795,7 +795,7 @@ public:
         stmtlist->Accept(this, &funcSymbolTable);
 
         // Create end operation.
-        auto end = builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+        auto returnOp = builder.create<mlir::starplat::ReturnOp>(builder.getUnknownLoc());
     }
 
     virtual void visitParamlist(const Paramlist *paramlist, mlir::SymbolTable *symbolTable) override
