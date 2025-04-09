@@ -142,7 +142,7 @@ namespace mlir
                                                                 if(mlir::isa<mlir::starplat::GetNodePropertyOp>(op))
                                                                 {   
                                                                     auto propertyAttr = op->getAttrOfType<StringAttr>("property");
-                                                                    auto useSrc = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), src->getResult(0), propertyAttr);
+                                                                    auto useSrc = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), src->getResult(0), op->getResult(0), propertyAttr);
                                                                     operandMapping[op->getResult(0)]= useSrc->getResult(0);
                                                                 
                                                                 }
@@ -158,7 +158,7 @@ namespace mlir
                                                                 if(mlir::isa<mlir::starplat::GetNodePropertyOp>(op))
                                                                 {   
                                                                     auto propertyAttr = op->getAttrOfType<StringAttr>("property");
-                                                                    auto useDst = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), dst->getResult(0), propertyAttr);
+                                                                    auto useDst = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), dst->getResult(0), op->getResult(0), propertyAttr);
                                                                     operandMapping[op->getResult(0)]= useDst->getResult(0);
 
                                                                 }

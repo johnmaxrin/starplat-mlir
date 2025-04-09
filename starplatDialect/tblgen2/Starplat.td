@@ -136,7 +136,8 @@ def GetNodePropertyOp : StarplatBaseOp<"getNodeProperty">
 
     let arguments = ( ins
                       AnyType : $node,
-                      Builtin_StringAttr : $property
+                      AnyType : $property,
+                      Builtin_StringAttr : $propertyAttr
                     );
     let results = ( outs
                     AnyType : $result

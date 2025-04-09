@@ -460,7 +460,7 @@ public:
                     {
                         mlir::Operation *propOp = globalLookupOp(lhs1MemberAccess->getIdentifier2()->getname());
                         mlir::Operation *varOp = globalLookupOp(lhs1MemberAccess->getIdentifier()->getname());
-                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0),propOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
                     }
                     else
                     {
@@ -498,7 +498,7 @@ public:
                     {
                         mlir::Operation *propOp = globalLookupOp(lhs2MemberAccess->getIdentifier2()->getname());
                         mlir::Operation *varOp = globalLookupOp(lhs2MemberAccess->getIdentifier()->getname());
-                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0),propOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
                     }
                     else
                     {
@@ -566,7 +566,7 @@ public:
                         {
                             // Generate get node property.
                             llvm::StringRef nameRef(id2->getname());
-                            gOperand2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op->getResult(0), builder.getStringAttr(nameRef));
+                            gOperand2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op->getResult(0),id2Op->getResult(0), builder.getStringAttr(nameRef));
                         }
                     }
                     else
@@ -609,7 +609,7 @@ public:
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
-                                op1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op1id1op->getResult(0), getProp);
+                                op1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op1id1op->getResult(0),op1id2op->getResult(0), getProp);
                             }
 
                             else

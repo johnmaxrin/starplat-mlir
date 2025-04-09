@@ -21,6 +21,7 @@ LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRew
 void lowerForAll(mlir::Operation *lowerForAllOp, mlir::IRRewriter *rewriter, mlir::Value numofnodes, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1, mlir::Block *prevBlock = nullptr, mlir::Value graphArg = nullptr);
 void lowerDeclareOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1);
 void lowerReturnOp(mlir::Operation *endOp, mlir::IRRewriter *rewriter);
+void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *rewriter);
 
 namespace mlir
 {
@@ -400,7 +401,6 @@ void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, 
             lowerDeclareOp(&op, rewriter, toErase, const1);
     }
 
-    
     rewriter->setInsertionPointToStart(loopExit);
 }
 
@@ -482,14 +482,10 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
                     lowerDeclareOp(&op, rewriter, toErase, const1);
             }
             // Walk the remaining stuffs insiode this for loop!
-        
 
             rewriter->setInsertionPointToStart(loopExit);
-            if(prevBlock != nullptr)
+            if (prevBlock != nullptr)
                 rewriter->create<LLVM::BrOp>(rewriter->getUnknownLoc(), prevBlock);
-            
-
-
         }
 
         else
@@ -504,18 +500,18 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
         auto loopAttr = forAllOp->getAttrOfType<ArrayAttr>("loopattributes");
         if ((dyn_cast<StringAttr>(loopAttr[0]).getValue() == "neighbours"))
         {
-            // Loop through neighbours of operand v in csr format. 
+            // Loop through neighbours of operand v in csr format.
             // Get the neighbours of v
             // Graph g contains, pointer to node list and edge list and num of nodes
-            // edge list contains the neighbour information. 
+            // edge list contains the neighbour information.
             // go to edgeList[v] -> store it in x
             // got to edgeList[v+1] -> store it in y
-            // total Number of neighbours,  n = y-x; 
+            // total Number of neighbours,  n = y-x;
             // Loop through edgeList[v] to edgeList[v + n]
             auto ptrType = LLVM::LLVMPointerType::get(rewriter->getContext());
             auto i32Type = rewriter->getI32Type();
 
-            auto edgelist = rewriter->create<LLVM::ExtractValueOp>(rewriter->getUnknownLoc(),ptrType, graphArg, rewriter->getDenseI64ArrayAttr({2}));
+            auto edgelist = rewriter->create<LLVM::ExtractValueOp>(rewriter->getUnknownLoc(), ptrType, graphArg, rewriter->getDenseI64ArrayAttr({2}));
 
             // go to edgeList[v] -> store it in x
             auto edgelistofv = rewriter->create<LLVM::GEPOp>(rewriter->getUnknownLoc(), ptrType, i32Type, edgelist, ArrayRef<Value>{forAllOp->getOperand(0)});
@@ -528,20 +524,28 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
             auto vpusl1value = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), i32Type, edgelistofvplus1);
 
             auto numofneigh = rewriter->create<LLVM::SubOp>(rewriter->getUnknownLoc(), i32Type, vpusl1value, vvalue);
-            
+
             auto loopIndexPtr = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), ptrType, i32Type, const1);
             rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), vvalue, loopIndexPtr);
 
-
             auto cond = rewriter->create<LLVM::ICmpOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), LLVM::ICmpPredicate::slt, loopIndexPtr, numofneigh);
 
-            rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), cond, loopBody, loopExit );
+            rewriter->create<LLVM::CondBrOp>(rewriter->getUnknownLoc(), cond, loopBody, loopExit);
 
+            rewriter->setInsertionPointToStart(loopBody);
 
-            // Start from vvalue till vplus1value
+            mlir::Region &forAllRegion = forAllOp->getRegion(0);
+            mlir::Block &forAllBLock = forAllRegion.front();
 
+            for (mlir::Operation &op : forAllBLock.getOperations())
+            {
 
+                if (llvm::isa<mlir::starplat::ForAllOp>(op))
+                    lowerForAll(&op, rewriter, numofnodes, toErase, const1, loopCond, forAllOp->getOperand(0));
 
+                else if (llvm::isa<mlir::starplat::DeclareOp>(op))
+                    lowerDeclareOp(&op, rewriter, toErase, const1);
+            }
         }
 
         else
@@ -575,18 +579,36 @@ void lowerDeclareOp(mlir::Operation *declareOp, mlir::IRRewriter *rewriter, llvm
             declOp->replaceAllUsesWith(alloc);
             toErase.push_back(declOp);
         }
+        
+        else if (argType.isa<mlir::starplat::EdgeType>())
+        {
+            auto alloc = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), LLVM::LLVMPointerType::get(rewriter->getContext()), rewriter->getI32Type(), const1->getResult(0));
+
+            if (declOp->hasAttr("sym_name"))
+            {
+                auto symNameAttr = declOp->getAttrOfType<mlir::StringAttr>("sym_name");
+                if (symNameAttr)
+                {
+                    alloc->setAttr("sym_name", rewriter->getStringAttr(symNameAttr.getValue()));
+                    alloc->setAttr("sym_visibility", rewriter->getStringAttr("nested"));
+                }
+            }
+            declOp->replaceAllUsesWith(alloc);
+            toErase.push_back(declOp);
+        }
     }
 }
 
-
-void lowerReturnOp(mlir::Operation *endOp, mlir::IRRewriter *rewriter)
+void lowerReturnOp(mlir::Operation *returnOp, mlir::IRRewriter *rewriter)
 {
     auto const0 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), rewriter->getI32Type(), rewriter->getI32IntegerAttr(0));
     rewriter->create<LLVM::ReturnOp>(rewriter->getUnknownLoc(), const0);
-
 }
 
-
+void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *rewriter)
+{
+    
+}
 
 LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint)
 {
