@@ -4,6 +4,7 @@
 #include "includes/StarPlatDialect.h"
 #include "mlir/Dialect/OpenMP/OpenMPDialect.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 
 // mlir::Operation *generateGraphStruct(mlir::MLIRContext *context)
 // {
@@ -21,7 +22,8 @@ LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRew
 void lowerForAll(mlir::Operation *lowerForAllOp, mlir::IRRewriter *rewriter, mlir::Value numofnodes, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1, mlir::Block *prevBlock = nullptr, mlir::Value graphArg = nullptr);
 void lowerDeclareOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1);
 void lowerReturnOp(mlir::Operation *endOp, mlir::IRRewriter *rewriter);
-void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *rewriter);
+void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
+mlir::Value lowergetEdgeOp(mlir::Operation *getEdgeOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
 
 namespace mlir
 {
@@ -545,6 +547,12 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
 
                 else if (llvm::isa<mlir::starplat::DeclareOp>(op))
                     lowerDeclareOp(&op, rewriter, toErase, const1);
+
+                else if (llvm::isa<mlir::starplat::GetNodePropertyOp>(op))
+                    lowergetNodePropertyOp(&op, rewriter, toErase);
+                
+                else if(llvm::isa<mlir::starplat::GetEdgeOp>(op))
+                    lowergetEdgeOp(&op, rewriter, toErase);
             }
         }
 
@@ -579,7 +587,7 @@ void lowerDeclareOp(mlir::Operation *declareOp, mlir::IRRewriter *rewriter, llvm
             declOp->replaceAllUsesWith(alloc);
             toErase.push_back(declOp);
         }
-        
+
         else if (argType.isa<mlir::starplat::EdgeType>())
         {
             auto alloc = rewriter->create<LLVM::AllocaOp>(rewriter->getUnknownLoc(), LLVM::LLVMPointerType::get(rewriter->getContext()), rewriter->getI32Type(), const1->getResult(0));
@@ -605,9 +613,40 @@ void lowerReturnOp(mlir::Operation *returnOp, mlir::IRRewriter *rewriter)
     rewriter->create<LLVM::ReturnOp>(rewriter->getUnknownLoc(), const0);
 }
 
-void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *rewriter)
+mlir::Value lowergetEdgeOp(mlir::Operation *getEdgeOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase)
 {
+    auto node = getEdgeOp->getOperand(1);
+    auto nbr = getEdgeOp->getOperand(2);
+    auto ptrType = LLVM::LLVMPointerType::get(rewriter->getContext());
+    auto i32Type = rewriter->getI32Type();
     
+    // Step
+    auto const1 = rewriter->create<LLVM::ConstantOp>(rewriter->getUnknownLoc(), i32Type, rewriter->getI32IntegerAttr(1));
+
+    // Lowerbound
+    auto lowerBound = rewriter->create<LLVM::GEPOp>(rewriter->getUnknownLoc(), ptrType, i32Type, getEdgeOp->getOperand(0), ArrayRef<Value>({node}));
+
+    // Upperbound
+    auto upperboundIndex = rewriter->create<LLVM::AddOp>(rewriter->getUnknownLoc(), i32Type, lowerBound->getResult(0),const1);
+    auto upperBound = rewriter->create<LLVM::GEPOp>(rewriter->getUnknownLoc(), ptrType, i32Type, getEdgeOp->getOperand(0), ArrayRef<Value>({upperboundIndex}));
+
+    auto forloop = rewriter->create<mlir::scf::ForOp>(rewriter->getUnknownLoc(), lowerBound, upperBound, const1, SmallVector<Value>{const1});
+    // Do the Loop Body
+
+    return forloop->getResult(0);
+}
+
+void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase)
+{
+    auto ptrType = LLVM::LLVMPointerType::get(rewriter->getContext());
+    auto i32Type = rewriter->getI32Type();
+
+    auto node = getNodePropOp->getResult(0);
+    auto propertArrayptr = getNodePropOp->getOperand(1);
+
+    auto gepOp = rewriter->create<LLVM::GEPOp>(rewriter->getUnknownLoc(), ptrType, i32Type, propertArrayptr, ArrayRef<Value>({node}));
+    getNodePropOp->replaceAllUsesWith(gepOp);
+    toErase.push_back(getNodePropOp);
 }
 
 LLVM::LLVMFuncOp createLLVMReductionFunction(mlir::Operation *modOp, mlir::IRRewriter *rewriter, mlir::Block *prevPoint)

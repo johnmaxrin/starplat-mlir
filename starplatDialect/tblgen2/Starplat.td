@@ -324,7 +324,7 @@ def VertexToEdge : Pass<"vertex-to-edge", "mlir::ModuleOp"> {
 def ConvertStartPlatIRToOMPPass : Pass<"starplatir-to-omp">{
   let summary = "StarPlat IR to OMP";
 
-  let dependentDialects = ["mlir::starplat::StarPlatDialect", "::mlir::omp::OpenMPDialect"];
+  let dependentDialects = ["mlir::starplat::StarPlatDialect", "::mlir::omp::OpenMPDialect", "::mlir::scf::SCFDialect"];
 
 }
 
