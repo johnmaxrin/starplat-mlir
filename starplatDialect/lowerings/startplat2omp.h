@@ -23,7 +23,9 @@ void lowerForAll(mlir::Operation *lowerForAllOp, mlir::IRRewriter *rewriter, mli
 void lowerDeclareOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1);
 void lowerReturnOp(mlir::Operation *endOp, mlir::IRRewriter *rewriter);
 void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
+void lowerGetEdgePropOp(mlir::Operation *edgePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
 mlir::Value lowergetEdgeOp(mlir::Operation *getEdgeOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
+void lowerAssignmentOp(mlir::Operation *assignmnetOp, mlir::IRRewriter *rewriter);
 
 namespace mlir
 {
@@ -553,6 +555,12 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
                 
                 else if(llvm::isa<mlir::starplat::GetEdgeOp>(op))
                     lowergetEdgeOp(&op, rewriter, toErase);
+
+                else if(llvm::isa<mlir::starplat::AssignmentOp>(op))
+                    lowerAssignmentOp(&op, rewriter);
+
+                else if(llvm::isa<mlir::starplat::GetEdgePropertyOp>(op))
+                    lowerGetEdgePropOp(&op, rewriter, toErase);
             }
         }
 
@@ -565,6 +573,24 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
 }
 
 
+void lowerAssignmentOp(mlir::Operation *assignmnetOp, mlir::IRRewriter *rewriter )
+{
+    mlir::Value lhs = assignmnetOp->getOperand(0);
+    mlir::Value rhs = assignmnetOp->getOperand(1);
+
+    auto storeop = rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), lhs, rhs);
+    assignmnetOp->replaceAllUsesWith(storeop);
+}
+
+void lowerGetEdgePropOp(mlir::Operation *edgePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase)
+{
+    auto ptrType = LLVM::LLVMPointerType::get(rewriter->getContext());
+    auto loadOp = rewriter->create<LLVM::LoadOp>(rewriter->getUnknownLoc(), ptrType, edgePropOp->getOperand(0));
+
+    edgePropOp->replaceAllUsesWith(loadOp);
+    toErase.push_back(edgePropOp);
+
+}
 
 void lowerDeclareOp(mlir::Operation *declareOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1)
 {

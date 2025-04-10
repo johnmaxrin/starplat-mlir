@@ -116,8 +116,8 @@ namespace mlir
                                                 auto &loopBlock = edgeForall.getBody().emplaceBlock();
                                                 builder.setInsertionPointToStart(&loopBlock);
 
-                                                auto src = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(),edgeVar.getResult(),builder.getStringAttr("source"));
-                                                auto dst = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(),edgeVar.getResult(),builder.getStringAttr("destination"));
+                                                auto src = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(), builder.getI32Type(),  edgeVar.getResult(),edgeVar.getResult(),edgeVar.getResult());
+                                                auto dst = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(), builder.getI32Type(), edgeVar.getResult(),edgeVar.getResult() ,edgeVar.getResult());
                                                 
 
 
@@ -174,7 +174,7 @@ namespace mlir
                                                            if(mlir::isa<mlir::starplat::GetEdgePropertyOp>(op))
                                                             {
                                                                 auto propertyAttr = op->getAttrOfType<StringAttr>("property");
-                                                                auto edgeProp = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), edgeVar->getResult(0), propertyAttr);
+                                                                auto edgeProp = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), edgeVar->getResult(0), op->getResult(0), propertyAttr);
                                                                 operandMapping[op->getResult(0)]= edgeProp->getResult(0);
 
                                                             }

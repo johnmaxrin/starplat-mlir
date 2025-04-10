@@ -150,6 +150,7 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
 
     let arguments = ( ins
                       AnyType : $edge,
+                      AnyType : $propertyOp,
                       Builtin_StringAttr : $property 
                     );
     let results = ( outs
