@@ -881,16 +881,21 @@ public:
 
         mlir::Type typeAttr;
 
+        mlir::Value lhs = NULL;
+        mlir::Value rhs = NULL;
+
         if (strcmp(type->getType(), "int") == 0)
             typeAttr = builder.getI32Type();
         else if (strcmp(type->getType(), "edge") == 0)
             typeAttr = mlir::starplat::EdgeType::get(builder.getContext());
 
         auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr, builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"));
+        lhs = idDecl.getResult();
 
         symbolTable->insert(idDecl);
 
         expr->Accept(this, symbolTable);
+        
 
         mlir::Operation *op;
         if (expr->getKind() == ExpressionKind::KIND_KEYWORD)
@@ -901,6 +906,7 @@ public:
 
             auto asgOp = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), idDecl.getResult(), op->getResult(0));
         }
+        
 
         else if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS)
         {
@@ -918,6 +924,7 @@ public:
             if (methodcallIn->getIsBuiltin())
             {
 
+
                 if (strcmp(methodcallIn->getIdentifier()->getname(), "get_edge") == 0)
                 {
                     // Visit ParamList
@@ -933,9 +940,14 @@ public:
 
                     // Create a get_edge Op.
                     auto getedgeOp = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(), typeAttr, accessIdentifier->getResult(0), node1Op->getResult(0), node2Op->getResult(0));
+                    rhs = getedgeOp.getResult();
+                    // Assign getedgeOp to iDecl. 
+                    // Work here tomorrow. 
+                    builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
                 }
             }
         }
+
     }
 
     virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment, mlir::SymbolTable *symbolTable)

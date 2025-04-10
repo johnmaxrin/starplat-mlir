@@ -564,6 +564,8 @@ void lowerForAll(mlir::Operation *forAllOp, mlir::IRRewriter *rewriter, mlir::Va
     }
 }
 
+
+
 void lowerDeclareOp(mlir::Operation *declareOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Operation *const1)
 {
 
@@ -632,6 +634,8 @@ mlir::Value lowergetEdgeOp(mlir::Operation *getEdgeOp, mlir::IRRewriter *rewrite
 
     auto forloop = rewriter->create<mlir::scf::ForOp>(rewriter->getUnknownLoc(), lowerBound, upperBound, const1, SmallVector<Value>{const1});
     // Do the Loop Body
+    getEdgeOp->replaceAllUsesWith(forloop);
+    toErase.push_back(getEdgeOp);
 
     return forloop->getResult(0);
 }
