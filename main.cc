@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    llvm::outs() << "\n\n\n\nAfter the pass:\n";
     starplatcodegen->print();
 
     // Work on Conversion of OMP

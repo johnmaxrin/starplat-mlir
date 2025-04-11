@@ -215,7 +215,8 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
                       AnyType : $lhs1,
                       AnyType : $lhs2,
                       AnyType : $rhs1,
-                      AnyType : $rhs2
+                      AnyType : $rhs2,
+                      AnyType : $updateValue
     );
 
     let results = ( outs

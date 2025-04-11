@@ -229,7 +229,7 @@ namespace mlir
                                                                         newOp4 = operandMapping[op4];
                                                                 }
                                                             
-                                                                auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(), newOp1, newOp2, newOp3, newOp4); 
+                                                                auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(),newOp2, newOp1, newOp2, newOp3, newOp4); 
                                                             
                                                             }
 

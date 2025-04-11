@@ -702,7 +702,7 @@ public:
             }
 
             // Create the Min Tupple
-            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(), gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4->getResult(0));
+            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(),gOperand2->getResult(0), gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4->getResult(0));
         }
         else
         {
