@@ -26,6 +26,7 @@ void lowergetNodePropertyOp(mlir::Operation *getNodePropOp, mlir::IRRewriter *re
 void lowerGetEdgePropOp(mlir::Operation *edgePropOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
 mlir::Value lowergetEdgeOp(mlir::Operation *getEdgeOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
 void lowerAssignmentOp(mlir::Operation *assignmnetOp, mlir::IRRewriter *rewriter);
+void lowerAddOp(mlir::Operation *addOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase);
 
 namespace mlir
 {
@@ -264,6 +265,9 @@ namespace mlir
                     else if(llvm::isa<mlir::starplat::ReturnOp>(op))
                         lowerReturnOp(op, &rewriter);
 
+                    else if(llvm::isa<mlir::starplat::AddOp>(op))
+                        lowerAddOp(op, &rewriter, toErase);
+
                     });
 
            
@@ -346,6 +350,16 @@ void lowerSetNodePropOp(mlir::Operation *setNodePropOp, mlir::IRRewriter *rewrit
     auto assign = rewriter->create<LLVM::StoreOp>(rewriter->getUnknownLoc(), value, prop);
 
     setNodePropOp->erase();
+}
+
+void lowerAddOp(mlir::Operation *addOp, mlir::IRRewriter *rewriter, llvm::SmallVectorImpl<mlir::Operation *> &toErase)
+{
+    auto i32Type = rewriter->getI32Type();
+
+    auto llvmAdd = rewriter->create<LLVM::AddOp>(rewriter->getUnknownLoc(), i32Type, addOp->getOperand(0), addOp->getOperand(1));
+
+    addOp->replaceAllUsesWith(llvmAdd);
+    toErase.push_back(addOp);
 }
 
 void lowerFixedPoint(mlir::Operation *fixedPointOp, mlir::IRRewriter *rewriter, mlir::Operation *funcOp, mlir::Operation *moduleOp, mlir::Operation *numOfNodes, llvm::SmallVectorImpl<mlir::Operation *> &toErase, mlir::Value graphArg)
