@@ -132,7 +132,7 @@ public:
                     exit(0);
                 }
 
-                loopOperands.push_back(idSymbol->getResult(0));
+                loopOperands.push_back(idSymbol);
 
                 const Identifier *innerMethodcallIdentifier = innerMethodcall->getIdentifier();
 
@@ -167,11 +167,11 @@ public:
                         {
                             const Identifier *idParam = static_cast<const Identifier *>(idExpr->getExpression());
                             llvm::outs() << "Symbol: " << idParam->getname() << "\n";
-                            
+
                             auto idSymbol = globalLookupOp(idParam->getname());
 
                             if (idSymbol)
-                                loopOperands.push_back(idSymbol->getResult(0));
+                                loopOperands.push_back(idSymbol);
 
                             else
                             {
@@ -240,8 +240,8 @@ public:
                             return;
                         }
 
-                        loopOperands.push_back(lhsidSymbol->getResult(0));
-                        loopOperands.push_back(rhsKeywordSymbol->getResult(0));
+                        loopOperands.push_back(lhsidSymbol);
+                        loopOperands.push_back(rhsKeywordSymbol);
                     }
 
                     else
@@ -300,7 +300,7 @@ public:
         auto graph = globalLookupOp(identifier1->getname());
         if (!graph)
             llvm::outs() << "Error: Graph not defined!\n";
-        operandsForAttachNodeProperty.push_back(graph->getResult(0));
+        operandsForAttachNodeProperty.push_back(graph);
 
         const Identifier *identifier2 = memberaccessnode->getIdentifier2();
 
@@ -329,8 +329,8 @@ public:
                         exit(1);
                     }
 
-                    auto *idSymbol = globalLookupOp(identifier->getname()); // globalLookupOp(identifier->getname());
-                    auto *kwSymbol = globalLookupOp(keyword->getKeyword()); // globalLookupOp(keyword->getKeyword());
+                    auto idSymbol = globalLookupOp(identifier->getname()); // globalLookupOp(identifier->getname());
+                    auto kwSymbol = globalLookupOp(keyword->getKeyword()); // globalLookupOp(keyword->getKeyword());
 
                     if (!kwSymbol)
                         llvm::outs() << "Error: Keyword '" << keyword->getKeyword() << "' not declared.\n";
@@ -340,8 +340,8 @@ public:
 
                     if (idSymbol && kwSymbol)
                     {
-                        operandsForAttachNodeProperty.push_back(idSymbol->getResult(0));
-                        operandsForAttachNodeProperty.push_back(kwSymbol->getResult(0));
+                        operandsForAttachNodeProperty.push_back(idSymbol);
+                        operandsForAttachNodeProperty.push_back(kwSymbol);
                     }
                     else
                         return; // Handle errors gracefully
@@ -447,7 +447,7 @@ public:
         mlir::Operation *gOperand1;
         mlir::Operation *gOperand2;
         mlir::Operation *gOperand3;
-        mlir::Operation *gOperand4;
+        mlir::Value gOperand4;
 
         if (lhsexpr1->getKind() == ExpressionKind::KIND_MEMBERACCESS)
         {
@@ -458,9 +458,9 @@ public:
                 {
                     if (globalLookupOp(lhs1MemberAccess->getIdentifier()->getname()))
                     {
-                        mlir::Operation *propOp = globalLookupOp(lhs1MemberAccess->getIdentifier2()->getname());
-                        mlir::Operation *varOp = globalLookupOp(lhs1MemberAccess->getIdentifier()->getname());
-                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0),propOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                        mlir::Value propOp = globalLookupOp(lhs1MemberAccess->getIdentifier2()->getname());
+                        mlir::Value varOp = globalLookupOp(lhs1MemberAccess->getIdentifier()->getname());
+                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp, builder.getStringAttr(lhs1MemberAccess->getIdentifier2()->getname()));
                     }
                     else
                     {
@@ -496,9 +496,9 @@ public:
                 {
                     if (globalLookupOp(lhs2MemberAccess->getIdentifier()->getname()))
                     {
-                        mlir::Operation *propOp = globalLookupOp(lhs2MemberAccess->getIdentifier2()->getname());
-                        mlir::Operation *varOp = globalLookupOp(lhs2MemberAccess->getIdentifier()->getname());
-                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp->getResult(0),propOp->getResult(0), propOp->getAttrOfType<mlir::StringAttr>("sym_name"));
+                        mlir::Value propOp = globalLookupOp(lhs2MemberAccess->getIdentifier2()->getname());
+                        mlir::Value varOp = globalLookupOp(lhs2MemberAccess->getIdentifier()->getname());
+                        gOperand1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp, builder.getStringAttr(lhs2MemberAccess->getIdentifier2()->getname()));
                     }
                     else
                     {
@@ -559,14 +559,16 @@ public:
                         auto id1Op = globalLookupOp(id1->getname());
                         auto id2Op = globalLookupOp(id2->getname());
 
-                        auto typeAttr = id1Op->getAttrOfType<mlir::TypeAttr>("type");
+                        auto id1Opop = id1Op.getDefiningOp();
+                        auto typeAttr = id1Opop->getAttrOfType<mlir::TypeAttr>("type");
+                        
                         mlir::Type id1Optype = typeAttr.getValue();
 
                         if (id1Optype.isa<mlir::starplat::NodeType>())
                         {
                             // Generate get node property.
                             llvm::StringRef nameRef(id2->getname());
-                            gOperand2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op->getResult(0),id2Op->getResult(0), builder.getStringAttr(nameRef));
+                            gOperand2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op, id2Op, builder.getStringAttr(nameRef));
                         }
                     }
                     else
@@ -602,14 +604,17 @@ public:
                             auto op1id1op = globalLookupOp(op1Id1->getname());
                             auto op1id2op = globalLookupOp(op1Id2->getname());
 
-                            auto typeAttr = op1id1op->getAttrOfType<mlir::TypeAttr>("type");
+                            auto op1id1opop = op1id1op.getDefiningOp();
+
+                            auto typeAttr = op1id1opop->getAttrOfType<mlir::TypeAttr>("type");
                             mlir::Type type = typeAttr.getValue();
+
 
                             if (type.isa<mlir::starplat::NodeType>())
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
-                                op1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op1id1op->getResult(0),op1id2op->getResult(0), getProp);
+                                op1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op1id1op, op1id2op, getProp);
                             }
 
                             else
@@ -643,14 +648,15 @@ public:
                             auto op2id1op = globalLookupOp(op2Id1->getname());
                             auto op2id2op = globalLookupOp(op2Id2->getname());
 
-                            auto typeAttr = op2id1op->getAttrOfType<mlir::TypeAttr>("type");
+                            auto op2id1opop = op2id1op.getDefiningOp();
+                            auto typeAttr = op2id1opop->getAttrOfType<mlir::TypeAttr>("type");
                             mlir::Type type = typeAttr.getValue();
 
                             if (type.isa<mlir::starplat::EdgeType>())
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
-                                op2 = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op2id1op->getResult(0), op2id2op->getResult(0), getProp);
+                                op2 = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op2id1op, op2id2op, getProp);
                             }
 
                             else
@@ -702,7 +708,8 @@ public:
             }
 
             // Create the Min Tupple
-            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(),gOperand2->getResult(0), gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4->getResult(0));
+
+            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(), gOperand2->getResult(0), gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4);
         }
         else
         {
@@ -773,8 +780,14 @@ public:
         module.push_back(func);
         auto &entryBlock = func.getBody().emplaceBlock();
 
+        int idx = 0;
         for (auto arg : funcType.getInputs())
+        {
             auto argval = entryBlock.addArgument(arg, builder.getUnknownLoc());
+            auto argName = argNames[idx++];
+            nameToArgMap[argName.dyn_cast<mlir::StringAttr>().getValue()] = argval;
+
+        }
 
         // Visit the function body.
         Statementlist *stmtlist = static_cast<Statementlist *>(function->getstmtlist());
@@ -782,15 +795,14 @@ public:
         mlir::SymbolTable funcSymbolTable(func);
         symbolTables.push_back(&funcSymbolTable);
 
-        int idx = 0;
         builder.setInsertionPointToStart(&entryBlock);
 
-        for (auto argItr : args)
-        {
+        // for (auto argItr : args)
+        // {
 
-            auto argOp = builder.create<mlir::starplat::ArgOp>(builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++], builder.getStringAttr(argItr->getVarName()->getname()), builder.getStringAttr("public"));
-            funcSymbolTable.insert(argOp);
-        }
+        //     auto argOp = builder.create<mlir::starplat::ArgOp>(builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++], builder.getStringAttr(argItr->getVarName()->getname()), builder.getStringAttr("public"));
+        //     funcSymbolTable.insert(argOp);
+        // }
 
         stmtlist->Accept(this, &funcSymbolTable);
 
@@ -835,7 +847,7 @@ public:
 
         mlir::ArrayAttr condAttrArray = builder.getArrayAttr({opAttr});
 
-        mlir::Operation *lhs = globalLookupOp(identifier->getname());
+        mlir::Value lhs = globalLookupOp(identifier->getname());
         if (!lhs)
         {
             llvm::errs() << "Error: " << identifier->getname() << " not declared.\n";
@@ -843,7 +855,7 @@ public:
         }
 
         const Expression *innerBoolExpr = static_cast<const Expression *>(boolExpr->getExpr1());
-        mlir::Operation *rhs;
+        mlir::Value rhs;
         if (innerBoolExpr->getKind() == ExpressionKind::KIND_IDENTIFIER)
         {
             rhs = globalLookupOp(static_cast<const Identifier *>(innerBoolExpr->getExpression())->getname());
@@ -854,7 +866,7 @@ public:
             }
         }
 
-        llvm::SmallVector<mlir::Value> condArgs = {lhs->getResult(0), rhs->getResult(0)};
+        llvm::SmallVector<mlir::Value> condArgs = {lhs, rhs};
         mlir::StringAttr fixPntAttr = builder.getStringAttr("FixedPnt");
         auto fixedPointUntil = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc(), condArgs, condAttrArray, fixPntAttr);
 
@@ -895,18 +907,16 @@ public:
         symbolTable->insert(idDecl);
 
         expr->Accept(this, symbolTable);
-        
 
-        mlir::Operation *op;
+        mlir::Value op;
         if (expr->getKind() == ExpressionKind::KIND_KEYWORD)
         {
             const Keyword *keyword = static_cast<const Keyword *>(expr->getExpression());
             if (globalLookupOp(keyword->getKeyword()))
                 op = globalLookupOp(keyword->getKeyword());
 
-            auto asgOp = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), idDecl.getResult(), op->getResult(0));
+            auto asgOp = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), idDecl.getResult(), op);
         }
-        
 
         else if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS)
         {
@@ -924,7 +934,6 @@ public:
             if (methodcallIn->getIsBuiltin())
             {
 
-
                 if (strcmp(methodcallIn->getIdentifier()->getname(), "get_edge") == 0)
                 {
                     // Visit ParamList
@@ -939,15 +948,14 @@ public:
                     auto node2Op = globalLookupOp(node2->getname());
 
                     // Create a get_edge Op.
-                    auto getedgeOp = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(), typeAttr, accessIdentifier->getResult(0), node1Op->getResult(0), node2Op->getResult(0));
+                    auto getedgeOp = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(), typeAttr, accessIdentifier, node1Op, node2Op);
                     rhs = getedgeOp.getResult();
-                    // Assign getedgeOp to iDecl. 
-                    // Work here tomorrow. 
+                    // Assign getedgeOp to iDecl.
+                    // Work here tomorrow.
                     builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
                 }
             }
         }
-
     }
 
     virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment, mlir::SymbolTable *symbolTable)
@@ -976,8 +984,8 @@ public:
             return;
         }
         mlir::starplat::NodeType::get(builder.getContext());
-        auto typeAttr = id1->getAttrOfType<mlir::TypeAttr>("type");
-        mlir::Type type = typeAttr.getValue();
+        // auto typeAttr = id1->getAttrOfType<mlir::TypeAttr>("type");
+        mlir::Type type = id1.getType();
 
         if (type.isa<mlir::starplat::NodeType>())
         {
@@ -986,14 +994,14 @@ public:
             {
                 const Number *number = static_cast<const Number *>(expr->getExpression());
                 auto numberVal = globalLookupOp(std::to_string(number->getnumber()));
-                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1->getResult(0), id2->getResult(0), numberVal->getResult(0));
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1, id2, numberVal);
             }
 
             else if (expr->getKind() == ExpressionKind::KIND_KEYWORD)
             {
                 const Keyword *keyword = static_cast<const Keyword *>(expr->getExpression());
                 auto keywordVal = globalLookupOp(keyword->getKeyword());
-                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1->getResult(0), id2->getResult(0), keywordVal->getResult(0));
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1, id2, keywordVal);
             }
         }
     }
@@ -1113,14 +1121,24 @@ private:
     mlir::SymbolTable globalSymbolTable;
 
     std::vector<mlir::SymbolTable *> symbolTables;
+    llvm::DenseMap<StringRef, mlir::Value> nameToArgMap;
 
-    mlir::Operation *globalLookupOp(llvm::StringRef name)
+    mlir::Value globalLookupOp(llvm::StringRef name)
     {
+        auto it = nameToArgMap.find(name);
+        if (it != nameToArgMap.end())
+        {
+            mlir::Value value = it->second;
+            return value;
+        }
+
         for (auto symbolTable : symbolTables)
         {
             if (symbolTable->lookup(name))
-                return symbolTable->lookup(name);
+                return symbolTable->lookup(name)->getResult(0);
         }
+
         return nullptr;
     }
+
 };
