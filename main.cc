@@ -21,6 +21,8 @@
 
 #include "lowerings/startplat2omp.h"
 
+#define DEBUG_TYPE "dialect-conversion"
+
 extern int yyparse();
 extern FILE *yyin;
 ASTNode* root;
