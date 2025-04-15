@@ -37,6 +37,8 @@ add_definitions(${LLVM_DEFINITIONS})
 
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 get_property(extension_libs GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
+get_property(translation_libs GLOBAL PROPERTY MLIR_TRANSLATION_LIBS)
+
 
 # add_compile_options(-fsanitize=address)
 # add_link_options(-fsanitize=address)
@@ -80,6 +82,7 @@ target_link_libraries(app
     ${FLEX_LIBRARIES} 
     ${BISON_LIBRARIES} 
     ${extension_libs}
+    ${translation_libs}
       MLIRAnalysis
           MLIRIR
           MLIRParser

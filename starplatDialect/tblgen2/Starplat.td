@@ -9,6 +9,15 @@ include "mlir/IR/BuiltinAttributes.td"
 include "mlir/Pass/PassBase.td"
 include "mlir/Dialect/OpenMP/OpenMPDialect.td"
 
+include "mlir/Interfaces/CallInterfaces.td"
+include "mlir/Interfaces/CastInterfaces.td"
+include "mlir/Interfaces/FunctionInterfaces.td"
+include "mlir/Interfaces/SideEffectInterfaces.td"
+include "mlir/IR/RegionKindInterface.td"
+include "mlir/IR/OpAsmInterface.td"
+
+
+
 def StarPlatDialect : Dialect {
     let summary = "Starplat dialect";
     let name = "starplat";
@@ -24,7 +33,7 @@ class StarplatBaseOp<string mnemonic, list<Trait> traits = []> : Op<StarPlatDial
 
 
 
-def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove, SymbolTable, Symbol]>
+def FuncOp : StarplatBaseOp<"func",[FunctionOpInterface, IsolatedFromAbove, SymbolTable]>
 {
     let summary = "Defines a function in the Starplat Dialect";
     let description = [{This operation represents a function definiton in the Starplat dialect.
@@ -34,7 +43,7 @@ def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove, SymbolTable, Symbol]>
 
   let arguments = (ins 
                     SymbolNameAttr:$sym_name,
-                    TypeAttrOf<FunctionType>:$funcType,
+                    TypeAttrOf<FunctionType>:$functionType,
                     OptionalAttr<ArrayAttr>:$argNames // Argument Attributes 
                   );
 
@@ -44,7 +53,15 @@ def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove, SymbolTable, Symbol]>
 
   let extraClassDeclaration = [{
     static FuncOp create(Location location, StringRef strVal, int intVal);
+
+    ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
+    ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
+    Region *getCallableRegion() { return &getBody(); }
+
                          }];
+
+
+
 
 }
 

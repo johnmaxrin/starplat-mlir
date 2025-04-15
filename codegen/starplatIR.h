@@ -27,6 +27,10 @@
 #include "mlir/Parser/Parser.h"
 #include <string>
 
+#include "mlir/Interfaces/CallInterfaces.h"
+#include "mlir/Interfaces/SideEffectInterfaces.h"
+#include "mlir/Interfaces/FunctionInterfaces.h"
+
 class StarPlatCodeGen : public MLIRVisitor
 {
 
@@ -775,7 +779,7 @@ public:
         mlir::ArrayAttr argNamesAttr = builder.getArrayAttr(argNames);
 
         auto func = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNamesAttr);
-        func.setNested();
+        //func.setNested();
 
         module.push_back(func);
         auto &entryBlock = func.getBody().emplaceBlock();
