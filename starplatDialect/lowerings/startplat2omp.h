@@ -5,6 +5,8 @@
 #include "mlir/Dialect/OpenMP/OpenMPDialect.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinDialect.h"
@@ -17,7 +19,6 @@
 #include "mlir/Support/LLVM.h"
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Support/TypeID.h"
-
 #include "llvm/Support/Casting.h"
 
 #include "mlir/Transforms/DialectConversion.h" // from @llvm-project
@@ -42,7 +43,13 @@ public:
         //               { return type; });
 
         addConversion([ctx](mlir::starplat::GraphType graph) -> Type
-                      { return LLVM::LLVMPointerType::get(ctx); });
+                      { 
+                        
+                        MemRefType memrefType = MemRefType::get({4}, mlir::Float64Type::get(ctx));
+                        return memrefType;
+                        // return LLVM::LLVMPointerType::get(ctx); 
+                        
+                    });
 
         addConversion([ctx](mlir::starplat::NodeType node) -> Type
                       { return LLVM::LLVMPointerType::get(ctx); });
@@ -81,6 +88,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         auto funcName = op.getSymName();
 
         // Create the LLVM function
+        auto funcOp2 = rewriter.create<mlir::func::FuncOp>(loc);
         auto funcOp = rewriter.create<LLVM::LLVMFuncOp>(loc, funcName, funcType);
 
         // Create an entry block with the right number of arguments
@@ -179,6 +187,8 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 
         llvm::outs() << "Declare Op Matched\n";
 
+        llvm::outs() << op <<"\n";
+
         auto elementType = rewriter.getI32Type(); // type of the element to allocate
         auto ptrType = LLVM::LLVMPointerType::get(rewriter.getContext());
 
@@ -187,19 +197,21 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
             op.getLoc(),
             rewriter.getI32Type(),
             rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
+        
+        MemRefType memrefType = MemRefType::get({4}, rewriter.getF32Type());
+        auto allocaOp = rewriter.create<memref::AllocaOp>(op.getLoc(), memrefType);
 
         // Now create the AllocaOp
-        // auto alloca = rewriter.create<LLVM::AllocaOp>(
-        //     op.getLoc(),
-        //     rewriter.getI32Type(),
-        //     elementType,
-        //     arraySize);
+        auto alloca = rewriter.create<LLVM::AllocaOp>(
+            op.getLoc(),
+            ptrType,
+            elementType,
+            arraySize);
 
         // alloca.dump();
 
-        rewriter.replaceOp(op, arraySize.getOperation());
+        rewriter.replaceOp(op, allocaOp.getOperation());
 
-        auto func = op->getParentOp();
         return success();
     }
 };
@@ -290,6 +302,7 @@ namespace mlir
 
                 target.addLegalDialect<mlir::LLVM::LLVMDialect>();
                 target.addLegalDialect<mlir::scf::SCFDialect>();
+                target.addLegalDialect<mlir::memref::MemRefDialect>();
 
                 //target.addIllegalOp<mlir::starplat::FuncOp>();
                 target.addIllegalOp<mlir::starplat::AddOp>();
