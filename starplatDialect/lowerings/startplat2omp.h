@@ -117,6 +117,54 @@ struct ConvertAttachNode : public OpConversionPattern<mlir::starplat::AttachNode
     }
 };
 
+struct ConvertSetNodeProp : public OpConversionPattern<mlir::starplat::SetNodePropertyOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(
+        mlir::starplat::SetNodePropertyOp op, OpAdaptor adaptor,
+        ConversionPatternRewriter &rewriter) const override
+    {
+
+        // auto arraySize = rewriter.create<LLVM::ConstantOp>(
+        //     op.getLoc(),
+        //     rewriter.getI32Type(),
+        //     rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
+
+        // auto func = op->getParentOp();
+
+        //rewriter.replaceOp(op.getOperation(), arraySize);
+        rewriter.eraseOp(op);
+
+        return success();
+    }
+};
+
+struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(
+        mlir::starplat::AssignmentOp op, OpAdaptor adaptor,
+        ConversionPatternRewriter &rewriter) const override
+    {
+
+        // auto arraySize = rewriter.create<LLVM::ConstantOp>(
+        //     op.getLoc(),
+        //     rewriter.getI32Type(),
+        //     rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
+
+        // auto func = op->getParentOp();
+
+        //rewriter.replaceOp(op.getOperation(), arraySize);
+        rewriter.eraseOp(op);
+
+        return success();
+    }
+};
+
+
+
 struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 {
     ConvertDeclareOp(mlir::MLIRContext *context)
@@ -196,7 +244,7 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
         auto func = op->getParentOp();
         func->dump();
 
-        // rewriter.eraseOp(op);
+        rewriter.eraseOp(op);
 
         return success();
     }
@@ -248,12 +296,14 @@ namespace mlir
                 target.addIllegalOp<mlir::starplat::DeclareOp>();
                 target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
                 target.addIllegalOp<mlir::starplat::ConstOp>();
+                target.addIllegalOp<mlir::starplat::AssignmentOp>();
+                target.addIllegalOp<mlir::starplat::SetNodePropertyOp>();
                 target.addIllegalOp<mlir::starplat::FixedPointUntilOp>();
 
                 RewritePatternSet patterns(context);
                 StarplatToLLVMTypeConverter typeConverter(context);
 
-                patterns.add<ConvertAdd, ConvertDeclareOp, ConvertConstOp, 
+                patterns.add<ConvertAdd, ConvertDeclareOp, ConvertConstOp, ConvertSetNodeProp, ConvertAssignOp,
                 ConvertFunc, ConvertFixedPointOp, ConvertAttachNode>(context);
 
                 populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns,typeConverter);
