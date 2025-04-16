@@ -84,17 +84,17 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1), oldFuncType.getInput(2), oldFuncType.getInput(3)};
 
         
-        auto funcType = LLVM::LLVMFunctionType::get(returnType, paramTypes, /*isVarArg=*/false);
+        auto funcType = mlir::FunctionType::get(rewriter.getContext(),paramTypes, returnType);
         auto funcName = op.getSymName();
 
         // Create the LLVM function
-        auto funcOp2 = rewriter.create<mlir::func::FuncOp>(loc);
-        auto funcOp = rewriter.create<LLVM::LLVMFuncOp>(loc, funcName, funcType);
+        auto funcOp2 = rewriter.create<mlir::func::FuncOp>(loc, funcName, funcType);
+       //auto funcOp = rewriter.create<LLVM::LLVMFuncOp>(loc, funcName, funcType);
 
         // Create an entry block with the right number of arguments
         // Block *entryBlock = rewriter.createBlock(&funcOp.getBody(), {}, paramTypes, {loc, loc});
 
-        rewriter.inlineRegionBefore(op.getRegion(), funcOp.getBody(), funcOp.end());
+        rewriter.inlineRegionBefore(op.getRegion(), funcOp2.getBody(), funcOp2.end());
         rewriter.eraseOp(op);
 
         // Replace original starplat.func
@@ -303,6 +303,7 @@ namespace mlir
                 target.addLegalDialect<mlir::LLVM::LLVMDialect>();
                 target.addLegalDialect<mlir::scf::SCFDialect>();
                 target.addLegalDialect<mlir::memref::MemRefDialect>();
+                target.addLegalDialect<mlir::func::FuncDialect>();
 
                 //target.addIllegalOp<mlir::starplat::FuncOp>();
                 target.addIllegalOp<mlir::starplat::AddOp>();
