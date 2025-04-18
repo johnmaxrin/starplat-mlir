@@ -71,6 +71,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
 {
     using OpConversionPattern<mlir::starplat::FuncOp>::OpConversionPattern;
 
+
     LogicalResult matchAndRewrite(
         mlir::starplat::FuncOp op, OpAdaptor adaptor,
         ConversionPatternRewriter &rewriter) const override
@@ -81,7 +82,9 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
 
         // Function signature: (i32, i32) -> i32
         auto oldFuncType = op.getFunctionType();
-        SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1), oldFuncType.getInput(2), oldFuncType.getInput(3)};
+
+        //SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1), oldFuncType.getInput(2), oldFuncType.getInput(3)};
+        SmallVector<Type> paramTypes = {oldFuncType.getInput(0)};
 
         
         auto funcType = mlir::FunctionType::get(rewriter.getContext(),paramTypes, returnType);
@@ -185,28 +188,15 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-        llvm::outs() << "Declare Op Matched\n";
-
-        llvm::outs() << op <<"\n";
-
+        
         auto elementType = rewriter.getI32Type(); // type of the element to allocate
-        auto ptrType = LLVM::LLVMPointerType::get(rewriter.getContext());
 
         // optional array size (can be omitted or passed as a Value)
-        auto arraySize = rewriter.create<LLVM::ConstantOp>(
-            op.getLoc(),
-            rewriter.getI32Type(),
-            rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
         
         MemRefType memrefType = MemRefType::get({4}, rewriter.getF32Type());
         auto allocaOp = rewriter.create<memref::AllocaOp>(op.getLoc(), memrefType);
 
         // Now create the AllocaOp
-        auto alloca = rewriter.create<LLVM::AllocaOp>(
-            op.getLoc(),
-            ptrType,
-            elementType,
-            arraySize);
 
         // alloca.dump();
 
@@ -225,7 +215,7 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-        llvm::outs() << "Constant Op Matched\n";
+        
         auto arraySize = rewriter.create<LLVM::ConstantOp>(
             op.getLoc(),
             rewriter.getI32Type(),
@@ -233,10 +223,7 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
 
         rewriter.replaceOp(op, arraySize);
         
-        llvm::outs() <<"#######\n";
-        op->dump();                    // Show original op
-        arraySize.print(llvm::outs()); // Show the replacement value
-        llvm::outs() <<"#######\n";
+       
 
         return success();
     }
@@ -251,10 +238,10 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
         ConversionPatternRewriter &rewriter) const override
     {
 
-        llvm::outs() << "FixedPoint Op Matched\n";
+        //llvm::outs() << "FixedPoint Op Matched\n";
 
-        auto func = op->getParentOp();
-        func->dump();
+//        auto func = op->getParentOp();
+  //      func->dump();
 
         rewriter.eraseOp(op);
 
