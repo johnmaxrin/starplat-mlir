@@ -45,7 +45,7 @@ public:
         addConversion([ctx](mlir::starplat::GraphType graph) -> Type
                       { 
                         
-                        MemRefType memrefType = MemRefType::get({4}, mlir::Float64Type::get(ctx));
+                        MemRefType memrefType = MemRefType::get({4}, LLVM::LLVMPointerType::get(ctx));
                         return memrefType;
                         // return LLVM::LLVMPointerType::get(ctx); 
                         

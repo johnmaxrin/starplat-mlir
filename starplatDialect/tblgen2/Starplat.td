@@ -30,6 +30,47 @@ class StarplatBaseOp<string mnemonic, list<Trait> traits = []> : Op<StarPlatDial
     let summary = "Starplat base operation class.";
 }
 
+// TYPES
+
+class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits = []>
+    : TypeDef<StarPlatDialect, name, traits> {
+  let mnemonic = typeMnemonic;
+}
+
+
+def GraphType : StarPlatDialectType<"Graph", "graph"> {
+  let summary = "Graph type";
+}
+
+def NodeType : StarPlatDialectType<"Node", "node"> {
+  let summary = "Node type";
+}
+
+def NodesType : StarPlatDialectType<"Nodes", "nodes">
+{
+  let summary = "For More than one node";
+}
+
+def EdgeType : StarPlatDialectType<"Edge", "edge">
+{
+  let summary = "Starplat Edge Type";
+}
+
+def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{
+  let summary = "Property of Node";
+  let parameters = (ins "Type":$parameter, StringRefParameter<"Graph Identifier">:$graphId);
+  let assemblyFormat = "`<` $parameter `,` $graphId `>`";
+
+}
+
+def PropEdgeType : StarPlatDialectType<"PropEdge", "propEdge">{
+  let summary = "Property of Edge";
+  let parameters = (ins "Type":$parameter, StringRefParameter<"Graph Identifier">:$graphId);
+  let assemblyFormat = "`<` $parameter `,` $graphId `>`";
+}
+
+// End of types
+
 
 
 
@@ -79,6 +120,22 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
                                 SymbolNameAttr:$sym_name,
                                 SymbolNameAttr:$sym_visibility
                                 );
+
+  let builders = [
+
+
+OpBuilder<(ins
+  "OpBuilder &builder":$builder,
+  "OperationState &state":$state,
+  "Type":$resultType,
+  "TypeAttr":$type,
+  "StringAttr":$sym_name,
+  "StringAttr":$sym_visibility
+)>
+
+  ];
+
+
 
   let results = (outs AnyType);
 
@@ -270,47 +327,6 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
  }
 
 
-
-// TYPES
-
-class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits = []>
-    : TypeDef<StarPlatDialect, name, traits> {
-  let mnemonic = typeMnemonic;
-}
-
-
-def GraphType : StarPlatDialectType<"Graph", "graph"> {
-  let summary = "Graph type";
-}
-
-def NodeType : StarPlatDialectType<"Node", "node"> {
-  let summary = "Node type";
-}
-
-def NodesType : StarPlatDialectType<"Nodes", "nodes">
-{
-  let summary = "For More than one node";
-}
-
-def EdgeType : StarPlatDialectType<"Edge", "edge">
-{
-  let summary = "Starplat Edge Type";
-}
-
-def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{
-  let summary = "Property of Node";
-  let parameters = (ins "Type":$parameter, StringRefParameter<"Graph Identifier">:$graphId);
-  let assemblyFormat = "`<` $parameter `,` $graphId `>`";
-
-}
-
-def PropEdgeType : StarPlatDialectType<"PropEdge", "propEdge">{
-  let summary = "Property of Edge";
-  let parameters = (ins "Type":$parameter, StringRefParameter<"Graph Identifier">:$graphId);
-  let assemblyFormat = "`<` $parameter `,` $graphId `>`";
-}
-
-// End of types
 
 
 // Passes
