@@ -118,27 +118,24 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
 
   let arguments = (ins TypeAttr :$type, 
                                 SymbolNameAttr:$sym_name,
-                                SymbolNameAttr:$sym_visibility
+                                SymbolNameAttr:$sym_visibility,
+                                 Optional<GraphType>:$graph
                                 );
 
-  let builders = [
 
-
-OpBuilder<(ins
-  "OpBuilder &builder":$builder,
-  "OperationState &state":$state,
-  "Type":$resultType,
-  "TypeAttr":$type,
-  "StringAttr":$sym_name,
-  "StringAttr":$sym_visibility
-)>
-
-  ];
 
 
 
   let results = (outs AnyType);
 
+    let builders = [
+      OpBuilder<(ins
+      "::mlir::IntegerType":$result,
+      "::mlir::TypeAttr":$typeAttr,
+      "::mlir::StringAttr":$sym_name,
+      "::mlir::StringAttr":$sym_visibility
+    )>
+  ];
 }
 
 def ArgOp : StarplatBaseOp<"arg", [Symbol]>

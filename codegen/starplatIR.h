@@ -905,7 +905,7 @@ public:
         else if (strcmp(type->getType(), "edge") == 0)
             typeAttr = mlir::starplat::EdgeType::get(builder.getContext());
 
-        auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), typeAttr, builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"));
+        auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(typeAttr), builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"));
         lhs = idDecl.getResult();
 
         symbolTable->insert(idDecl);

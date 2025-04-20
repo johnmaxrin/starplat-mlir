@@ -38,6 +38,13 @@ namespace mlir
                 #include "tblgen2/StarPlatOps.cpp.inc"
                 >();  
         }
+
+
+
+        static void build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState,::mlir::Type restype, ::mlir::TypeAttr typeAttr, ::mlir::StringAttr sym_name, ::mlir::StringAttr sym_visibility)
+        {
+
+        }
     }
 
 
