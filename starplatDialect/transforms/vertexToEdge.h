@@ -105,7 +105,9 @@ namespace mlir
                                                 
                                                 attributes[i] = builder.getStringAttr("edges");
                                                 char *edgeVarName = "v_e";
-                                                auto edgeVar = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(mlir::starplat::EdgeType::get(builder.getContext())), builder.getStringAttr(edgeVarName), builder.getStringAttr("public"));
+
+                                                mlir::Value graph = NULL;
+                                                auto edgeVar = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), mlir::starplat::EdgeType::get(builder.getContext()), builder.getStringAttr(edgeVarName), builder.getStringAttr("public"), graph);
                                                 mlir::Value oldV = operands[1];
                                                 mlir::Value oldNbr;
                                                 operands[1] = edgeVar.getResult(); // Second variable is always the loop variable.

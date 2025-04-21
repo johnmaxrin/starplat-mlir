@@ -63,11 +63,9 @@ public:
         {
 
             auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
-            auto typeAttr = ::mlir::TypeAttr::get(type);
-            auto resType = builder.getI32Type();
-
             auto visibility = builder.getStringAttr("public");
-            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()), visibility);
+            mlir::Value graph = NULL;
+            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type , builder.getStringAttr(identifier->getname()), visibility, graph);
 
             if (globalLookupOp(identifier->getname()))
             {
@@ -80,9 +78,8 @@ public:
         {
 
             auto type = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type(), graphId);
-            auto typeAttr = ::mlir::TypeAttr::get(type);
-            auto resType = builder.getI32Type();
-            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), resType, typeAttr, builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"));
+            mlir::Value graph = NULL;
+            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"), graph);
             symbolTable->insert(declare);
         }
     }
@@ -143,7 +140,8 @@ public:
                 if (strcmp(innerMethodcallIdentifier->getname(), "nodes") == 0)
                 {
                     loopVarType = mlir::starplat::NodeType::get(builder.getContext());
-                    loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(loopVarType), builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
+                    mlir::Value graph = NULL;
+                    loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), loopVarType, builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
                     ops.push_back(loopVarOp);
                     symbolTable->insert(loopVarOp);
                     loopOperands.push_back(loopVarOp->getResult(0));
@@ -191,7 +189,8 @@ public:
                         }
 
                         loopVarType = mlir::starplat::NodeType::get(builder.getContext());
-                        loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(loopVarType), builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
+                        mlir::Value graph = NULL;
+                        loopVarOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), loopVarType, builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
                         ops.push_back(loopVarOp);
                         symbolTable->insert(loopVarOp);
                         loopOperands.push_back(loopVarOp->getResult(0));
@@ -905,7 +904,8 @@ public:
         else if (strcmp(type->getType(), "edge") == 0)
             typeAttr = mlir::starplat::EdgeType::get(builder.getContext());
 
-        auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), builder.getI32Type(), mlir::TypeAttr::get(typeAttr), builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"));
+        mlir::Value graph = NULL;
+        auto idDecl = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), typeAttr, builder.getStringAttr(identifier->getname()), builder.getStringAttr("public"), graph);
         lhs = idDecl.getResult();
 
         symbolTable->insert(idDecl);

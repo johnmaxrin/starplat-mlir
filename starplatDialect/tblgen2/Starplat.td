@@ -116,26 +116,15 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
                           and it returns an SSA value representing the declared variable. 
   }];
 
-  let arguments = (ins TypeAttr :$type, 
+  let arguments = (ins  
                                 SymbolNameAttr:$sym_name,
                                 SymbolNameAttr:$sym_visibility,
                                  Optional<GraphType>:$graph
                                 );
 
 
-
-
-
   let results = (outs AnyType);
 
-    let builders = [
-      OpBuilder<(ins
-      "::mlir::IntegerType":$result,
-      "::mlir::TypeAttr":$typeAttr,
-      "::mlir::StringAttr":$sym_name,
-      "::mlir::StringAttr":$sym_visibility
-    )>
-  ];
 }
 
 def ArgOp : StarplatBaseOp<"arg", [Symbol]>
