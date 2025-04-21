@@ -7,6 +7,7 @@
 #include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
 
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinDialect.h"
@@ -43,34 +44,38 @@ public:
         //               { return type; });
 
         addConversion([ctx](mlir::starplat::GraphType graph) -> Type
-                      { 
-                        
-                        MemRefType memrefType = MemRefType::get({4}, LLVM::LLVMPointerType::get(ctx));
-                        return memrefType;
-                        // return LLVM::LLVMPointerType::get(ctx); 
-                        
-                    });
+                      {
+                          MemRefType memrefType = MemRefType::get({4}, LLVM::LLVMPointerType::get(ctx));
+                          return memrefType;
+                          // return LLVM::LLVMPointerType::get(ctx);
+                      });
+
+        addTargetMaterialization(
+            [ctx](OpBuilder &builder, Type type, ValueRange inputs, Location loc) -> std::optional<Value>
+            {
+                if (type.isa<mlir::starplat::GraphType>() &&
+                    inputs.size() == 1 &&
+                    inputs[0].getType().isa<MemRefType>())
+                {
+                    return inputs[0]; // just forward the memref
+                }
+                return std::nullopt;
+            });
 
         addConversion([ctx](mlir::starplat::NodeType node) -> Type
                       { return LLVM::LLVMPointerType::get(ctx); });
 
         addConversion([ctx](mlir::IntegerType intType) -> Type
                       { return LLVM::LLVMPointerType::get(ctx); });
-                        
+
         addConversion([ctx](mlir::starplat::PropNodeType intType) -> Type
                       { return LLVM::LLVMPointerType::get(ctx); });
-
-            
-
-
-        
     }
 };
 
 struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
 {
     using OpConversionPattern<mlir::starplat::FuncOp>::OpConversionPattern;
-
 
     LogicalResult matchAndRewrite(
         mlir::starplat::FuncOp op, OpAdaptor adaptor,
@@ -83,16 +88,15 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         // Function signature: (i32, i32) -> i32
         auto oldFuncType = op.getFunctionType();
 
-        //SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1), oldFuncType.getInput(2), oldFuncType.getInput(3)};
+        // SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1), oldFuncType.getInput(2), oldFuncType.getInput(3)};
         SmallVector<Type> paramTypes = {oldFuncType.getInput(0)};
 
-        
-        auto funcType = mlir::FunctionType::get(rewriter.getContext(),paramTypes, returnType);
+        auto funcType = mlir::FunctionType::get(rewriter.getContext(), paramTypes, returnType);
         auto funcName = op.getSymName();
 
         // Create the LLVM function
         auto funcOp2 = rewriter.create<mlir::func::FuncOp>(loc, funcName, funcType);
-       //auto funcOp = rewriter.create<LLVM::LLVMFuncOp>(loc, funcName, funcType);
+        // auto funcOp = rewriter.create<LLVM::LLVMFuncOp>(loc, funcName, funcType);
 
         // Create an entry block with the right number of arguments
         // Block *entryBlock = rewriter.createBlock(&funcOp.getBody(), {}, paramTypes, {loc, loc});
@@ -144,7 +148,7 @@ struct ConvertSetNodeProp : public OpConversionPattern<mlir::starplat::SetNodePr
 
         // auto func = op->getParentOp();
 
-        //rewriter.replaceOp(op.getOperation(), arraySize);
+        // rewriter.replaceOp(op.getOperation(), arraySize);
         rewriter.eraseOp(op);
 
         return success();
@@ -167,14 +171,12 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
 
         // auto func = op->getParentOp();
 
-        //rewriter.replaceOp(op.getOperation(), arraySize);
+        // rewriter.replaceOp(op.getOperation(), arraySize);
         rewriter.eraseOp(op);
 
         return success();
     }
 };
-
-
 
 struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 {
@@ -188,19 +190,44 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-        
         auto elementType = rewriter.getI32Type(); // type of the element to allocate
 
         // optional array size (can be omitted or passed as a Value)
-        
-        MemRefType memrefType = MemRefType::get({4}, rewriter.getF32Type());
-        auto allocaOp = rewriter.create<memref::AllocaOp>(op.getLoc(), memrefType);
 
-        // Now create the AllocaOp
+        auto resType = op->getResult(0).getType();
+        if (resType.isa<mlir::starplat::PropNodeType>())
+        {
 
-        // alloca.dump();
+            auto graph = op->getOperand(0);
 
-        rewriter.replaceOp(op, allocaOp.getOperation());
+            auto loc = op->getLoc();
+
+            auto elementType = adaptor.getOperands()[0].getType().cast<mlir::MemRefType>().getElementType();
+            // auto elementType = graph.getType().cast<MemRefType>().getElementType();
+            auto zero = rewriter.create<mlir::arith::ConstantIndexOp>(loc, 0);
+            //auto elementType = MemRefType::get({4}, LLVM::LLVMPointerType::get(op.getContext()));
+            
+  // static void build(::mlir::Type result, ::mlir::Value memref, ::mlir::ValueRange indices, /*optional*/::mlir::BoolAttr nontemporal);
+            Value ptrToSize = rewriter.create<mlir::memref::LoadOp>(
+                loc,
+                elementType,
+                adaptor.getOperands()[0],
+                mlir::ValueRange(zero)
+            );
+            
+            MemRefType memrefType = MemRefType::get({4}, rewriter.getF32Type());
+            auto allocaOp = rewriter.create<memref::AllocaOp>(op.getLoc(), memrefType);
+
+            rewriter.replaceOp(op, allocaOp.getOperation());
+
+            op->getParentOp()->dump();
+        }
+
+        else
+        {
+            llvm::outs() << "Error: DeclareOp lowering not yet implemented.";
+            return failure();
+        }
 
         return success();
     }
@@ -215,15 +242,12 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-        
         auto arraySize = rewriter.create<LLVM::ConstantOp>(
             op.getLoc(),
             rewriter.getI32Type(),
             rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
 
         rewriter.replaceOp(op, arraySize);
-        
-       
 
         return success();
     }
@@ -238,10 +262,10 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
         ConversionPatternRewriter &rewriter) const override
     {
 
-        //llvm::outs() << "FixedPoint Op Matched\n";
+        // llvm::outs() << "FixedPoint Op Matched\n";
 
-//        auto func = op->getParentOp();
-  //      func->dump();
+        //        auto func = op->getParentOp();
+        //      func->dump();
 
         rewriter.eraseOp(op);
 
@@ -291,8 +315,9 @@ namespace mlir
                 target.addLegalDialect<mlir::scf::SCFDialect>();
                 target.addLegalDialect<mlir::memref::MemRefDialect>();
                 target.addLegalDialect<mlir::func::FuncDialect>();
+                target.addLegalDialect<mlir::arith::ArithDialect>();
 
-                //target.addIllegalOp<mlir::starplat::FuncOp>();
+                // target.addIllegalOp<mlir::starplat::FuncOp>();
                 target.addIllegalOp<mlir::starplat::AddOp>();
                 target.addIllegalOp<mlir::starplat::DeclareOp>();
                 target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
@@ -305,17 +330,16 @@ namespace mlir
                 StarplatToLLVMTypeConverter typeConverter(context);
 
                 patterns.add<ConvertAdd, ConvertDeclareOp, ConvertConstOp, ConvertSetNodeProp, ConvertAssignOp,
-                ConvertFunc, ConvertFixedPointOp, ConvertAttachNode>(context);
+                             ConvertFunc, ConvertFixedPointOp, ConvertAttachNode>(context);
 
-                populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns,typeConverter);
-                target.addDynamicallyLegalOp<mlir::starplat::FuncOp>([&](starplat::FuncOp op) {
+                populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns, typeConverter);
+                target.addDynamicallyLegalOp<mlir::starplat::FuncOp>([&](starplat::FuncOp op)
+                                                                     {
 
                     auto isSignatureLegal = typeConverter.isSignatureLegal(op.getFunctionType());
                     auto isLegal = typeConverter.isLegal(&op.getBody());
 
-                    return isSignatureLegal && isLegal;
-                  });
-
+                    return isSignatureLegal && isLegal; });
 
                 if (failed(applyPartialConversion(module, target, std::move(patterns))))
                 {

@@ -64,14 +64,20 @@ public:
 
             auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
             auto visibility = builder.getStringAttr("public");
-            mlir::Value graph = NULL;
-            auto declare = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type , builder.getStringAttr(identifier->getname()), visibility, graph);
+            mlir::Value graph = globalLookupOp(graphId);
+
+            mlir::Operation *declareOp;
+
+            if(graph)
+                declareOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type , builder.getStringAttr(identifier->getname()), visibility, graph);
+            else
+                llvm::errs() <<"Error: Undefined Symbol "<<graphId<<"\n";
 
             if (globalLookupOp(identifier->getname()))
             {
             }
             else
-                symbolTable->insert(declare);
+                symbolTable->insert(declareOp);
         }
 
         else if (std::string(Type->getGraphPropNode()->getPropertyType()) == "propEdge")

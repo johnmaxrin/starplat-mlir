@@ -346,7 +346,7 @@ def ConvertStartPlatIRToOMPPass : Pass<"starplatir-to-omp">{
   let summary = "StarPlat IR to OMP";
 
   let dependentDialects = ["mlir::starplat::StarPlatDialect", "::mlir::omp::OpenMPDialect", "mlir::func::FuncDialect",
-  "::mlir::scf::SCFDialect", "::mlir::memref::MemRefDialect"];
+  "::mlir::scf::SCFDialect", "::mlir::memref::MemRefDialect", "mlir::arith::ArithDialect"];
 
 }
 
