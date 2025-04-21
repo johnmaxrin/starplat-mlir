@@ -154,6 +154,20 @@ struct ConvertSetNodeProp : public OpConversionPattern<mlir::starplat::SetNodePr
         return success();
     }
 };
+struct ConvertReturnOp : public OpConversionPattern<mlir::starplat::ReturnOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(
+        mlir::starplat::ReturnOp op, OpAdaptor adaptor,
+        ConversionPatternRewriter &rewriter) const override
+    {
+
+      
+        rewriter.eraseOp(op);
+        return success();
+    }
+};
 
 struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp>
 {
@@ -164,14 +178,7 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
         ConversionPatternRewriter &rewriter) const override
     {
 
-        // auto arraySize = rewriter.create<LLVM::ConstantOp>(
-        //     op.getLoc(),
-        //     rewriter.getI32Type(),
-        //     rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
-
-        // auto func = op->getParentOp();
-
-        // rewriter.replaceOp(op.getOperation(), arraySize);
+        
         rewriter.eraseOp(op);
 
         return success();
@@ -202,25 +209,29 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 
             auto loc = op->getLoc();
 
-            auto elementType = adaptor.getOperands()[0].getType().cast<mlir::MemRefType>().getElementType();
-            // auto elementType = graph.getType().cast<MemRefType>().getElementType();
+            auto elementType = LLVM::LLVMPointerType::get(rewriter.getContext());
+
             auto zero = rewriter.create<mlir::arith::ConstantIndexOp>(loc, 0);
-            //auto elementType = MemRefType::get({4}, LLVM::LLVMPointerType::get(op.getContext()));
-            
-  // static void build(::mlir::Type result, ::mlir::Value memref, ::mlir::ValueRange indices, /*optional*/::mlir::BoolAttr nontemporal);
             Value ptrToSize = rewriter.create<mlir::memref::LoadOp>(
                 loc,
                 elementType,
                 adaptor.getOperands()[0],
                 mlir::ValueRange(zero)
             );
+
+            Value ret = rewriter.create<mlir::LLVM::LoadOp>(
+                loc,
+                rewriter.getI32Type(),
+                ptrToSize
+            );
+
+            auto returnOp = rewriter.create<mlir::func::ReturnOp>(loc, ret);
             
-            MemRefType memrefType = MemRefType::get({4}, rewriter.getF32Type());
-            auto allocaOp = rewriter.create<memref::AllocaOp>(op.getLoc(), memrefType);
+            // MemRefType memrefType = MemRefType::get({4}, rewriter.getF32Type());
+            // auto allocaOp = rewriter.create<memref::AllocaOp>(op.getLoc(), memrefType);
 
-            rewriter.replaceOp(op, allocaOp.getOperation());
+            rewriter.replaceOp(op, returnOp.getOperation());
 
-            op->getParentOp()->dump();
         }
 
         else
@@ -330,7 +341,7 @@ namespace mlir
                 StarplatToLLVMTypeConverter typeConverter(context);
 
                 patterns.add<ConvertAdd, ConvertDeclareOp, ConvertConstOp, ConvertSetNodeProp, ConvertAssignOp,
-                             ConvertFunc, ConvertFixedPointOp, ConvertAttachNode>(context);
+                             ConvertFunc, ConvertFixedPointOp, ConvertAttachNode, ConvertReturnOp>(context);
 
                 populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns, typeConverter);
                 target.addDynamicallyLegalOp<mlir::starplat::FuncOp>([&](starplat::FuncOp op)
