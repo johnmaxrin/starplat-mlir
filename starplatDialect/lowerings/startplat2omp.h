@@ -31,7 +31,7 @@
 //     return;
 // }
 
-mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
+mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext *context);
 mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context);
 
 class StarplatToLLVMTypeConverter : public TypeConverter
@@ -44,11 +44,7 @@ public:
         //               { return type; });
 
         addConversion([ctx](mlir::starplat::GraphType graph) -> Type
-                      {
-                          MemRefType memrefType = MemRefType::get({4}, LLVM::LLVMPointerType::get(ctx));
-                          return memrefType;
-                          // return LLVM::LLVMPointerType::get(ctx);
-                      });
+                      { return createGraphStruct(ctx); });
 
         addTargetMaterialization(
             [ctx](OpBuilder &builder, Type type, ValueRange inputs, Location loc) -> std::optional<Value>
@@ -163,7 +159,6 @@ struct ConvertReturnOp : public OpConversionPattern<mlir::starplat::ReturnOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-      
         rewriter.eraseOp(op);
         return success();
     }
@@ -178,7 +173,6 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
         ConversionPatternRewriter &rewriter) const override
     {
 
-        
         rewriter.eraseOp(op);
 
         return success();
@@ -204,34 +198,16 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
         auto resType = op->getResult(0).getType();
         if (resType.isa<mlir::starplat::PropNodeType>())
         {
-
-            auto graph = op->getOperand(0);
-
             auto loc = op->getLoc();
+            auto field0 = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 32), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
+            Value dynamicSize = rewriter.create<arith::IndexCastOp>(loc, rewriter.getIndexType(), field0);
 
-            auto elementType = LLVM::LLVMPointerType::get(rewriter.getContext());
+            auto memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI32Type());
+            Value allocated = rewriter.create<memref::AllocOp>(loc, memrefType, mlir::ValueRange({dynamicSize}));
 
-            auto zero = rewriter.create<mlir::arith::ConstantIndexOp>(loc, 0);
-            Value ptrToSize = rewriter.create<mlir::memref::LoadOp>(
-                loc,
-                elementType,
-                adaptor.getOperands()[0],
-                mlir::ValueRange(zero)
-            );
+            auto numofNodes = rewriter.create<mlir::func::ReturnOp>(loc, field0.getResult());
 
-            Value ret = rewriter.create<mlir::LLVM::LoadOp>(
-                loc,
-                rewriter.getI32Type(),
-                ptrToSize
-            );
-
-            auto returnOp = rewriter.create<mlir::func::ReturnOp>(loc, ret);
-            
-            // MemRefType memrefType = MemRefType::get({4}, rewriter.getF32Type());
-            // auto allocaOp = rewriter.create<memref::AllocaOp>(op.getLoc(), memrefType);
-
-            rewriter.replaceOp(op, returnOp.getOperation());
-
+            rewriter.replaceOp(op, numofNodes.getOperation());
         }
 
         else
@@ -361,7 +337,7 @@ namespace mlir
     }
 }
 
-mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::MLIRContext *context)
+mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext *context)
 {
 
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Graph");
@@ -369,8 +345,9 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::IRRewriter *rewriter, mlir::M
 
     auto ptrType = LLVM::LLVMPointerType::get(context);
     // Define Graph struct body with (Node*, int)
-    structType.setBody({ptrType, rewriter->getI32Type(), ptrType}, /*isPacked=*/false);
+    // structType.setBody({ptrType, mlir::IntegerType::get(context, 32), ptrType}, /*isPacked=*/false);
 
+    structType.setBody({mlir::IntegerType::get(context, 32)}, /*isPacked=*/false);
     // structType.setBody({rewriter->getI32Type()}, false);
 
     return structType;

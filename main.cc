@@ -18,6 +18,9 @@
 #include "transforms/reachingDef.h"
 #include "transforms/vertexToEdge.h"
 
+#include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
+#include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
+
 
 #include "lowerings/startplat2omp.h"
 
@@ -73,6 +76,20 @@ int main(int argc, char *argv[])
     }
 
     llvm::outs() << "\n\n\n\nAfter the pass:\n";
+    starplatcodegen->print();
+
+
+    llvm::outs() << "\n\n\n\nLower to LLVM IR:\n";
+    PassManager pmllvm(starplatcodegen->getContext());
+    pmllvm.addPass(mlir::createConvertFuncToLLVMPass());
+    pmllvm.addPass(mlir::createFinalizeMemRefToLLVMConversionPass());
+    pmllvm.addPass(mlir::createReconcileUnrealizedCastsPass());
+
+    if (failed(pmllvm.run(starplatcodegen->getModule()->getOperation()))) {
+        llvm::errs() << "Failed to run passes\n";
+        return 1;
+    }
+    
     starplatcodegen->print();
 
     // Work on Conversion of OMP
