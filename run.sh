@@ -1,6 +1,6 @@
 printf "Running Tests\n\n"
 
-./build/bin/app  tests/declare.avl
+./build/bin/app  tests/attachNodeProp.avl
 
 printf '\n'
 printf '\n'

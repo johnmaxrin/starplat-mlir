@@ -159,7 +159,6 @@ struct ConvertReturnOp : public OpConversionPattern<mlir::starplat::ReturnOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-        rewriter.eraseOp(op);
         return success();
     }
 };
@@ -205,9 +204,8 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
             auto memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI32Type());
             Value allocated = rewriter.create<memref::AllocOp>(loc, memrefType, mlir::ValueRange({dynamicSize}));
 
-            auto numofNodes = rewriter.create<mlir::func::ReturnOp>(loc, field0.getResult());
-
-            rewriter.replaceOp(op, numofNodes.getOperation());
+            
+            rewriter.replaceOp(op, allocated);
         }
 
         else
@@ -229,12 +227,23 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-        auto arraySize = rewriter.create<LLVM::ConstantOp>(
-            op.getLoc(),
-            rewriter.getI32Type(),
-            rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
+       auto loc = op.getLoc();
+       
+       auto value = op.getValueAttr();
+        
+       if(value.cast<mlir::StringAttr>().getValue() == "False")
+            rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
+       
+        else
+       {
+        llvm::outs() << "Error: Constant Not Implemented.";
+        exit(0);
+       }
 
-        rewriter.replaceOp(op, arraySize);
+
+       
+
+        rewriter.eraseOp(op);
 
         return success();
     }
