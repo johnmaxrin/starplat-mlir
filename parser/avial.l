@@ -16,6 +16,7 @@
 "Graph"                 {yylval.id = strdup(yytext); return GRAPH;}
 "Node"                  {yylval.id = strdup(yytext); return NODE;}
 "int"                   {yylval.id = strdup(yytext); return INT;}
+"bool"                  {yylval.id = strdup(yytext); return BOOL;}
 "propNode"              {yylval.id = strdup(yytext); return PROPNODE; }
 "propEdge"              {yylval.id = strdup(yytext); return PROPEDGE; }
 "False"                 {yylval.id = strdup(yytext); return FALSE; }

@@ -62,7 +62,18 @@ public:
         if (std::string(Type->getGraphPropNode()->getPropertyType()) == "propNode")
         {
 
-            auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
+            mlir::Type type;
+
+            if(std::string(Type->getType()->getType()) == "int")
+                type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
+            else if(std::string(Type->getType()->getType()) == "bool")
+                type = builder.getType<mlir::starplat::PropNodeType>(builder.getI1Type(), graphId);
+            else
+            {
+                llvm::errs() <<"Error: Type not implemented\n";
+                exit(0);
+            } 
+
             auto visibility = builder.getStringAttr("public");
             mlir::Value graph = globalLookupOp(graphId);
 

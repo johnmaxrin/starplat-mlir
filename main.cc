@@ -20,6 +20,8 @@
 
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
+#include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
+#include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
 
 
 #include "lowerings/startplat2omp.h"
@@ -81,8 +83,10 @@ int main(int argc, char *argv[])
 
     llvm::outs() << "\n\n\n\nLower to LLVM IR:\n";
     PassManager pmllvm(starplatcodegen->getContext());
-    pmllvm.addPass(mlir::createConvertFuncToLLVMPass());
     pmllvm.addPass(mlir::createFinalizeMemRefToLLVMConversionPass());
+    pmllvm.addPass(mlir::createConvertSCFToCFPass());
+    pmllvm.addPass(mlir::createConvertControlFlowToLLVMPass());
+    pmllvm.addPass(mlir::createConvertFuncToLLVMPass());
     pmllvm.addPass(mlir::createReconcileUnrealizedCastsPass());
 
     if (failed(pmllvm.run(starplatcodegen->getModule()->getOperation()))) {
@@ -90,6 +94,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     
+
     starplatcodegen->print();
 
     // Work on Conversion of OMP

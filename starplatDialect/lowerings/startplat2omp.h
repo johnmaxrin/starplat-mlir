@@ -78,7 +78,11 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         ConversionPatternRewriter &rewriter) const override
     {
         auto loc = op.getLoc();
-        auto returnType = rewriter.getI32Type();
+        auto returnType =  MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
+        
+        //rewriter.getI32Type(); // up up 
+
+
         auto i32Type = rewriter.getI32Type();
 
         // Function signature: (i32, i32) -> i32
@@ -114,15 +118,29 @@ struct ConvertAttachNode : public OpConversionPattern<mlir::starplat::AttachNode
         ConversionPatternRewriter &rewriter) const override
     {
 
-        auto arraySize = rewriter.create<LLVM::ConstantOp>(
-            op.getLoc(),
-            rewriter.getI32Type(),
-            rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
+        // "starplat.attachNodeProperty"(%arg0, %0, %1) : (!starplat.graph, !starplat.propNode<i32, "g">, i32) -> ()}
+        // Get num of nodes from arg0 done
+        // Loop from 0 to num of nodes  done
+        // Assign %0[index] = %1
 
-        auto func = op->getParentOp();
+        auto loc = op.getLoc();
+        
+        auto constZero = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI32Type(), rewriter.getI32IntegerAttr(0));
+        auto numOfNodes = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 32), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
+        auto step = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI32Type(), rewriter.getI32IntegerAttr(1)); 
 
-        rewriter.replaceOp(op.getOperation(), arraySize);
-        // rewriter.eraseOp(op);
+        rewriter.create<mlir::scf::ForOp>(loc, constZero, numOfNodes, step, mlir::ValueRange{}, [&](mlir::OpBuilder &builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs){
+            auto indexIv = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), iv);
+
+
+
+            builder.create<mlir::memref::StoreOp>(nestedLoc, adaptor.getOperands()[2], adaptor.getOperands()[1], mlir::ValueRange{indexIv}); 
+            builder.create<mlir::scf::YieldOp>(nestedLoc);
+        });
+
+        rewriter.create<func::ReturnOp>(loc,adaptor.getOperands()[1]);
+        
+        rewriter.eraseOp(op);
 
         return success();
     }
@@ -158,6 +176,11 @@ struct ConvertReturnOp : public OpConversionPattern<mlir::starplat::ReturnOp>
         mlir::starplat::ReturnOp op, OpAdaptor adaptor,
         ConversionPatternRewriter &rewriter) const override
     {
+
+        // auto retVal = rewriter.create<LLVM::ConstantOp>(op.getLoc(), rewriter.getI32Type(), rewriter.getI32IntegerAttr(0));
+        // rewriter.create<LLVM::ReturnOp>(op.getLoc(), retVal);
+
+        rewriter.eraseOp(op);
 
         return success();
     }
@@ -198,10 +221,22 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
         if (resType.isa<mlir::starplat::PropNodeType>())
         {
             auto loc = op->getLoc();
+            
+            auto rescast = resType.dyn_cast<mlir::starplat::PropNodeType>();
+
+            
+
             auto field0 = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 32), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
             Value dynamicSize = rewriter.create<arith::IndexCastOp>(loc, rewriter.getIndexType(), field0);
 
-            auto memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI32Type());
+            MemRefType memrefType;
+            if(rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 1))
+                memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
+            else
+            {
+                llvm::outs() <<"Error: MemrefType not implemented\n";
+                exit(0);
+            }
             Value allocated = rewriter.create<memref::AllocOp>(loc, memrefType, mlir::ValueRange({dynamicSize}));
 
             
@@ -232,18 +267,16 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
        auto value = op.getValueAttr();
         
        if(value.cast<mlir::StringAttr>().getValue() == "False")
-            rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
+        {   
+            auto newOp = rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
+            rewriter.replaceOp(op, newOp);
+        }
        
         else
        {
         llvm::outs() << "Error: Constant Not Implemented.";
         exit(0);
        }
-
-
-       
-
-        rewriter.eraseOp(op);
 
         return success();
     }
