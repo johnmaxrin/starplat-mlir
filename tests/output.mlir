@@ -1,36 +1,37 @@
 module {
   llvm.func @malloc(i64) -> !llvm.ptr
-  llvm.func @attachNodeProperty(%arg0: !llvm.struct<"Graph", (i32)>) -> !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> {
-    %0 = llvm.extractvalue %arg0[0] : !llvm.struct<"Graph", (i32)> 
-    %1 = llvm.sext %0 : i32 to i64
-    %2 = llvm.mlir.constant(1 : index) : i64
-    %3 = llvm.mlir.zero : !llvm.ptr
-    %4 = llvm.getelementptr %3[%1] : (!llvm.ptr, i64) -> !llvm.ptr, i1
-    %5 = llvm.ptrtoint %4 : !llvm.ptr to i64
-    %6 = llvm.call @malloc(%5) : (i64) -> !llvm.ptr
-    %7 = llvm.mlir.undef : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)>
-    %8 = llvm.insertvalue %6, %7[0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %9 = llvm.insertvalue %6, %8[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %10 = llvm.mlir.constant(0 : index) : i64
-    %11 = llvm.insertvalue %10, %9[2] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %12 = llvm.insertvalue %1, %11[3, 0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %13 = llvm.insertvalue %2, %12[4, 0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %14 = llvm.mlir.constant(false) : i1
-    %15 = llvm.mlir.constant(0 : i32) : i32
-    %16 = llvm.extractvalue %arg0[0] : !llvm.struct<"Graph", (i32)> 
-    %17 = llvm.mlir.constant(1 : i32) : i32
-    llvm.br ^bb1(%15 : i32)
-  ^bb1(%18: i32):  // 2 preds: ^bb0, ^bb2
-    %19 = llvm.icmp "slt" %18, %16 : i32
-    llvm.cond_br %19, ^bb2, ^bb3
+  llvm.func @attachNodeProperty(%arg0: !llvm.struct<"Graph", (i64)>) -> !llvm.ptr {
+    %0 = llvm.extractvalue %arg0[0] : !llvm.struct<"Graph", (i64)> 
+    %1 = llvm.mlir.constant(1 : index) : i64
+    %2 = llvm.mlir.zero : !llvm.ptr
+    %3 = llvm.getelementptr %2[%0] : (!llvm.ptr, i64) -> !llvm.ptr, i1
+    %4 = llvm.ptrtoint %3 : !llvm.ptr to i64
+    %5 = llvm.call @malloc(%4) : (i64) -> !llvm.ptr
+    %6 = llvm.mlir.undef : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)>
+    %7 = llvm.insertvalue %5, %6[0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %8 = llvm.insertvalue %5, %7[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %9 = llvm.mlir.constant(0 : index) : i64
+    %10 = llvm.insertvalue %9, %8[2] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %11 = llvm.insertvalue %0, %10[3, 0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %12 = llvm.insertvalue %1, %11[4, 0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %13 = llvm.mlir.constant(true) : i1
+    %14 = llvm.mlir.constant(0 : i64) : i64
+    %15 = llvm.extractvalue %arg0[0] : !llvm.struct<"Graph", (i64)> 
+    %16 = llvm.mlir.constant(1 : i64) : i64
+    llvm.br ^bb1(%14 : i64)
+  ^bb1(%17: i64):  // 2 preds: ^bb0, ^bb2
+    %18 = llvm.icmp "slt" %17, %15 : i64
+    llvm.cond_br %18, ^bb2, ^bb3
   ^bb2:  // pred: ^bb1
-    %20 = llvm.sext %18 : i32 to i64
-    %21 = llvm.extractvalue %13[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %22 = llvm.getelementptr %21[%20] : (!llvm.ptr, i64) -> !llvm.ptr, i1
-    llvm.store %14, %22 : i1, !llvm.ptr
-    %23 = llvm.add %18, %17 : i32
-    llvm.br ^bb1(%23 : i32)
+    %19 = llvm.extractvalue %12[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %20 = llvm.getelementptr %19[%17] : (!llvm.ptr, i64) -> !llvm.ptr, i1
+    llvm.store %13, %20 : i1, !llvm.ptr
+    %21 = llvm.add %17, %16 : i64
+    llvm.br ^bb1(%21 : i64)
   ^bb3:  // pred: ^bb1
-    llvm.return %13 : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)>
+    %22 = llvm.extractvalue %12[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %23 = llvm.ptrtoint %22 : !llvm.ptr to i64
+    %24 = llvm.inttoptr %23 : i64 to !llvm.ptr
+    llvm.return %24 : !llvm.ptr
   }
 }

@@ -78,12 +78,14 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         ConversionPatternRewriter &rewriter) const override
     {
         auto loc = op.getLoc();
-        auto returnType =  MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
+        
+        auto returnType = LLVM::LLVMPointerType::get(op.getContext());
+        //auto returnType =  MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
         
         //rewriter.getI32Type(); // up up 
 
 
-        auto i32Type = rewriter.getI32Type();
+        auto i64Type = rewriter.getI64Type();
 
         // Function signature: (i32, i32) -> i32
         auto oldFuncType = op.getFunctionType();
@@ -125,9 +127,9 @@ struct ConvertAttachNode : public OpConversionPattern<mlir::starplat::AttachNode
 
         auto loc = op.getLoc();
         
-        auto constZero = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI32Type(), rewriter.getI32IntegerAttr(0));
-        auto numOfNodes = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 32), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
-        auto step = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI32Type(), rewriter.getI32IntegerAttr(1)); 
+        auto constZero = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
+        auto numOfNodes = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
+        auto step = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1)); 
 
         rewriter.create<mlir::scf::ForOp>(loc, constZero, numOfNodes, step, mlir::ValueRange{}, [&](mlir::OpBuilder &builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs){
             auto indexIv = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), iv);
@@ -138,7 +140,12 @@ struct ConvertAttachNode : public OpConversionPattern<mlir::starplat::AttachNode
             builder.create<mlir::scf::YieldOp>(nestedLoc);
         });
 
-        rewriter.create<func::ReturnOp>(loc,adaptor.getOperands()[1]);
+        
+        // Value llvmPtr = MemRefDescriptor(memrefVal).alignedPtr(builder, loc);
+        auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[1]);
+        auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
+        auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        rewriter.create<func::ReturnOp>(loc,IdxtoPtr.getResult());
         
         rewriter.eraseOp(op);
 
@@ -226,7 +233,7 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 
             
 
-            auto field0 = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 32), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
+            auto field0 = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
             Value dynamicSize = rewriter.create<arith::IndexCastOp>(loc, rewriter.getIndexType(), field0);
 
             MemRefType memrefType;
@@ -389,7 +396,7 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext *context)
     // Define Graph struct body with (Node*, int)
     // structType.setBody({ptrType, mlir::IntegerType::get(context, 32), ptrType}, /*isPacked=*/false);
 
-    structType.setBody({mlir::IntegerType::get(context, 32)}, /*isPacked=*/false);
+    structType.setBody({mlir::IntegerType::get(context, 64)}, /*isPacked=*/false);
     // structType.setBody({rewriter->getI32Type()}, false);
 
     return structType;
