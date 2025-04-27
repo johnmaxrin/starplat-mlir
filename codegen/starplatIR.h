@@ -917,7 +917,11 @@ public:
         mlir::Value rhs = NULL;
 
         if (strcmp(type->getType(), "int") == 0)
-            typeAttr = builder.getI32Type();
+            typeAttr = builder.getI64Type();
+        
+        else if (strcmp(type->getType(), "bool") == 0)
+            typeAttr = builder.getI1Type();
+
         else if (strcmp(type->getType(), "edge") == 0)
             typeAttr = mlir::starplat::EdgeType::get(builder.getContext());
 
@@ -1035,11 +1039,15 @@ public:
         if (globalLookupOp(keyword->getKeyword()))
             return;
 
-        auto keywrodSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
+        mlir::Value keywordSSA;
 
-        keywrodSSA.setNested();
+        if(strcmp(keyword->getKeyword(),"False") == 0)
+            keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
+        else
+            keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
 
-        symbolTable->insert(keywrodSSA);
+
+        symbolTable->insert(keywordSSA.getDefiningOp());
     }
 
     virtual void visitGraphProperties(const GraphProperties *graphproperties, mlir::SymbolTable *symbolTable) override

@@ -216,7 +216,13 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
         ConversionPatternRewriter &rewriter) const override
     {
 
-        rewriter.eraseOp(op);
+        auto assign = rewriter.create<mlir::memref::StoreOp>(op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
+        rewriter.replaceOp(op, assign);
+
+        auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[0]);
+        auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
+        auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
 
         return success();
     }
@@ -261,11 +267,36 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
             rewriter.replaceOp(op, allocated);
         }
 
+        else if(resType.isa<mlir::IntegerType>())
+        {
+            auto loc = op->getLoc();
+            auto resCast = resType.dyn_cast<mlir::IntegerType>();
+
+            MemRefType memrefType;
+
+            if(resCast.getWidth() == 64)
+                memrefType = MemRefType::get({}, rewriter.getI64Type());
+            else if(resCast.getWidth() == 1)
+                memrefType = MemRefType::get({}, rewriter.getI1Type());
+            
+
+            else
+            {
+                llvm::outs() << "Error: MemrefType Integer type not implemented.\n";
+                exit(0);
+            }
+
+            Value allocated = rewriter.create<memref::AllocOp>(loc, memrefType);
+            rewriter.replaceOp(op, allocated);
+        }
+
         else
         {
-            llvm::outs() << "Error: DeclareOp lowering not yet implemented.";
+            llvm::outs() << "Error: This DeclareOp lowering not yet implemented.";
             return failure();
         }
+
+
 
         return success();
     }
