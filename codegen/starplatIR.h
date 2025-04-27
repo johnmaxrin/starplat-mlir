@@ -1008,6 +1008,7 @@ public:
         // auto typeAttr = id1->getAttrOfType<mlir::TypeAttr>("type");
         mlir::Type type = id1.getType();
 
+
         if (type.isa<mlir::starplat::NodeType>())
         {
             // Set Node Property
@@ -1015,15 +1016,16 @@ public:
             {
                 const Number *number = static_cast<const Number *>(expr->getExpression());
                 auto numberVal = globalLookupOp(std::to_string(number->getnumber()));
-                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1, id2, numberVal);
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(),id2.getDefiningOp()->getOperand(0), id1, id2, numberVal);
             }
 
             else if (expr->getKind() == ExpressionKind::KIND_KEYWORD)
             {
                 const Keyword *keyword = static_cast<const Keyword *>(expr->getExpression());
                 auto keywordVal = globalLookupOp(keyword->getKeyword());
-                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id1, id2, keywordVal);
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(),id2.getDefiningOp()->getOperand(0), id1, id2, keywordVal);
             }
+
         }
     }
 

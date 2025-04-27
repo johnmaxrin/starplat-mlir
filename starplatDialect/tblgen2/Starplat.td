@@ -184,6 +184,7 @@ def AttachNodePropertyOp : StarplatBaseOp<"attachNodeProperty">
     let summary = "Set Node property";
 
     let arguments = ( ins
+                      AnyType : $graph,
                       AnyType : $node,
                       AnyType : $property,
                       AnyType : $value

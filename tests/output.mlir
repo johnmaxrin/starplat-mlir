@@ -1,6 +1,6 @@
 module {
   llvm.func @malloc(i64) -> !llvm.ptr
-  llvm.func @attachNodeProperty(%arg0: !llvm.struct<"Graph", (i64)>) -> !llvm.ptr {
+  llvm.func @attachNodeProperty(%arg0: !llvm.struct<"Graph", (i64)>, %arg1: i64) -> !llvm.ptr {
     %0 = llvm.extractvalue %arg0[0] : !llvm.struct<"Graph", (i64)> 
     %1 = llvm.mlir.constant(1 : index) : i64
     %2 = llvm.mlir.zero : !llvm.ptr
@@ -14,7 +14,7 @@ module {
     %10 = llvm.insertvalue %9, %8[2] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
     %11 = llvm.insertvalue %0, %10[3, 0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
     %12 = llvm.insertvalue %1, %11[4, 0] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %13 = llvm.mlir.constant(true) : i1
+    %13 = llvm.mlir.constant(false) : i1
     %14 = llvm.mlir.constant(0 : i64) : i64
     %15 = llvm.extractvalue %arg0[0] : !llvm.struct<"Graph", (i64)> 
     %16 = llvm.mlir.constant(1 : i64) : i64
@@ -29,9 +29,19 @@ module {
     %21 = llvm.add %17, %16 : i64
     llvm.br ^bb1(%21 : i64)
   ^bb3:  // pred: ^bb1
-    %22 = llvm.extractvalue %12[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
-    %23 = llvm.ptrtoint %22 : !llvm.ptr to i64
-    %24 = llvm.inttoptr %23 : i64 to !llvm.ptr
-    llvm.return %24 : !llvm.ptr
+    %22 = llvm.mlir.constant(true) : i1
+    %23 = llvm.extractvalue %arg0[0] : !llvm.struct<"Graph", (i64)> 
+    %24 = llvm.icmp "sgt" %23, %arg1 : i64
+    llvm.cond_br %24, ^bb4, ^bb5
+  ^bb4:  // pred: ^bb3
+    %25 = llvm.extractvalue %12[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %26 = llvm.getelementptr %25[%arg1] : (!llvm.ptr, i64) -> !llvm.ptr, i1
+    llvm.store %22, %26 : i1, !llvm.ptr
+    llvm.br ^bb5
+  ^bb5:  // 2 preds: ^bb3, ^bb4
+    %27 = llvm.extractvalue %12[1] : !llvm.struct<(ptr, ptr, i64, array<1 x i64>, array<1 x i64>)> 
+    %28 = llvm.ptrtoint %27 : !llvm.ptr to i64
+    %29 = llvm.inttoptr %28 : i64 to !llvm.ptr
+    llvm.return %29 : !llvm.ptr
   }
 }

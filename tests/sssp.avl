@@ -1,7 +1,6 @@
 function Compute_SSSP (Graph g,propNode<int,g> dist, propEdge<int,g> weight, Node src) {
     
     
-    
     propNode <int,g> modified_nxt;
     propNode <int,g> modified;
 

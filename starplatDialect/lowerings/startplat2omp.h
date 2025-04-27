@@ -59,7 +59,7 @@ public:
             });
 
         addConversion([ctx](mlir::starplat::NodeType node) -> Type
-                      { return LLVM::LLVMPointerType::get(ctx); });
+                      { return mlir::IntegerType::get(ctx,64); });
 
         addConversion([ctx](mlir::IntegerType intType) -> Type
                       { return LLVM::LLVMPointerType::get(ctx); });
@@ -82,7 +82,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         auto returnType = LLVM::LLVMPointerType::get(op.getContext());
         //auto returnType =  MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
         
-        //rewriter.getI32Type(); // up up 
+        //auto returnType = rewriter.getI64Type(); // up up 
 
 
         auto i64Type = rewriter.getI64Type();
@@ -91,7 +91,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         auto oldFuncType = op.getFunctionType();
 
         // SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1), oldFuncType.getInput(2), oldFuncType.getInput(3)};
-        SmallVector<Type> paramTypes = {oldFuncType.getInput(0)};
+        SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1)};
 
         auto funcType = mlir::FunctionType::get(rewriter.getContext(), paramTypes, returnType);
         auto funcName = op.getSymName();
@@ -141,11 +141,9 @@ struct ConvertAttachNode : public OpConversionPattern<mlir::starplat::AttachNode
         });
 
         
-        // Value llvmPtr = MemRefDescriptor(memrefVal).alignedPtr(builder, loc);
-        auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[1]);
-        auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
-        auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
-        rewriter.create<func::ReturnOp>(loc,IdxtoPtr.getResult());
+        // auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[1]);
+        // auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
+        // auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
         
         rewriter.eraseOp(op);
 
@@ -162,14 +160,30 @@ struct ConvertSetNodeProp : public OpConversionPattern<mlir::starplat::SetNodePr
         ConversionPatternRewriter &rewriter) const override
     {
 
-        // auto arraySize = rewriter.create<LLVM::ConstantOp>(
-        //     op.getLoc(),
-        //     rewriter.getI32Type(),
-        //     rewriter.getIntegerAttr(rewriter.getI32Type(), 1));
+        // Check if the node id is greater than the total number of nodes using operand(0) & operand(1)
+        // If no, then assign operand(3) to operand(2)[operand(1)]
+        auto numOfNodes =  rewriter.create<LLVM::ExtractValueOp>(op.getLoc(), mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0], rewriter.getDenseI64ArrayAttr({0}));
 
-        // auto func = op->getParentOp();
+        auto cond = rewriter.create<mlir::arith::CmpIOp>(op.getLoc(), rewriter.getI1Type(), mlir::arith::CmpIPredicate::sgt, numOfNodes.getResult(), adaptor.getOperands()[1]);
 
-        // rewriter.replaceOp(op.getOperation(), arraySize);
+        rewriter.create<mlir::scf::IfOp>(op.getLoc(), cond, [&](mlir::OpBuilder &builder, mlir::Location nestedLoc){
+
+            auto index = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), adaptor.getOperands()[1]);
+
+            builder.create<mlir::memref::StoreOp>(nestedLoc, adaptor.getOperands()[3], adaptor.getOperands()[2], mlir::ValueRange{index}); 
+            builder.create<mlir::scf::YieldOp>(nestedLoc);
+
+        });
+
+        
+        auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[2]);
+        auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
+        auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        
+
+        
+        rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
+
         rewriter.eraseOp(op);
 
         return success();
@@ -220,9 +234,6 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
         ConversionPatternRewriter &rewriter) const override
     {
 
-        auto elementType = rewriter.getI32Type(); // type of the element to allocate
-
-        // optional array size (can be omitted or passed as a Value)
 
         auto resType = op->getResult(0).getType();
         if (resType.isa<mlir::starplat::PropNodeType>())
@@ -278,7 +289,12 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
             auto newOp = rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
             rewriter.replaceOp(op, newOp);
         }
-       
+        
+       else if(value.cast<mlir::StringAttr>().getValue() == "True")
+        {   
+            auto newOp = rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(1));
+            rewriter.replaceOp(op, newOp);
+        }
         else
        {
         llvm::outs() << "Error: Constant Not Implemented.";

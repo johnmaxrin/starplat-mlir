@@ -5,36 +5,47 @@ source_filename = "LLVMDialectModule"
 
 declare ptr @malloc(i64)
 
-define ptr @attachNodeProperty(%Graph %0) {
-  %2 = extractvalue %Graph %0, 0
-  %3 = getelementptr i1, ptr null, i64 %2
-  %4 = ptrtoint ptr %3 to i64
-  %5 = call ptr @malloc(i64 %4)
-  %6 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } undef, ptr %5, 0
-  %7 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %6, ptr %5, 1
-  %8 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %7, i64 0, 2
-  %9 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %8, i64 %2, 3, 0
-  %10 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %9, i64 1, 4, 0
-  %11 = extractvalue %Graph %0, 0
-  br label %12
+define ptr @attachNodeProperty(%Graph %0, i64 %1) {
+  %3 = extractvalue %Graph %0, 0
+  %4 = getelementptr i1, ptr null, i64 %3
+  %5 = ptrtoint ptr %4 to i64
+  %6 = call ptr @malloc(i64 %5)
+  %7 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } undef, ptr %6, 0
+  %8 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %7, ptr %6, 1
+  %9 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %8, i64 0, 2
+  %10 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %9, i64 %3, 3, 0
+  %11 = insertvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %10, i64 1, 4, 0
+  %12 = extractvalue %Graph %0, 0
+  br label %13
 
-12:                                               ; preds = %15, %1
-  %13 = phi i64 [ %18, %15 ], [ 0, %1 ]
-  %14 = icmp slt i64 %13, %11
-  br i1 %14, label %15, label %19
+13:                                               ; preds = %16, %2
+  %14 = phi i64 [ %19, %16 ], [ 0, %2 ]
+  %15 = icmp slt i64 %14, %12
+  br i1 %15, label %16, label %20
 
-15:                                               ; preds = %12
-  %16 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %10, 1
-  %17 = getelementptr i1, ptr %16, i64 %13
-  store i1 true, ptr %17, align 1
-  %18 = add i64 %13, 1
-  br label %12
+16:                                               ; preds = %13
+  %17 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %11, 1
+  %18 = getelementptr i1, ptr %17, i64 %14
+  store i1 false, ptr %18, align 1
+  %19 = add i64 %14, 1
+  br label %13
 
-19:                                               ; preds = %12
-  %20 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %10, 1
-  %21 = ptrtoint ptr %20 to i64
-  %22 = inttoptr i64 %21 to ptr
-  ret ptr %22
+20:                                               ; preds = %13
+  %21 = extractvalue %Graph %0, 0
+  %22 = icmp sgt i64 %21, %1
+  br i1 %22, label %23, label %26
+
+23:                                               ; preds = %20
+  %24 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %11, 1
+  %25 = getelementptr i1, ptr %24, i64 %1
+  store i1 true, ptr %25, align 1
+  br label %26
+
+26:                                               ; preds = %23, %20
+  %27 = extractvalue { ptr, ptr, i64, [1 x i64], [1 x i64] } %11, 1
+  %28 = ptrtoint ptr %27 to i64
+  %29 = inttoptr i64 %28 to ptr
+  ret ptr %29
 }
 
 !llvm.module.flags = !{!0}
