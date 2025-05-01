@@ -1,7 +1,5 @@
-# Avial
-An MLIR dialect that enables unified heterogeneous
-execution by seamlessly orchestrating workload distribution across
-CPUs, GPUs, and MPI-based clusters within a single binary.
+# Starplat MLIR
+Starplat-MLIR is an MLIR-based compiler infrastructure for the Starplat domain-specific language (DSL), designed to support high-performance graph analytics and heterogeneous compilation across CPUs, GPUs, and FPGAs. This repository contains custom dialects, IR transformations, and backend lowering pipelines for optimizing and generating parallel code from Starplat programs.
 
 ### How to compile?
 ```bash
