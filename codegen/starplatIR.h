@@ -65,7 +65,7 @@ public:
             mlir::Type type;
 
             if(std::string(Type->getType()->getType()) == "int")
-                type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
+                type = builder.getType<mlir::starplat::PropNodeType>(builder.getI64Type(), graphId);
             else if(std::string(Type->getType()->getType()) == "bool")
                 type = builder.getType<mlir::starplat::PropNodeType>(builder.getI1Type(), graphId);
             else
@@ -254,14 +254,17 @@ public:
                         auto lhsidSymbol = globalLookupOp(lhsIdentifier->getname());
                         auto rhsKeywordSymbol = globalLookupOp(rhsKeyword->getKeyword());
 
-                        if (!lhsidSymbol || !rhsKeywordSymbol)
+                        if(!rhsKeywordSymbol)
+                            rhsKeyword->Accept(this, symbolTable);
+
+                        if (!lhsidSymbol)
                         {
-                            llvm::outs() << "Error: Identifier '" << lhsIdentifier->getname() << "' or Keyword '" << rhsKeyword->getKeyword() << "' not declared.\n";
+                            llvm::outs() << "Error DXB: Identifier '" << lhsIdentifier->getname()<< "' not declared.\n";
                             return;
                         }
 
                         loopOperands.push_back(lhsidSymbol);
-                        loopOperands.push_back(rhsKeywordSymbol);
+                        loopOperands.push_back(globalLookupOp(rhsKeyword->getKeyword()));
                     }
 
                     else
@@ -343,6 +346,8 @@ public:
                     const auto *keyword = static_cast<const Keyword *>(paramAssignment->getkeyword());
                     keyword->Accept(this, symbolTable);
 
+                    
+
                     if (!identifier || !keyword)
                     {
                         llvm::outs() << "error: " << "identifier or keyword is null\n";
@@ -351,6 +356,7 @@ public:
 
                     auto idSymbol = globalLookupOp(identifier->getname()); // globalLookupOp(identifier->getname());
                     auto kwSymbol = globalLookupOp(keyword->getKeyword()); // globalLookupOp(keyword->getKeyword());
+
 
                     if (!kwSymbol)
                         llvm::outs() << "Error: Keyword '" << keyword->getKeyword() << "' not declared.\n";
@@ -401,19 +407,9 @@ public:
     {
         Identifier *identifier = static_cast<Identifier *>(paramAssignment->getidentifier());
         Keyword *keyword = static_cast<Keyword *>(paramAssignment->getkeyword());
+        keyword->Accept(this, symbolTable);
 
-        if (!globalLookupOp(keyword->getKeyword()))
-        {
-            auto keywordVal = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(std::string(keyword->getKeyword())), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
 
-            if (keywordVal)
-                symbolTable->insert(keywordVal);
-            else
-            {
-                llvm::outs() << "error: " << "while adding to Symbol Table\n";
-                exit(1);
-            }
-        }
         if (globalLookupOp(identifier->getname()))
         {
             auto lhs = globalLookupOp(identifier->getname());
@@ -1039,15 +1035,18 @@ public:
         if (globalLookupOp(keyword->getKeyword()))
             return;
 
-        mlir::Value keywordSSA;
+        mlir::Operation *keywordSSA;
 
         if(strcmp(keyword->getKeyword(),"False") == 0)
             keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
+        
+        else if(strcmp(keyword->getKeyword(),"True") == 0)
+            keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
         else
-            keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
+            keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI64Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
 
 
-        symbolTable->insert(keywordSSA.getDefiningOp());
+        symbolTable->insert(keywordSSA);
     }
 
     virtual void visitGraphProperties(const GraphProperties *graphproperties, mlir::SymbolTable *symbolTable) override

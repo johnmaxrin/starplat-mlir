@@ -91,7 +91,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         auto oldFuncType = op.getFunctionType();
 
         // SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1), oldFuncType.getInput(2), oldFuncType.getInput(3)};
-        SmallVector<Type> paramTypes = {oldFuncType.getInput(0), oldFuncType.getInput(1)};
+        SmallVector<Type> paramTypes = {oldFuncType.getInput(0)};
 
         auto funcType = mlir::FunctionType::get(rewriter.getContext(), paramTypes, returnType);
         auto funcName = op.getSymName();
@@ -136,6 +136,7 @@ struct ConvertAttachNode : public OpConversionPattern<mlir::starplat::AttachNode
 
 
 
+
             builder.create<mlir::memref::StoreOp>(nestedLoc, adaptor.getOperands()[2], adaptor.getOperands()[1], mlir::ValueRange{indexIv}); 
             builder.create<mlir::scf::YieldOp>(nestedLoc);
         });
@@ -169,6 +170,7 @@ struct ConvertSetNodeProp : public OpConversionPattern<mlir::starplat::SetNodePr
         rewriter.create<mlir::scf::IfOp>(op.getLoc(), cond, [&](mlir::OpBuilder &builder, mlir::Location nestedLoc){
 
             auto index = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), adaptor.getOperands()[1]);
+
 
             builder.create<mlir::memref::StoreOp>(nestedLoc, adaptor.getOperands()[3], adaptor.getOperands()[2], mlir::ValueRange{index}); 
             builder.create<mlir::scf::YieldOp>(nestedLoc);
@@ -216,6 +218,7 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
         ConversionPatternRewriter &rewriter) const override
     {
 
+
         auto assign = rewriter.create<mlir::memref::StoreOp>(op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
         rewriter.replaceOp(op, assign);
 
@@ -256,6 +259,10 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
             MemRefType memrefType;
             if(rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 1))
                 memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
+            
+            else if(rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 64))
+                memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI64Type());
+            
             else
             {
                 llvm::outs() <<"Error: MemrefType not implemented\n";
@@ -288,6 +295,11 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 
             Value allocated = rewriter.create<memref::AllocOp>(loc, memrefType);
             rewriter.replaceOp(op, allocated);
+        }
+
+        else if(resType.isa<mlir::starplat::NodeType>())
+        {
+            llvm::outs() << "Hello\n";
         }
 
         else
@@ -345,10 +357,58 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
         ConversionPatternRewriter &rewriter) const override
     {
 
-        // llvm::outs() << "FixedPoint Op Matched\n";
+        auto cond = op.getTerminationConditionAttr();
+        cond.dump();
 
-        //        auto func = op->getParentOp();
-        //      func->dump();
+        // What to do for fixed point? 
+        // Operand 1 will always be an I1, Operand 2 can be any type! Convert it to 
+        auto op1 = adaptor.getOperands()[0];
+        auto op2 = adaptor.getOperands()[1];
+
+        auto op1Type = op1.getType();
+        auto op2Type = op2.getType();
+        int width = op1Type.getIntOrFloatBitWidth();
+
+        if(op1Type.isa<mlir::IntegerType>() && width == 1)
+        {
+            
+            if(op2Type.isa<mlir::starplat::PropNodeType>())
+            {
+                // Or all the values in the propnode and get an I1
+                auto graph = op2.getDefiningOp()->getOperands()[0];
+
+                auto constZero = rewriter.create<LLVM::ConstantOp>(op.getLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
+                auto numOfNodes = rewriter.create<LLVM::ExtractValueOp>(op.getLoc(), mlir::IntegerType::get(op.getContext(), 64), graph, rewriter.getDenseI64ArrayAttr({0}));
+                auto step = rewriter.create<LLVM::ConstantOp>(op.getLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1)); 
+
+                rewriter.create<mlir::scf::ForOp>(op.getLoc(), constZero, numOfNodes, step, mlir::ValueRange{}, [&](mlir::OpBuilder &builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs){
+                    auto indexIv = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), iv);
+
+                    auto val = builder.create<mlir::memref::LoadOp>(nestedLoc,  adaptor.getOperands()[2], adaptor.getOperands()[1], mlir::ValueRange{indexIv}); 
+                    builder.create<mlir::scf::YieldOp>(nestedLoc);
+                
+                });
+            }
+
+            else
+            {
+                llvm::outs() << "Error: This FixedPoint Operand Type not Implemented\n";
+                exit(0);
+            }
+    
+
+        }
+
+        else
+        {
+            llvm::errs() << "Error: Fixedpoint Variable type error\n";
+            exit(0);
+        }
+        // I1 through, or-ing if it is a propNode. 
+        // And make use of the termination condition. 
+
+       // rewriter.create<mlir::scf::WhileOp>(op.getLoc(), );
+
 
         rewriter.eraseOp(op);
 

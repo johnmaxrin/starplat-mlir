@@ -1,6 +1,6 @@
 printf "Running Tests\n\n"
 
-./build/bin/app  tests/assignmentOp.avl
+./build/bin/app  tests/fixedPointOp.avl
 
 printf '\n'
 printf '\n'

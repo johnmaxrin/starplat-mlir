@@ -1,0 +1,17 @@
+function fixedPointop (Graph g) 
+{
+    propNode <bool,g> modified;    
+    g.attachNodeProperty(modified = False);
+
+    bool finished = False;
+
+
+    fixedPoint until (finished:!modified) {
+        
+        forall(v in g.nodes().filter(modified == True))
+        {
+            v.modified = True;
+        }
+
+    } 
+}
