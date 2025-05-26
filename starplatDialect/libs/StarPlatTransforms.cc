@@ -18,7 +18,7 @@ namespace mlir
     {
 #define GEN_PASS_DEF_REACHDEF
 
-#include "tblgen2/Passes.h.inc"
+#include "Passes.h.inc"
     } // namespace starplat
 } // namespace mlir
 

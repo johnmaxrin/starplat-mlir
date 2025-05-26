@@ -74,7 +74,7 @@ def PropEdgeType : StarPlatDialectType<"PropEdge", "propEdge">{
 
 
 
-def FuncOp : StarplatBaseOp<"func",[FunctionOpInterface, IsolatedFromAbove, SymbolTable]>
+def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove, SymbolTable]>
 {
     let summary = "Defines a function in the Starplat Dialect";
     let description = [{This operation represents a function definiton in the Starplat dialect.

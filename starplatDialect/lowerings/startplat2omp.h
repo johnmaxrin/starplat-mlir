@@ -49,9 +49,9 @@ public:
         addTargetMaterialization(
             [ctx](OpBuilder &builder, Type type, ValueRange inputs, Location loc) -> std::optional<Value>
             {
-                if (type.isa<mlir::starplat::GraphType>() &&
+                if (isa<mlir::starplat::GraphType>(type) &&
                     inputs.size() == 1 &&
-                    inputs[0].getType().isa<MemRefType>())
+                    isa<MemRefType>(inputs[0].getType()))
                 {
                     return inputs[0]; // just forward the memref
                 }
@@ -180,11 +180,11 @@ struct ConvertSetNodeProp : public OpConversionPattern<mlir::starplat::SetNodePr
         
         auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[2]);
         auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
-        auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        //auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
         
 
         
-        rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
+        //rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
 
         rewriter.eraseOp(op);
 
@@ -224,8 +224,8 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
 
         auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[0]);
         auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
-        auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
-        rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
+        //auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        //rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
 
         return success();
     }
@@ -245,11 +245,11 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 
 
         auto resType = op->getResult(0).getType();
-        if (resType.isa<mlir::starplat::PropNodeType>())
+        if (isa<mlir::starplat::PropNodeType>(resType))
         {
             auto loc = op->getLoc();
             
-            auto rescast = resType.dyn_cast<mlir::starplat::PropNodeType>();
+            auto rescast = dyn_cast<mlir::starplat::PropNodeType>(resType);
 
             
 
@@ -274,10 +274,10 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
             rewriter.replaceOp(op, allocated);
         }
 
-        else if(resType.isa<mlir::IntegerType>())
+        else if(isa<mlir::IntegerType>(resType))
         {
             auto loc = op->getLoc();
-            auto resCast = resType.dyn_cast<mlir::IntegerType>();
+            auto resCast = dyn_cast<mlir::IntegerType>(resType);
 
             MemRefType memrefType;
 
@@ -297,7 +297,7 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
             rewriter.replaceOp(op, allocated);
         }
 
-        else if(resType.isa<mlir::starplat::NodeType>())
+        else if(isa<mlir::starplat::NodeType>(resType))
         {
             llvm::outs() << "Hello\n";
         }
@@ -327,13 +327,13 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
        
        auto value = op.getValueAttr();
         
-       if(value.cast<mlir::StringAttr>().getValue() == "False")
+       if(cast<mlir::StringAttr>(value).getValue() == "False")
         {   
             auto newOp = rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
             rewriter.replaceOp(op, newOp);
         }
         
-       else if(value.cast<mlir::StringAttr>().getValue() == "True")
+       else if(cast<mlir::StringAttr>(value).getValue() == "True")
         {   
             auto newOp = rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(1));
             rewriter.replaceOp(op, newOp);
@@ -369,10 +369,10 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
         auto op2Type = op2.getType();
         int width = op1Type.getIntOrFloatBitWidth();
 
-        if(op1Type.isa<mlir::IntegerType>() && width == 1)
+        if(isa<mlir::IntegerType>(op1Type) && width == 1)
         {
             
-            if(op2Type.isa<mlir::starplat::PropNodeType>())
+            if(isa<mlir::starplat::PropNodeType>(op2Type))
             {
                 // Or all the values in the propnode and get an I1
                 auto graph = op2.getDefiningOp()->getOperands()[0];
@@ -384,7 +384,7 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
                 rewriter.create<mlir::scf::ForOp>(op.getLoc(), constZero, numOfNodes, step, mlir::ValueRange{}, [&](mlir::OpBuilder &builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs){
                     auto indexIv = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), iv);
 
-                    auto val = builder.create<mlir::memref::LoadOp>(nestedLoc,  adaptor.getOperands()[2], adaptor.getOperands()[1], mlir::ValueRange{indexIv}); 
+                    //auto val = builder.create<mlir::memref::LoadOp>(nestedLoc,  adaptor.getOperands()[2], adaptor.getOperands()[1], mlir::ValueRange{indexIv}); 
                     builder.create<mlir::scf::YieldOp>(nestedLoc);
                 
                 });

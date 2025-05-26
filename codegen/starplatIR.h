@@ -581,7 +581,7 @@ public:
                         
                         mlir::Type id1Optype = typeAttr.getValue();
 
-                        if (id1Optype.isa<mlir::starplat::NodeType>())
+                        if (isa<mlir::starplat::NodeType>(id1Optype))
                         {
                             // Generate get node property.
                             llvm::StringRef nameRef(id2->getname());
@@ -627,7 +627,7 @@ public:
                             mlir::Type type = typeAttr.getValue();
 
 
-                            if (type.isa<mlir::starplat::NodeType>())
+                            if (isa<mlir::starplat::NodeType>(type))
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
@@ -669,7 +669,7 @@ public:
                             auto typeAttr = op2id1opop->getAttrOfType<mlir::TypeAttr>("type");
                             mlir::Type type = typeAttr.getValue();
 
-                            if (type.isa<mlir::starplat::EdgeType>())
+                            if (isa<mlir::starplat::EdgeType>(type))
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
@@ -802,7 +802,7 @@ public:
         {
             auto argval = entryBlock.addArgument(arg, builder.getUnknownLoc());
             auto argName = argNames[idx++];
-            nameToArgMap[argName.dyn_cast<mlir::StringAttr>().getValue()] = argval;
+            nameToArgMap[dyn_cast<mlir::StringAttr>(argName).getValue()] = argval;
 
         }
 
@@ -1010,7 +1010,7 @@ public:
         mlir::Type type = id1.getType();
 
 
-        if (type.isa<mlir::starplat::NodeType>())
+        if (isa<mlir::starplat::NodeType>(type))
         {
             // Set Node Property
             if (expr->getKind() == ExpressionKind::KIND_NUMBER)

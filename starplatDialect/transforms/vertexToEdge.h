@@ -38,11 +38,11 @@ namespace mlir
                                                              auto attr = op->getAttr("loopattributes");
                                                              if (attr)
                                                              {
-                                                                 if (auto arrAttr = attr.dyn_cast<mlir::ArrayAttr>())
+                                                                 if (auto arrAttr = dyn_cast<mlir::ArrayAttr>(attr))
                                                                  {
                                                                      for (auto attrElm : arrAttr)
                                                                      {
-                                                                         if (auto strAttr = attrElm.dyn_cast<mlir::StringAttr>())
+                                                                         if (auto strAttr = dyn_cast<mlir::StringAttr>(attrElm))
                                                                          {
                                                                              if (strAttr.getValue() == "nodes")
                                                                              {
@@ -52,11 +52,11 @@ namespace mlir
                                                                                                                          auto nbrAttr = op->getAttr("loopattributes");
                                                                                                                          if (nbrAttr)
                                                                                                                          {
-                                                                                                                             if (auto nbrArrAttr = nbrAttr.dyn_cast<mlir::ArrayAttr>())
+                                                                                                                             if (auto nbrArrAttr = dyn_cast<mlir::ArrayAttr>(nbrAttr))
                                                                                                                              {
                                                                                                                                  for (auto nbrAttrElm : nbrArrAttr)
 
-                                                                                                                                     if (auto nbrStrAttr = nbrAttrElm.dyn_cast<mlir::StringAttr>())
+                                                                                                                                     if (auto nbrStrAttr = dyn_cast<mlir::StringAttr>(nbrAttrElm))
                                                                                                                                      {
                                                                                                                                          if (nbrStrAttr.getValue() == "neighbours")
                                                                                                                                          {
@@ -85,12 +85,12 @@ namespace mlir
                             auto attr = op->getAttr("loopattributes");
                             if(attr)
                             {
-                                if(auto arrAttr = attr.dyn_cast<mlir::ArrayAttr>())
+                                if(auto arrAttr = dyn_cast<mlir::ArrayAttr>(attr))
                                 {
                                     mlir::SmallVector<mlir::Attribute> attributesOuter(arrAttr.begin(), arrAttr.end());
                                     for(size_t i = 0; i < attributesOuter.size(); i++)
                                     {
-                                        if(auto strAttr = attributesOuter[i].dyn_cast<mlir::StringAttr>())
+                                        if(auto strAttr = dyn_cast<mlir::StringAttr>(attributesOuter[i]))
                                         {
                                             if(strAttr.getValue() == "nodes")
                                             {

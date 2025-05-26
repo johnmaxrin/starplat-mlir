@@ -6,6 +6,6 @@
 #include "mlir/IR/DialectImplementation.h"
 
 #define GET_TYPEDEF_CLASSES
-#include "tblgen2/StarPlatTypes.h.inc"
+#include "StarPlatTypes.h.inc"
 
 #endif  // STARPLATDIALECT_TYPES_H

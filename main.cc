@@ -12,11 +12,13 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 
-#include "tblgen2/StarPlatOps.cpp.inc"
+//#include "tblgen2/StarPlatOps.cpp.inc"
 
 #include "mlir/Pass/PassManager.h"
-#include "transforms/reachingDef.h"
-#include "transforms/vertexToEdge.h"
+// #include "transforms/reachingDef.h"
+// #include "transforms/vertexToEdge.h"
+
+#include "starplatDialect/includes/StarPlatDialect.h"
 
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
@@ -24,7 +26,7 @@
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
 
 
-#include "lowerings/startplat2omp.h"
+// #include "lowerings/startplat2omp.h"
 
 #define DEBUG_TYPE "dialect-conversion"
 
@@ -69,8 +71,7 @@ int main(int argc, char *argv[])
 
     //pm.addPass(mlir::starplat::createVertexToEdge());
     //pm.addPass(mlir::starplat::createReachDef());
-
-    pm.addPass(mlir::starplat::createConvertStartPlatIRToOMPPass());
+    //pm.addPass(mlir::starplat::createConvertStartPlatIRToOMPPass());
 
     if (failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
         llvm::errs() << "Failed to run passes\n";
@@ -81,21 +82,9 @@ int main(int argc, char *argv[])
     starplatcodegen->print();
 
 
-    llvm::outs() << "\n\n\n\nLower to LLVM IR:\n";
-    PassManager pmllvm(starplatcodegen->getContext());
-    pmllvm.addPass(mlir::createFinalizeMemRefToLLVMConversionPass());
-    pmllvm.addPass(mlir::createConvertSCFToCFPass());
-    pmllvm.addPass(mlir::createConvertControlFlowToLLVMPass());
-    pmllvm.addPass(mlir::createConvertFuncToLLVMPass());
-    pmllvm.addPass(mlir::createReconcileUnrealizedCastsPass());
 
-    if (failed(pmllvm.run(starplatcodegen->getModule()->getOperation()))) {
-        llvm::errs() << "Failed to run passes\n";
-        return 1;
-    }
     
 
-    starplatcodegen->print();
 
     // Work on Conversion of OMP
     // Working on Generating a hello world program in LLVM - Done 

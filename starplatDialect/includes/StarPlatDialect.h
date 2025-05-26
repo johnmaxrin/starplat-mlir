@@ -10,7 +10,7 @@
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Interfaces/FunctionInterfaces.h"
 
-#include "tblgen2/StarPlatDialect.h.inc"
+#include "StarPlatDialect.h.inc"
 
 
 

@@ -53,26 +53,22 @@ add_definitions(${NO_RTTI})
 
 # Include parser directory as a subdirectory
 add_subdirectory(parser)
-add_subdirectory(avialDialect)
 add_subdirectory(starplatDialect)
 
 # Include directories for the source files
 include_directories(
     ${CMAKE_SOURCE_DIR}/ast       # Include path for AST headers
     ${CMAKE_SOURCE_DIR}/codegen    # Include path for codegen headers
-    ${CMAKE_SOURCE_DIR}/avialDialect    
     ${CMAKE_SOURCE_DIR}/starplatDialect    
 
     ${CMAKE_BINARY_DIR}/parser  # Include path for generated parser files
-    ${CMAKE_BINARY_DIR}/avialDialect
     ${CMAKE_BINARY_DIR}/starplatDialect
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc avialDialect/lib/AvialDialect.cc starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
+add_llvm_executable(app main.cc  starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
         DEPENDS 
-          MLIRStarPlatIncGen 
-          MLIRAvialIncGen )
+          MLIRStarPlatIncGen  )
 
 
 target_link_libraries(app 
