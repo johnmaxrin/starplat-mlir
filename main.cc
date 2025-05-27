@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
     yyparse();
     fclose(file);
 
+    printf("Parsing Complete\n");
+
     
     // CodeGen *codegen = new CodeGen;
 
@@ -62,28 +64,17 @@ int main(int argc, char *argv[])
     //     root->Accept(codegen);
 
     StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen;
+
+
     if(root!= nullptr)
         root->Accept(starplatcodegen, starplatcodegen->getSymbolTable());
+    else
+        printf("Hello\n");
+
 
     starplatcodegen->print();
 
-    PassManager pm(starplatcodegen->getContext());
-
-    //pm.addPass(mlir::starplat::createVertexToEdge());
-    //pm.addPass(mlir::starplat::createReachDef());
-    //pm.addPass(mlir::starplat::createConvertStartPlatIRToOMPPass());
-
-    if (failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
-        llvm::errs() << "Failed to run passes\n";
-        return 1;
-    }
-
-    llvm::outs() << "\n\n\n\nAfter the pass:\n";
-    starplatcodegen->print();
-
-
-
-    
+        
 
 
     // Work on Conversion of OMP

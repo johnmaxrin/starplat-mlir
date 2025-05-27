@@ -27,7 +27,7 @@ addExpr properties templateType templateDecl paramAssignment param memberaccessA
 
 %%
 
-prgm  : function            {root = $1;}
+prgm  : function            {root = $1;printf("Here Again!\n");}
         | stmtlist           {root = $1;}   
         ;
 
@@ -35,6 +35,7 @@ function : FUNCTION IDENTIFIER LPAREN arglist RPAREN LCURLY stmtlist RCURLY     
                                                                                         Identifier* funcName = new Identifier($2);
                                                                                         Arglist* arglist = static_cast<Arglist*>($4);
                                                                                         $$ = new Function(funcName, arglist, $7);
+                                                                                        printf("Here I Am\n");
                                                                                 }
          ;
 

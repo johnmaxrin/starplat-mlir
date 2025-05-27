@@ -1,7 +1,8 @@
+#!/bin/bash
+
 printf "Running Tests\n\n"
 
-./build/bin/app  tests/fixedPointOp.avl
+./build/bin/app "$1"
 
-printf '\n'
-printf '\n'
+printf '\n\n'
 echo "Testing complete"
