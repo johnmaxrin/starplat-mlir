@@ -64,25 +64,25 @@ public:
 
             mlir::Type type;
 
-            if(std::string(Type->getType()->getType()) == "int")
+            if (std::string(Type->getType()->getType()) == "int")
                 type = builder.getType<mlir::starplat::PropNodeType>(builder.getI64Type(), graphId);
-            else if(std::string(Type->getType()->getType()) == "bool")
+            else if (std::string(Type->getType()->getType()) == "bool")
                 type = builder.getType<mlir::starplat::PropNodeType>(builder.getI1Type(), graphId);
             else
             {
-                llvm::errs() <<"Error: Type not implemented\n";
+                llvm::errs() << "Error: Type not implemented\n";
                 exit(0);
-            } 
+            }
 
             auto visibility = builder.getStringAttr("public");
             mlir::Value graph = globalLookupOp(graphId);
 
             mlir::Operation *declareOp;
 
-            if(graph)
-                declareOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type , builder.getStringAttr(identifier->getname()), visibility, graph);
+            if (graph)
+                declareOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()), visibility, graph);
             else
-                llvm::errs() <<"Error: Undefined Symbol "<<graphId<<"\n";
+                llvm::errs() << "Error: Undefined Symbol " << graphId << "\n";
 
             if (globalLookupOp(identifier->getname()))
             {
@@ -255,12 +255,12 @@ public:
                         auto lhsidSymbol = globalLookupOp(lhsIdentifier->getname());
                         auto rhsKeywordSymbol = globalLookupOp(rhsKeyword->getKeyword());
 
-                        if(!rhsKeywordSymbol)
+                        if (!rhsKeywordSymbol)
                             rhsKeyword->Accept(this, symbolTable);
 
                         if (!lhsidSymbol)
                         {
-                            llvm::outs() << "Error DXB: Identifier '" << lhsIdentifier->getname()<< "' not declared.\n";
+                            llvm::outs() << "Error DXB: Identifier '" << lhsIdentifier->getname() << "' not declared.\n";
                             return;
                         }
 
@@ -347,8 +347,6 @@ public:
                     const auto *keyword = static_cast<const Keyword *>(paramAssignment->getkeyword());
                     keyword->Accept(this, symbolTable);
 
-                    
-
                     if (!identifier || !keyword)
                     {
                         llvm::outs() << "error: " << "identifier or keyword is null\n";
@@ -357,7 +355,6 @@ public:
 
                     auto idSymbol = globalLookupOp(identifier->getname()); // globalLookupOp(identifier->getname());
                     auto kwSymbol = globalLookupOp(keyword->getKeyword()); // globalLookupOp(keyword->getKeyword());
-
 
                     if (!kwSymbol)
                         llvm::outs() << "Error: Keyword '" << keyword->getKeyword() << "' not declared.\n";
@@ -409,7 +406,6 @@ public:
         Identifier *identifier = static_cast<Identifier *>(paramAssignment->getidentifier());
         Keyword *keyword = static_cast<Keyword *>(paramAssignment->getkeyword());
         keyword->Accept(this, symbolTable);
-
 
         if (globalLookupOp(identifier->getname()))
         {
@@ -578,7 +574,7 @@ public:
 
                         auto id1Opop = id1Op.getDefiningOp();
                         auto typeAttr = id1Opop->getAttrOfType<mlir::TypeAttr>("type");
-                        
+
                         mlir::Type id1Optype = typeAttr.getValue();
 
                         if (isa<mlir::starplat::NodeType>(id1Optype))
@@ -625,7 +621,6 @@ public:
 
                             auto typeAttr = op1id1opop->getAttrOfType<mlir::TypeAttr>("type");
                             mlir::Type type = typeAttr.getValue();
-
 
                             if (isa<mlir::starplat::NodeType>(type))
                             {
@@ -792,7 +787,7 @@ public:
         mlir::ArrayAttr argNamesAttr = builder.getArrayAttr(argNames);
 
         auto func = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNamesAttr);
-        //func.setNested();
+        // func.setNested();
 
         module.push_back(func);
         auto &entryBlock = func.getBody().emplaceBlock();
@@ -803,10 +798,10 @@ public:
             auto argval = entryBlock.addArgument(arg, builder.getUnknownLoc());
             auto argName = argNames[idx++];
             nameToArgMap[dyn_cast<mlir::StringAttr>(argName).getValue()] = argval;
-
         }
 
         // Visit the function body.
+
         Statementlist *stmtlist = static_cast<Statementlist *>(function->getstmtlist());
 
         mlir::SymbolTable funcSymbolTable(func);
@@ -821,7 +816,13 @@ public:
         //     funcSymbolTable.insert(argOp);
         // }
 
-        stmtlist->Accept(this, &funcSymbolTable);
+        printf("Visiting Body!!\n");
+
+        if (stmtlist->getStatementList().size() != 0)
+        {
+            printf("Inside If %d\n", stmtlist->getStatementList().size());
+            stmtlist->Accept(this, &funcSymbolTable);
+        }
 
         // Create end operation.
         auto returnOp = builder.create<mlir::starplat::ReturnOp>(builder.getUnknownLoc());
@@ -915,7 +916,7 @@ public:
 
         if (strcmp(type->getType(), "int") == 0)
             typeAttr = builder.getI64Type();
-        
+
         else if (strcmp(type->getType(), "bool") == 0)
             typeAttr = builder.getI1Type();
 
@@ -1009,7 +1010,6 @@ public:
         // auto typeAttr = id1->getAttrOfType<mlir::TypeAttr>("type");
         mlir::Type type = id1.getType();
 
-
         if (isa<mlir::starplat::NodeType>(type))
         {
             // Set Node Property
@@ -1017,16 +1017,15 @@ public:
             {
                 const Number *number = static_cast<const Number *>(expr->getExpression());
                 auto numberVal = globalLookupOp(std::to_string(number->getnumber()));
-                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(),id2.getDefiningOp()->getOperand(0), id1, id2, numberVal);
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id2.getDefiningOp()->getOperand(0), id1, id2, numberVal);
             }
 
             else if (expr->getKind() == ExpressionKind::KIND_KEYWORD)
             {
                 const Keyword *keyword = static_cast<const Keyword *>(expr->getExpression());
                 auto keywordVal = globalLookupOp(keyword->getKeyword());
-                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(),id2.getDefiningOp()->getOperand(0), id1, id2, keywordVal);
+                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id2.getDefiningOp()->getOperand(0), id1, id2, keywordVal);
             }
-
         }
     }
 
@@ -1038,14 +1037,13 @@ public:
 
         mlir::Operation *keywordSSA;
 
-        if(strcmp(keyword->getKeyword(),"False") == 0)
+        if (strcmp(keyword->getKeyword(), "False") == 0)
             keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
-        
-        else if(strcmp(keyword->getKeyword(),"True") == 0)
+
+        else if (strcmp(keyword->getKeyword(), "True") == 0)
             keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
         else
             keywordSSA = builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI64Type(), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
-
 
         symbolTable->insert(keywordSSA);
     }
@@ -1099,6 +1097,8 @@ public:
 
     virtual void visitStatementlist(const Statementlist *stmtlist, mlir::SymbolTable *symbolTable) override
     {
+        printf("Inside Stmtlist\n");
+
         for (ASTNode *stmt : stmtlist->getStatementList())
         {
             stmt->Accept(this, symbolTable);
@@ -1171,5 +1171,4 @@ private:
 
         return nullptr;
     }
-
 };

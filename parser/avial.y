@@ -39,10 +39,9 @@ function : FUNCTION IDENTIFIER LPAREN arglist RPAREN LCURLY stmtlist RCURLY     
                                                                                 }
          ;
 
-stmtlist : stmt                 {
-                                  Statementlist* stmtlist = new Statementlist();
-                                  stmtlist->addstmt($1);
-                                  $$ = stmtlist;
+stmtlist :                  {
+                                  $$ = new Statementlist();
+                                  
                                 }
 
          | stmtlist stmt        {

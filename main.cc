@@ -58,10 +58,12 @@ int main(int argc, char *argv[])
     printf("Parsing Complete\n");
 
     
-    // CodeGen *codegen = new CodeGen;
+    CodeGen *codegen = new CodeGen;
 
-    // if(root != nullptr)
-    //     root->Accept(codegen);
+    if(root != nullptr)
+        root->Accept(codegen);
+
+    
 
     StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen;
 
