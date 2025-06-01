@@ -40,8 +40,8 @@ public:
 
     virtual void visitMemberaccessStmt(const MemberacceessStmt *memberAccess) override
     {
-        llvm::errs() << "visitMemberaccessStmt not implemented\n";
-        std::abort();
+        memberAccess->getMemberAccess()->Accept(this);
+        //std::abort();
     }
 
     virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt)
@@ -214,11 +214,21 @@ public:
 
     virtual void visitArg(const Arg *arg) override
     {
-        cout << "\t";
-        arg->getType()->Accept(this);
+        if (arg->getType())
+        {
+            cout << "\t";
+            arg->getType()->Accept(this);
 
-        cout << "\t";
-        arg->getVarName()->Accept(this);
+            cout << "\t";
+            arg->getVarName()->Accept(this);
+        }
+
+        else if(arg->getTemplateType())
+        {
+            cout<<"\t{";
+            cout<<"PROPxx";
+            cout<<"}";
+        }
     }
 
     virtual void visitStatement(const Statement *statement) override

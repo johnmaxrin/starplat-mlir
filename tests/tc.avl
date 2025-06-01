@@ -1,5 +1,11 @@
-function foo(Graph g)
+function foo(Graph g, propNode<int,g> dist, propEdge<int,g> weight, Node src)
 {
   
+    propNode <int,g> modified_nxt;
+    propNode <int,g> modified;
+    g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
+    
+    src.dist=0;
+    int finished =False;
 
 }
