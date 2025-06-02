@@ -6,6 +6,19 @@ function foo(Graph g, propNode<int,g> dist, propEdge<int,g> weight, Node src)
     g.attachNodeProperty(dist=INF, modified = False, modified_nxt = False );
     
     src.dist=0;
-    int finished =False;
+    int finished = False;
+    src.modified = True; 
+
+    fixedPoint until (finished:!modified) {
+      forall (v in g.nodes().filter(modified == True)) {
+        forall (nbr in g.neighbors(v)) {          
+          edge e = g.get_edge(v, nbr);
+          <nbr.dist,nbr.modified_nxt> = <Min (nbr.dist, v.dist + e.weight), True>;
+
+        }
+      }  
+      modified = modified_nxt;
+      g.attachNodeProperty(modified_nxt = False);
+    }
 
 }

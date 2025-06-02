@@ -537,6 +537,7 @@ public:
             return;
         }
 
+
         if (rhsexpr1->getKind() == ExpressionKind::KIND_METHODCALL)
         {
             const Methodcall *rhsMethodCall = static_cast<const Methodcall *>(rhsexpr1->getExpression());
@@ -572,17 +573,18 @@ public:
                         auto id1Op = globalLookupOp(id1->getname());
                         auto id2Op = globalLookupOp(id2->getname());
 
-                        auto id1Opop = id1Op.getDefiningOp();
-                        auto typeAttr = id1Opop->getAttrOfType<mlir::TypeAttr>("type");
 
-                        mlir::Type id1Optype = typeAttr.getValue();
 
-                        if (isa<mlir::starplat::NodeType>(id1Optype))
+
+
+
+                        if (isa<mlir::starplat::NodeType>(id1Op.getType()))
                         {
                             // Generate get node property.
                             llvm::StringRef nameRef(id2->getname());
                             gOperand2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op, id2Op, builder.getStringAttr(nameRef));
                         }
+
                     }
                     else
                     {
@@ -595,6 +597,7 @@ public:
                     llvm::outs() << "Error: Not implemented @ Tuple Assignment.\n";
                     return;
                 }
+
 
                 if (operand2->getKind() == ExpressionKind::KIND_ADDOP)
                 {
@@ -617,12 +620,9 @@ public:
                             auto op1id1op = globalLookupOp(op1Id1->getname());
                             auto op1id2op = globalLookupOp(op1Id2->getname());
 
-                            auto op1id1opop = op1id1op.getDefiningOp();
 
-                            auto typeAttr = op1id1opop->getAttrOfType<mlir::TypeAttr>("type");
-                            mlir::Type type = typeAttr.getValue();
 
-                            if (isa<mlir::starplat::NodeType>(type))
+                            if (isa<mlir::starplat::NodeType>(op1id1op.getType()))
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
@@ -660,11 +660,8 @@ public:
                             auto op2id1op = globalLookupOp(op2Id1->getname());
                             auto op2id2op = globalLookupOp(op2Id2->getname());
 
-                            auto op2id1opop = op2id1op.getDefiningOp();
-                            auto typeAttr = op2id1opop->getAttrOfType<mlir::TypeAttr>("type");
-                            mlir::Type type = typeAttr.getValue();
 
-                            if (isa<mlir::starplat::EdgeType>(type))
+                            if (isa<mlir::starplat::EdgeType>(op2id1op.getType()))
                             {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
