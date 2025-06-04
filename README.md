@@ -1,14 +1,16 @@
-# Starplat MLIR
-Starplat-MLIR is an MLIR-based compiler infrastructure for the Starplat domain-specific language (DSL), designed to support high-performance graph analytics and heterogeneous compilation across CPUs, GPUs, and FPGAs. This repository contains custom dialects, IR transformations, and backend lowering pipelines for optimizing and generating parallel code from Starplat programs.
+# StarPlat-MLIR
 
-### How to compile?
-```bash
-chmod +x compile.sh
-./compile.sh
-```
+**StarPlat-MLIR** is a compiler infrastructure project that implements the StarPlat DSL using [MLIR (Multi-Level Intermediate Representation)](https://mlir.llvm.org/). It provides a custom dialect for StarPlat and includes various analysis and transformation passes to optimize graph workloads for heterogeneous execution.
 
-### How to run?
+## ✨ Features
 
-```bash
-.build/app tests/test.avl > ast.avl
-```
+- **StarPlat Dialect**: A custom MLIR dialect designed to represent high-level graph computations in the StarPlat DSL.
+- **Lowering to LLVM**: Supports lowering StarPlat IR all the way down to LLVM dialect, enabling native code generation.
+- **Graph-specific Optimizations**:
+  - **Edge-to-Vertex Conversion**
+  - **Vertex-to-Edge Conversion**
+  - **Push-to-Pull Conversion**
+  - **Pull-to-Push Conversion**
+
+ 
+
