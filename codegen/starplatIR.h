@@ -126,6 +126,7 @@ public:
             exit(0);
         }
 
+        // Chumma
         // get the type of expr inorder to get the type of loopVar.
         if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS)
         {
