@@ -1,4 +1,0 @@
-function Declare (Graph g) 
-{
-    propNode <int,g> modified_nxt;
-}

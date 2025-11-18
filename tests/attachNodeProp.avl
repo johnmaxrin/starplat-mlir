@@ -1,5 +1,0 @@
-function attachNodeProperty (Graph g) 
-{
-    propNode <bool,g> modified_nxt;
-    g.attachNodeProperty(modified_nxt = False );
-}

@@ -1,4 +1,0 @@
-function assignment (Graph g, Node src) 
-{
-       bool finished = False;
-} 

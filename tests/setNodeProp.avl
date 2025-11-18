@@ -1,6 +1,0 @@
-function setNodeProperty (Graph g, Node src) 
-{
-    propNode <bool,g> modified;
-    g.attachNodeProperty(modified = False );
-    src.modified = True; 
-}
