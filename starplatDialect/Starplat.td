@@ -267,6 +267,12 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     );
  }
 
+def StoreOp : StarplatBaseOp<"store">
+{
+  let summary = "Store Src to destination";
+  let arguments = (ins AnyType : $src, AnyType : $dst);
+}
+
 
  def MinOp : StarplatBaseOp<"min">
  {
