@@ -89,10 +89,20 @@ public:
     virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt) override
     {
         std::cout << "Increment and Assign Statement: {\n";
-        // incandassignstmt->getIdentifier()->Accept(this);
-        // incandassignstmt->getexpr()->Accept(this);
+        //incandassignstmt->getIdentifier()->Accept(this);
+        //incandassignstmt->getexpr()->Accept(this);
 
         cout << "}\n";
+    }
+    
+    void visitAssignment(const Assignment *assignment) override
+    {
+
+    }
+
+    void visitAssignmentStmt(const AssignmentStmt *assignemntStmt) override
+    {
+
     }
 
     virtual void visitIdentifier(const Identifier *identifier) override

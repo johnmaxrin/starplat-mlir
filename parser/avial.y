@@ -21,7 +21,7 @@
 %token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS TRUE NOT BOOL
 
 %type<astNode>  methodcall memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
-stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt memberaccessstmt
+stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt memberaccessstmt assignmentStmt
 addExpr properties templateType templateDecl paramAssignment param memberaccessAssignment KEYWORDS 
 
 
@@ -51,7 +51,7 @@ stmtlist :                  {
                                 }
          ;
 
-stmt :  assignment SEMICLN                              {}
+stmt :  assignmentStmt                              {$$ = $1;}
         |   declarationstmt                             {$$ = $1;}
         |   ifstmt			                {$$ = $1;}
         |   forstmt 			                {$$ = $1;}
@@ -89,7 +89,9 @@ templateDecl : templateType IDENTIFIER SEMICLN {
                                                 }
               ;
 
-assignment : IDENTIFIER EQUAL expr      {$$ = new Incandassignstmt();}
+assignmentStmt : assignment SEMICLN     {$$ = new AssignmentStmt($1);}
+
+assignment : IDENTIFIER EQUAL expr      {$$ = new Assignment($1, $3);}
             ;
 
 initializestmt : type IDENTIFIER EQUAL expr SEMICLN {

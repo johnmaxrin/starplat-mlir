@@ -10,6 +10,8 @@ class ParameterAssignment;
 class ForallStatement;
 class IfStatement;
 class BoolExpr;
+class AssignmentStmt;
+class Assignment;
 class Incandassignstmt;
 class Identifier;
 class ReturnStmt;
@@ -46,6 +48,8 @@ class Visitor
         virtual void visitIfStmt(const IfStatement *ifStmt) = 0;
         virtual void visitBoolExpr(const BoolExpr *boolExpr) = 0;
         virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt) = 0;
+        virtual void visitAssignment(const Assignment *assignment) = 0;
+        virtual void visitAssignmentStmt(const AssignmentStmt *assignmentStmt) = 0;
         virtual void visitIdentifier(const Identifier *identifier) = 0;
         virtual void visitReturnStmt(const ReturnStmt *returnStmt) = 0;
         virtual void visitFunction(const Function *function) = 0;
@@ -84,6 +88,8 @@ class MLIRVisitor
         virtual void visitIfStmt(const IfStatement *ifStmt, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitBoolExpr(const BoolExpr *boolExpr, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt, mlir::SymbolTable *symbolTable) = 0;
+        virtual void visitAssignment(const Assignment *assignment, mlir::SymbolTable *symbolTable) = 0;
+        virtual void visitAssignmentStmt(const AssignmentStmt *assignmentStmt, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitIdentifier(const Identifier *identifier, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitReturnStmt(const ReturnStmt *returnStmt, mlir::SymbolTable *symbolTable) = 0;
         virtual void visitFunction(const Function *function, mlir::SymbolTable *symbolTable) = 0;

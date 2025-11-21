@@ -590,6 +590,66 @@ private:
     ASTNode *operand2_;
 };
 
+class Assignment : public ASTNode
+{
+public:
+    Assignment(char *identifier, ASTNode *expr)
+        : identifier(identifier), expr(expr) {}
+
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitAssignment(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitAssignment(this, symbolTable);
+    }
+
+    ~Assignment()
+    {
+        delete identifier;
+        delete expr;
+    }
+
+    char *getIdentifier() const { return identifier; }
+    ASTNode *getexpr() const { return expr; }
+
+private:
+    char* identifier;
+    ASTNode *expr;
+};
+
+
+
+class AssignmentStmt : public ASTNode
+{
+public:
+    AssignmentStmt(ASTNode *assignment)
+        : assignment(assignment) {}
+
+
+    virtual void Accept(Visitor *visitor) const override
+    {
+        visitor->visitAssignmentStmt(this);
+    }
+
+    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
+    {
+        visitor->visitAssignmentStmt(this, symbolTable);
+    }
+
+    ~AssignmentStmt()
+    {
+        delete assignment;
+    }
+
+    ASTNode *getAssignment() const { return assignment; }
+
+private:
+    ASTNode *assignment;
+};
 
 class Incandassignstmt : public ASTNode
 {

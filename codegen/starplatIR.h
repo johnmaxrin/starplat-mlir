@@ -391,6 +391,18 @@ public:
 
     virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt, mlir::SymbolTable *symbolTable) override
     {
+
+    }    
+
+    void visitAssignment(const Assignment *assignemnt, mlir::SymbolTable *symbolTable) override
+    {
+        //    llvm::errs() << "Hi\n";
+    }
+
+
+    void visitAssignmentStmt(const AssignmentStmt *assignemntStmt, mlir::SymbolTable *symbolTable) override
+    {
+        //llvm::errs() << "Hi\n";
     }
 
     virtual void visitIdentifier(const Identifier *identifier, mlir::SymbolTable *symbolTable) override
