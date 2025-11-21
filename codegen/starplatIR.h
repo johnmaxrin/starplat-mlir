@@ -394,19 +394,45 @@ public:
 
     }    
 
-    void visitAssignment(const Assignment *assignemnt, mlir::SymbolTable *symbolTable) override
+    void visitAssignment(const Assignment *assignment, mlir::SymbolTable *symbolTable) override
     {
-        //    llvm::errs() << "Hi\n";
+        static_cast<Expression *>(assignment->getexpr())->Accept(this,symbolTable);
     }
 
 
     void visitAssignmentStmt(const AssignmentStmt *assignemntStmt, mlir::SymbolTable *symbolTable) override
     {
-        //llvm::errs() << "Hi\n";
+        Assignment *assignment = static_cast<Assignment *>(assignemntStmt->getAssignment());
+        char *identifier = assignment->getIdentifier();
+        Expression * expr = static_cast<Expression *>(assignment->getexpr());
+
+        if(expr->getKind() == KIND_IDENTIFIER)
+        {
+            // Global lookup. 
+            // Build store op. 
+            auto lhs = globalLookupOp(identifier);
+            const Identifier *rhsId = static_cast<const Identifier *>(expr->getExpression());
+            auto rhs = globalLookupOp(rhsId->getname());
+
+            if(lhs && rhs)
+                builder.create<starplat::StoreOp>(builder.getUnknownLoc(), lhs, rhs);
+            else {
+                llvm::errs() << "Not Implemented\n";
+                exit(0);
+            }
+
+        }
+
+        else
+        {
+            llvm::errs() << "Not Implemented!\n";
+            exit(0); // Abort
+        }
     }
 
     virtual void visitIdentifier(const Identifier *identifier, mlir::SymbolTable *symbolTable) override
     {
+
     }
 
     virtual void visitReturnStmt(const ReturnStmt *returnStmt, mlir::SymbolTable *symbolTable) override
