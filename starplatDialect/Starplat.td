@@ -38,7 +38,7 @@ class StarPlatDialectType<string name, string typeMnemonic, list<Trait> traits =
 }
 
 
-def GraphType : StarPlatDialectType<"Graph", "graph"> {
+def StarPlat_GraphType : StarPlatDialectType<"Graph", "graph"> {
   let summary = "Graph type";
 }
 
@@ -119,7 +119,7 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
   let arguments = (ins  
                                 SymbolNameAttr:$sym_name,
                                 SymbolNameAttr:$sym_visibility,
-                                 Optional<GraphType>:$graph
+                                 Optional<StarPlat_GraphType>:$graph
                                 );
 
 
