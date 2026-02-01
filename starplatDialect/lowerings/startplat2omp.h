@@ -384,7 +384,11 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
                 rewriter.create<mlir::scf::ForOp>(op.getLoc(), constZero, numOfNodes, step, mlir::ValueRange{}, [&](mlir::OpBuilder &builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs){
                     auto indexIv = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), iv);
 
+<<<<<<< HEAD
                     //auto val = builder.create<mlir::memref::LoadOp>(nestedLoc,  adaptor.getOperands()[2], adaptor.getOperands()[1], mlir::ValueRange{indexIv}); 
+=======
+                    auto val = builder.create<mlir::memref::LoadOp>(nestedLoc, adaptor.getOperands()[1], mlir::ValueRange{indexIv}); 
+>>>>>>> 15eba46 (Add OMP Backend)
                     builder.create<mlir::scf::YieldOp>(nestedLoc);
                 
                 });
