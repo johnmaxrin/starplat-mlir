@@ -1,6 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
+#include <execinfo.h>
 #include <cstring>
+#include <signal.h>
+
 
 #include "ast/ast.h"
 #include "ast/visitor.h"
@@ -12,7 +15,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
 
-//#include "tblgen2/StarPlatOps.cpp.inc"
+// #include "tblgen2/StarPlatOps.cpp.inc"
 
 #include "mlir/Pass/PassManager.h"
 // #include "transforms/reachingDef.h"
@@ -25,6 +28,7 @@
 #include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 #include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
 
+#include "starplatDialect/lowerings/startplat2omp.h"
 
 // #include "lowerings/startplat2omp.h"
 
@@ -32,11 +36,23 @@
 
 extern int yyparse();
 extern FILE *yyin;
-ASTNode* root;
+ASTNode *root;
+
+void signalHandler(int sig) {
+    void *array[10];
+    size_t size;
+    
+    size = backtrace(array, 10);
+    
+    fprintf(stderr, "Error: signal %d:\n", sig);
+    backtrace_symbols_fd(array, size, 0);
+    exit(1);
+}
 
 int main(int argc, char *argv[])
 {
     root = nullptr;
+    signal(SIGSEGV, signalHandler);  
 
     if (argc < 2)
     {
@@ -57,40 +73,39 @@ int main(int argc, char *argv[])
 
     printf("Parsing Complete\n");
 
-    
     CodeGen *codegen = new CodeGen;
 
-    if(root != nullptr)
+    if (root != nullptr)
         root->Accept(codegen);
-
-    
 
     StarPlatCodeGen *starplatcodegen = new StarPlatCodeGen;
 
-
-    if(root!= nullptr)
+    if (root != nullptr)
         root->Accept(starplatcodegen, starplatcodegen->getSymbolTable());
     else
-        printf("Hello\n");
+    {
+        llvm::errs() << "Error in DSL Code\n";
+        exit(0);
+    }
 
+    //starplatcodegen->print();
+
+    PassManager pm(starplatcodegen->getContext());
+    pm.addPass(mlir::starplat::createConvertStartPlatIRToOMPPass());
+
+    // // RUN the pass on the module
+    if (mlir::failed(pm.run(starplatcodegen->getModule()->getOperation())))
+    {
+        llvm::errs() << "StarPlat → OMP lowering failed\n";
+        return 0;
+    }
 
     starplatcodegen->print();
 
-        
-
-
     // Work on Conversion of OMP
-    // Working on Generating a hello world program in LLVM - Done 
-    // Workign on generating OMP - Done 
+    // Working on Generating a hello world program in LLVM - Done
+    // Workign on generating OMP - Done
     // Donw with the Blog and Repo
-
-    // MLIRCodeGen *MLIRgen = new MLIRCodeGen;
-
-    // if(root!= nullptr)
-    //     root->Accept(MLIRgen);
-    
-    // MLIRgen->printModule();
-    
 
     return 0;
 }
