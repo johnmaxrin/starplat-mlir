@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20.0)
 project(Avial)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -66,7 +67,7 @@ include_directories(
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc  starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
+add_llvm_executable(app main.cc Anchor.cpp starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
         DEPENDS 
           MLIRStarPlatIncGen  )
 
