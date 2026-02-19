@@ -6,3 +6,4 @@ Avial.code*
 build
 .vscode/*
 avial.code-workspace
+.cache/clangd/index
