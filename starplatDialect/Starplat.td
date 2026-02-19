@@ -106,7 +106,7 @@ def FuncOp : StarplatBaseOp<"func",[IsolatedFromAbove, SymbolTable]>
 
 }
 
-def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
+def DeclareOp : StarplatBaseOp<"declare">
 {
   let summary = "Declares a variable of a specified type and returns its SSA value.";
   let description = [{
@@ -127,7 +127,7 @@ def DeclareOp : StarplatBaseOp<"declare", [Symbol]>
 
 }
 
-def ArgOp : StarplatBaseOp<"arg", [Symbol]>
+def ArgOp : StarplatBaseOp<"arg">
 {
   let summary = "For handling the argument.";
 
@@ -154,7 +154,7 @@ def AssignmentOp : StarplatBaseOp<"assign", []>
   }];
 }
 
-def ConstOp : StarplatBaseOp<"const", [Symbol]> 
+def ConstOp : StarplatBaseOp<"const"> 
 {
   let summary = "Const Operaiton";
   let arguments = (ins
@@ -349,7 +349,7 @@ def VertexToEdge : Pass<"vertex-to-edge", "mlir::ModuleOp"> {
     let dependentDialects = ["mlir::starplat::StarPlatDialect"];
 }
 
-def ConvertStartPlatIRToOMPPass : Pass<"starplatir-to-omp">{
+def ConvertStarPlatIRToOMPPass : Pass<"starplatir-to-omp">{
   let summary = "StarPlat IR to OMP";
 
   let dependentDialects = ["mlir::starplat::StarPlatDialect", "::mlir::omp::OpenMPDialect", "mlir::func::FuncDialect",

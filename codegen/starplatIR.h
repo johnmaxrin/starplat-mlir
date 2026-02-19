@@ -34,7 +34,9 @@
 #include "mlir/Interfaces/CallInterfaces.h"
 #include "mlir/Interfaces/FunctionInterfaces.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
+#include "mlir/Support/LLVM.h"
 #include "visitor.h"
+#include "llvm/Support/LogicalResult.h"
 
 class StarPlatCodeGen : public MLIRVisitor
 {
@@ -76,8 +78,8 @@ class StarPlatCodeGen : public MLIRVisitor
             mlir::Operation* declareOp;
 
             if (graph)
-                declareOp = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()),
-                                                                      visibility, graph);
+                declareOp = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()),
+                                                              visibility, graph);
             else
                 llvm::errs() << "Error: Undefined Symbol " << graphId << "\n";
 
@@ -91,8 +93,8 @@ class StarPlatCodeGen : public MLIRVisitor
 
             auto type         = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type(), graphId);
             mlir::Value graph = NULL;
-            auto declare      = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()),
-                                                                     builder.getStringAttr("public"), graph);
+            auto declare = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()),
+                                                             builder.getStringAttr("public"), graph);
             symbolTable->insert(declare);
         }
     }
@@ -124,7 +126,7 @@ class StarPlatCodeGen : public MLIRVisitor
             const Memberaccess* memberaccess  = static_cast<const Memberaccess*>(expr->getExpression());
             const Methodcall* outermethodcall = static_cast<const Methodcall*>(memberaccess->getMethodCall()); // Filter Methodcall.
 
-            const Paramlist* paramlisttz      = static_cast<const Paramlist*>(outermethodcall->getParamLists());
+            // const Paramlist* paramlisttz      = static_cast<const Paramlist*>(outermethodcall->getParamLists());
 
             // Check if this is with nested access.
             // TODO: Do this recursively!
@@ -147,8 +149,8 @@ class StarPlatCodeGen : public MLIRVisitor
                 if (strcmp(innerMethodcallIdentifier->getname(), "nodes") == 0) {
                     loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
                     mlir::Value graph = NULL;
-                    loopVarOp         = builder.create<mlir::starplat::DeclareOp>(
-                        builder.getUnknownLoc(), loopVarType, builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
+                    loopVarOp         = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), loopVarType,
+                                                                          builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
                     ops.push_back(loopVarOp);
                     symbolTable->insert(loopVarOp);
                     loopOperands.push_back(loopVarOp->getResult(0));
@@ -190,8 +192,9 @@ class StarPlatCodeGen : public MLIRVisitor
 
                         loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
                         mlir::Value graph = NULL;
-                        loopVarOp         = builder.create<mlir::starplat::DeclareOp>(
-                            builder.getUnknownLoc(), loopVarType, builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
+                        loopVarOp =
+                            mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), loopVarType,
+                                                              builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
                         ops.push_back(loopVarOp);
                         symbolTable->insert(loopVarOp);
                         loopOperands.push_back(loopVarOp->getResult(0));
@@ -256,7 +259,7 @@ class StarPlatCodeGen : public MLIRVisitor
         mlir::ArrayAttr loopAttrArray = builder.getArrayAttr(loopAttr);
         mlir::StringAttr loopa        = builder.getStringAttr("loopa");
 
-        auto loopOp                   = builder.create<mlir::starplat::ForAllOp>(builder.getUnknownLoc(), loopOperands, loopAttrArray, filter, loopa);
+        auto loopOp = mlir::starplat::ForAllOp::create(builder, builder.getUnknownLoc(), loopOperands, loopAttrArray, filter, loopa);
 
         loopOp.setNested();
 
@@ -282,7 +285,7 @@ class StarPlatCodeGen : public MLIRVisitor
 
         stmtlist->Accept(this, &forAllSymbolTable);
 
-        builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+        mlir::starplat::endOp::create(builder, builder.getUnknownLoc());
         builder.setInsertionPointAfter(loopOp);
     }
 
@@ -301,7 +304,7 @@ class StarPlatCodeGen : public MLIRVisitor
             llvm::outs() << "Error: Graph not defined!\n";
         operandsForAttachNodeProperty.push_back(graph);
 
-        const Identifier* identifier2 = memberaccessnode->getIdentifier2();
+        // const Identifier* identifier2 = memberaccessnode->getIdentifier2();
 
         if (methodcallnode && methodcallnode->getIsBuiltin()) {
             if (std::strcmp(methodcallnode->getIdentifier()->getname(), "attachNodeProperty") == 0) {
@@ -342,7 +345,8 @@ class StarPlatCodeGen : public MLIRVisitor
                         return; // Handle errors gracefully
                 }
 
-                auto attachNodeProp = builder.create<mlir::starplat::AttachNodePropertyOp>(builder.getUnknownLoc(), operandsForAttachNodeProperty);
+                // auto attachNodeProp =
+                mlir::starplat::AttachNodePropertyOp::create(builder, builder.getUnknownLoc(), operandsForAttachNodeProperty);
             }
 
             else {
@@ -374,7 +378,7 @@ class StarPlatCodeGen : public MLIRVisitor
             auto rhs                = globalLookupOp(rhsId->getname());
 
             if (lhs && rhs)
-                builder.create<starplat::StoreOp>(builder.getUnknownLoc(), lhs, rhs);
+                starplat::StoreOp::create(builder, builder.getUnknownLoc(), lhs, rhs);
             else {
                 llvm::errs() << "Not Implemented\n";
                 exit(0);
@@ -391,25 +395,25 @@ class StarPlatCodeGen : public MLIRVisitor
 
     virtual void visitReturnStmt(const ReturnStmt* returnStmt, mlir::SymbolTable* symbolTable) override {}
 
-    virtual void visitParameterAssignment(const ParameterAssignment* paramAssignment, mlir::SymbolTable* symbolTable) {
+    virtual void visitParameterAssignment(const ParameterAssignment* paramAssignment, mlir::SymbolTable* symbolTable) override {
         Identifier* identifier = static_cast<Identifier*>(paramAssignment->getidentifier());
         Keyword* keyword       = static_cast<Keyword*>(paramAssignment->getkeyword());
         keyword->Accept(this, symbolTable);
 
         if (globalLookupOp(identifier->getname())) {
-            auto lhs = globalLookupOp(identifier->getname());
-            auto rhs = globalLookupOp(keyword->getKeyword());
-
-            // auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
+            // auto lhs = globalLookupOp(identifier->getname());
+            // auto rhs = globalLookupOp(keyword->getKeyword());
+            //
+            // auto assign = mlir::starplat::AssignmentOp::create(builder,builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
             // symbolTable->rename(assign, builder.getStringAttr(identifier->getname()));
         }
 
         else if (globalLookupOp(identifier->getname()) != nullptr) {
 
-            auto lhs = globalLookupOp(identifier->getname());
-            auto rhs = globalLookupOp(keyword->getKeyword());
+            // auto lhs = globalLookupOp(identifier->getname());
+            // auto rhs = globalLookupOp(keyword->getKeyword());
 
-            // auto assign = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
+            // auto assign = mlir::starplat::AssignmentOp::create(builder,builder.getUnknownLoc(), lhs->getResult(0), rhs->getResult(0));
             // symbolTable->rename(assign, builder.getStringAttr(identifier->getname()));
         }
         else {
@@ -418,14 +422,14 @@ class StarPlatCodeGen : public MLIRVisitor
         }
     }
 
-    virtual void visitParam(const Param* param, mlir::SymbolTable* symbolTable) {
+    virtual void visitParam(const Param* param, mlir::SymbolTable* symbolTable) override {
         const ParameterAssignment* paramAssignment = static_cast<const ParameterAssignment*>(param->getParamAssignment());
         if (paramAssignment != nullptr) {
             paramAssignment->Accept(this, symbolTable);
         }
     }
 
-    virtual void visitTupleAssignment(const TupleAssignment* tupleAssignment, mlir::SymbolTable* symbolTable) {
+    virtual void visitTupleAssignment(const TupleAssignment* tupleAssignment, mlir::SymbolTable* symbolTable) override {
         // <nbr.dist,nbr.modified_nxt> =
         //      <Min (nbr.dist, v.dist + e.weight), True>;
 
@@ -452,8 +456,7 @@ class StarPlatCodeGen : public MLIRVisitor
                     if (globalLookupOp(lhs1MemberAccess->getIdentifier()->getname())) {
                         mlir::Value propOp = globalLookupOp(lhs1MemberAccess->getIdentifier2()->getname());
                         mlir::Value varOp  = globalLookupOp(lhs1MemberAccess->getIdentifier()->getname());
-                        gOperand1 =
-                            builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp,
+                        gOperand1 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp,
                                                                               builder.getStringAttr(lhs1MemberAccess->getIdentifier2()->getname()));
                     }
                     else {
@@ -484,8 +487,7 @@ class StarPlatCodeGen : public MLIRVisitor
                     if (globalLookupOp(lhs2MemberAccess->getIdentifier()->getname())) {
                         mlir::Value propOp = globalLookupOp(lhs2MemberAccess->getIdentifier2()->getname());
                         mlir::Value varOp  = globalLookupOp(lhs2MemberAccess->getIdentifier()->getname());
-                        gOperand1 =
-                            builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp,
+                        gOperand1 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp,
                                                                               builder.getStringAttr(lhs2MemberAccess->getIdentifier2()->getname()));
                     }
                     else {
@@ -540,8 +542,8 @@ class StarPlatCodeGen : public MLIRVisitor
                         if (isa<mlir::starplat::NodeType>(id1Op.getType())) {
                             // Generate get node property.
                             llvm::StringRef nameRef(id2->getname());
-                            gOperand2 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), id1Op, id2Op,
-                                                                                          builder.getStringAttr(nameRef));
+                            gOperand2 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), id1Op,
+                                                                                  id2Op, builder.getStringAttr(nameRef));
                         }
                     }
                     else {
@@ -575,8 +577,8 @@ class StarPlatCodeGen : public MLIRVisitor
                             if (isa<mlir::starplat::NodeType>(op1id1op.getType())) {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
-                                op1 = builder.create<mlir::starplat::GetNodePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op1id1op,
-                                                                                        op1id2op, getProp);
+                                op1 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op1id1op,
+                                                                                op1id2op, getProp);
                             }
 
                             else {
@@ -608,8 +610,8 @@ class StarPlatCodeGen : public MLIRVisitor
                             if (isa<mlir::starplat::EdgeType>(op2id1op.getType())) {
                                 // Generate getNodeProp
                                 auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
-                                op2 = builder.create<mlir::starplat::GetEdgePropertyOp>(builder.getUnknownLoc(), builder.getI32Type(), op2id1op,
-                                                                                        op2id2op, getProp);
+                                op2 = mlir::starplat::GetEdgePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op2id1op,
+                                                                                op2id2op, getProp);
                             }
 
                             else {
@@ -630,7 +632,7 @@ class StarPlatCodeGen : public MLIRVisitor
 
                     // Create add OP
                     gOperand3 =
-                        builder.create<mlir::starplat::AddOp>(builder.getUnknownLoc(), builder.getI32Type(), op1->getResult(0), op2->getResult(0));
+                        mlir::starplat::AddOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op1->getResult(0), op2->getResult(0));
                 }
                 else {
                     llvm::outs() << "Error: Not implemented @ Tuple Assignment.\n";
@@ -655,8 +657,9 @@ class StarPlatCodeGen : public MLIRVisitor
 
             // Create the Min Tupple
 
-            auto minOp = builder.create<mlir::starplat::MinOp>(builder.getUnknownLoc(), builder.getI32Type(), gOperand2->getResult(0),
-                                                               gOperand1->getResult(0), gOperand2->getResult(0), gOperand3->getResult(0), gOperand4);
+            // auto minOp =
+            mlir::starplat::MinOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), gOperand2->getResult(0), gOperand1->getResult(0),
+                                          gOperand2->getResult(0), gOperand3->getResult(0), gOperand4);
         }
         else {
             llvm::outs() << "Error: Tuple Assignment failed.\n";
@@ -664,7 +667,7 @@ class StarPlatCodeGen : public MLIRVisitor
         }
     }
 
-    virtual void visitAdd(const Add* add, mlir::SymbolTable* symbolTable) {}
+    virtual void visitAdd(const Add* add, mlir::SymbolTable* symbolTable) override {}
 
     virtual void visitFunction(const Function* function, mlir::SymbolTable* symbolTable) override {
         // Create function type.
@@ -681,12 +684,14 @@ class StarPlatCodeGen : public MLIRVisitor
                 if (std::string(arg->getType()->getType()) == "Graph") {
 
                     argTypes.push_back(builder.getType<mlir::starplat::GraphType>());
-                    auto GraphType = mlir::starplat::GraphType::get(builder.getContext());
+                    // auto GraphType =
+                    mlir::starplat::GraphType::get(builder.getContext());
                 }
 
                 else if (std::string(arg->getType()->getType()) == "Node") {
                     argTypes.push_back(builder.getType<mlir::starplat::NodeType>());
-                    auto NodeType = mlir::starplat::NodeType::get(builder.getContext());
+                    // auto NodeType =
+                    mlir::starplat::NodeType::get(builder.getContext());
                 }
             }
             else if (arg->getTemplateType() != nullptr) {
@@ -694,13 +699,15 @@ class StarPlatCodeGen : public MLIRVisitor
 
                 if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propNode") {
                     argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId));
-                    auto type     = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
-                    auto typeAttr = ::mlir::TypeAttr::get(type);
+                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
+                    // auto typeAttr =
+                    ::mlir::TypeAttr::get(type);
                 }
                 else if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propEdge") {
                     argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId));
-                    auto type     = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
-                    auto typeAttr = ::mlir::TypeAttr::get(type);
+                    auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
+                    // auto typeAttr =
+                    ::mlir::TypeAttr::get(type);
                 }
             }
 
@@ -710,7 +717,7 @@ class StarPlatCodeGen : public MLIRVisitor
         auto funcType                = builder.getFunctionType(argTypes, {});
         mlir::ArrayAttr argNamesAttr = builder.getArrayAttr(argNames);
 
-        auto func = builder.create<mlir::starplat::FuncOp>(builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNamesAttr);
+        auto func = mlir::starplat::FuncOp::create(builder, builder.getUnknownLoc(), function->getfuncNameIdentifier(), funcType, argNamesAttr);
         // func.setNested();
 
         module.push_back(func);
@@ -737,19 +744,20 @@ class StarPlatCodeGen : public MLIRVisitor
         // for (auto argItr : args)
         // {
 
-        //     auto argOp = builder.create<mlir::starplat::ArgOp>(builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++],
+        //     auto argOp = mlir::starplat::ArgOp::create(builder,builder.getUnknownLoc(), builder.getI32Type(), argTypes[idx++],
         //     builder.getStringAttr(argItr->getVarName()->getname()), builder.getStringAttr("public")); funcSymbolTable.insert(argOp);
         // }
 
         printf("Visiting Body!!\n");
 
         if (stmtlist->getStatementList().size() != 0) {
-            printf("Inside If %d\n", stmtlist->getStatementList().size());
+            printf("Inside If %zu\n", stmtlist->getStatementList().size());
             stmtlist->Accept(this, &funcSymbolTable);
         }
 
         // Create end operation.
-        auto returnOp = builder.create<mlir::starplat::ReturnOp>(builder.getUnknownLoc());
+        // auto returnOp =
+        mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
     }
 
     virtual void visitParamlist(const Paramlist* paramlist, mlir::SymbolTable* symbolTable) override {
@@ -803,7 +811,7 @@ class StarPlatCodeGen : public MLIRVisitor
 
         llvm::SmallVector<mlir::Value> condArgs = {lhs, rhs};
         mlir::StringAttr fixPntAttr             = builder.getStringAttr("FixedPnt");
-        auto fixedPointUntil = builder.create<mlir::starplat::FixedPointUntilOp>(builder.getUnknownLoc(), condArgs, condAttrArray, fixPntAttr);
+        auto fixedPointUntil = mlir::starplat::FixedPointUntilOp::create(builder, builder.getUnknownLoc(), condArgs, condAttrArray, fixPntAttr);
 
         fixedPointUntil.setNested();
 
@@ -816,11 +824,11 @@ class StarPlatCodeGen : public MLIRVisitor
 
         stmtlist->Accept(this, &fixedSymbolTable);
 
-        builder.create<mlir::starplat::endOp>(builder.getUnknownLoc());
+        mlir::starplat::endOp::create(builder, builder.getUnknownLoc());
         builder.setInsertionPointAfter(fixedPointUntil);
     }
 
-    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt* initialiseAssignmentStmt, mlir::SymbolTable* symbolTable) {
+    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt* initialiseAssignmentStmt, mlir::SymbolTable* symbolTable) override {
         const TypeExpr* type         = static_cast<const TypeExpr*>(initialiseAssignmentStmt->gettype());
         const Identifier* identifier = static_cast<const Identifier*>(initialiseAssignmentStmt->getidentifier());
         const Expression* expr       = static_cast<const Expression*>(initialiseAssignmentStmt->getexpr());
@@ -840,9 +848,9 @@ class StarPlatCodeGen : public MLIRVisitor
             typeAttr = mlir::starplat::EdgeType::get(builder.getContext());
 
         mlir::Value graph = NULL;
-        auto idDecl       = builder.create<mlir::starplat::DeclareOp>(builder.getUnknownLoc(), typeAttr, builder.getStringAttr(identifier->getname()),
-                                                                builder.getStringAttr("public"), graph);
-        lhs               = idDecl.getResult();
+        auto idDecl = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), typeAttr, builder.getStringAttr(identifier->getname()),
+                                                        builder.getStringAttr("public"), graph);
+        lhs         = idDecl.getResult();
 
         symbolTable->insert(idDecl);
 
@@ -854,7 +862,8 @@ class StarPlatCodeGen : public MLIRVisitor
             if (globalLookupOp(keyword->getKeyword()))
                 op = globalLookupOp(keyword->getKeyword());
 
-            auto asgOp = builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), idDecl.getResult(), op);
+            // auto asgOp =
+            mlir::starplat::AssignmentOp::create(builder, builder.getUnknownLoc(), idDecl.getResult(), op);
         }
 
         else if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS) {
@@ -883,17 +892,18 @@ class StarPlatCodeGen : public MLIRVisitor
                     auto node2Op                        = globalLookupOp(node2->getname());
 
                     // Create a get_edge Op.
-                    auto getedgeOp = builder.create<mlir::starplat::GetEdgeOp>(builder.getUnknownLoc(), typeAttr, accessIdentifier, node1Op, node2Op);
-                    rhs            = getedgeOp.getResult();
+                    auto getedgeOp =
+                        mlir::starplat::GetEdgeOp::create(builder, builder.getUnknownLoc(), typeAttr, accessIdentifier, node1Op, node2Op);
+                    rhs = getedgeOp.getResult();
                     // Assign getedgeOp to iDecl.
                     // Work here tomorrow.
-                    builder.create<mlir::starplat::AssignmentOp>(builder.getUnknownLoc(), lhs, rhs);
+                    mlir::starplat::AssignmentOp::create(builder, builder.getUnknownLoc(), lhs, rhs);
                 }
             }
         }
     }
 
-    virtual void visitMemberAccessAssignment(const MemberAccessAssignment* memberAccessAssignment, mlir::SymbolTable* symbolTable) {
+    virtual void visitMemberAccessAssignment(const MemberAccessAssignment* memberAccessAssignment, mlir::SymbolTable* symbolTable) override {
 
         const Memberaccess* memberAccess = static_cast<const Memberaccess*>(memberAccessAssignment->getMemberAccess());
         memberAccess->Accept(this, symbolTable);
@@ -926,17 +936,19 @@ class StarPlatCodeGen : public MLIRVisitor
                 auto numberVal       = globalLookupOp(std::to_string(number->getnumber()));
 
                 if (id2.getDefiningOp() != nullptr)
-                    auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id2.getDefiningOp()->getOperand(0),
-                                                                                         id1, id2, numberVal);
+                    // auto setNodeProp =
+                    mlir::starplat::SetNodePropertyOp::create(builder, builder.getUnknownLoc(), id2.getDefiningOp()->getOperand(0), id1, id2,
+                                                              numberVal);
                 else
-                    auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id2, id1, id2, numberVal);
+                    // auto setNodeProp =
+                    mlir::starplat::SetNodePropertyOp::create(builder, builder.getUnknownLoc(), id2, id1, id2, numberVal);
             }
 
             else if (expr->getKind() == ExpressionKind::KIND_KEYWORD) {
                 const Keyword* keyword = static_cast<const Keyword*>(expr->getExpression());
                 auto keywordVal        = globalLookupOp(keyword->getKeyword());
-                auto setNodeProp = builder.create<mlir::starplat::SetNodePropertyOp>(builder.getUnknownLoc(), id2.getDefiningOp()->getOperand(0), id1,
-                                                                                     id2, keywordVal);
+                // auto setNodeProp =
+                mlir::starplat::SetNodePropertyOp::create(builder, builder.getUnknownLoc(), id2.getDefiningOp()->getOperand(0), id1, id2, keywordVal);
             }
         }
     }
@@ -950,17 +962,17 @@ class StarPlatCodeGen : public MLIRVisitor
 
         if (strcmp(keyword->getKeyword(), "False") == 0)
             keywordSSA =
-                builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()),
-                                                        builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
+                mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()),
+                                                builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
 
         else if (strcmp(keyword->getKeyword(), "True") == 0)
             keywordSSA =
-                builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()),
-                                                        builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
+                mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI1Type(), builder.getStringAttr(keyword->getKeyword()),
+                                                builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
         else
             keywordSSA =
-                builder.create<mlir::starplat::ConstOp>(builder.getUnknownLoc(), builder.getI64Type(), builder.getStringAttr(keyword->getKeyword()),
-                                                        builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
+                mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), builder.getStringAttr(keyword->getKeyword()),
+                                                builder.getStringAttr(keyword->getKeyword()), builder.getStringAttr("public"));
 
         symbolTable->insert(keywordSSA);
     }
@@ -1012,9 +1024,9 @@ class StarPlatCodeGen : public MLIRVisitor
         if (globalLookupOp(std::to_string(number->getnumber())))
             return;
 
-        auto constant = builder.create<mlir::starplat::ConstOp>(
-            builder.getUnknownLoc(), builder.getI32Type(), builder.getStringAttr(std::to_string(number->getnumber())),
-            builder.getStringAttr(std::to_string(number->getnumber())), builder.getStringAttr("public"));
+        auto constant = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(),
+                                                        builder.getStringAttr(std::to_string(number->getnumber())),
+                                                        builder.getStringAttr(std::to_string(number->getnumber())), builder.getStringAttr("public"));
         symbolTable->insert(constant);
     }
 
@@ -1023,8 +1035,9 @@ class StarPlatCodeGen : public MLIRVisitor
     }
 
     void print() {
-        verify(module);
-        module.dump();
+        LogicalResult lr = verify(module);
+        if (llvm::succeeded(lr))
+            module.dump();
     }
 
     mlir::SymbolTable* getSymbolTable() { return &globalSymbolTable; }

@@ -44,9 +44,9 @@ class CodeGen : public Visitor
         // std::abort();
     }
 
-    virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement* templateDeclStmt) { cout << "Template Declaration\n\n"; }
+    virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement* templateDeclStmt) override { cout << "Template Declaration\n\n"; }
 
-    virtual void visitTemplateType(const TemplateType* templateType) { cout << "Template Type\n"; }
+    virtual void visitTemplateType(const TemplateType* templateType) override { cout << "Template Type\n"; }
 
     virtual void visitForallStmt(const ForallStatement* forAllStmt) override {
         std::cout << "Forall: {\n";
@@ -97,11 +97,11 @@ class CodeGen : public Visitor
         cout << "}";
     }
 
-    virtual void visitParameterAssignment(const ParameterAssignment* paramAssignment) { cout << "Parameter Assignment\n"; }
+    virtual void visitParameterAssignment(const ParameterAssignment* paramAssignment) override { cout << "Parameter Assignment\n"; }
 
-    virtual void visitParam(const Param* param) { cout << "Params\n\n"; }
+    virtual void visitParam(const Param* param) override { cout << "Params\n\n"; }
 
-    virtual void visitTupleAssignment(const TupleAssignment* tupleAssignment) { cout << "Tuple Assignment\n"; }
+    virtual void visitTupleAssignment(const TupleAssignment* tupleAssignment) override { cout << "Tuple Assignment\n"; }
 
     virtual void visitFunction(const Function* function) override {
         Arglist* arglist        = static_cast<Arglist*>(function->getparams());
@@ -126,9 +126,13 @@ class CodeGen : public Visitor
         stmtlist->Accept(this);
     }
 
-    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt* initialiseAssignmentStmt) { cout << "Init Assignment Stmt\n"; }
+    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt* initialiseAssignmentStmt) override {
+        cout << "Init Assignment Stmt\n";
+    }
 
-    virtual void visitMemberAccessAssignment(const MemberAccessAssignment* memberAccessAssignment) { cout << "Member Access Assignment\n\n"; }
+    virtual void visitMemberAccessAssignment(const MemberAccessAssignment* memberAccessAssignment) override {
+        cout << "Member Access Assignment\n\n";
+    }
 
     virtual void visitKeyword(const Keyword* keyword) override {}
 

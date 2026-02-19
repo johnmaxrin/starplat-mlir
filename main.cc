@@ -6,9 +6,9 @@
 
 #include "ast/ast.h"
 #include "ast/visitor.h"
+#include "astdump.h"
 #include "avial.tab.h"
-#include "codegen/astdump.h"
-#include "codegen/starplatIR.h"
+#include "starplatIR.h"
 
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -27,9 +27,9 @@
 #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
 #include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 
-#include "starplatDialect/lowerings/starplat2omp.h"
+#include "lowerings/starplat2omp.h"
 
-// #include "lowerings/startplat2omp.h"
+// #include "lowerings/starplat2omp.h"
 
 #define DEBUG_TYPE "dialect-conversion"
 
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
     // starplatcodegen->print();
 
     PassManager pm(starplatcodegen->getContext());
-    pm.addPass(mlir::starplat::createConvertStartPlatIRToOMPPass());
+    pm.addPass(mlir::starplat::createConvertStarPlatIRToOMPPass());
 
     // // RUN the pass on the module
     if (mlir::failed(pm.run(starplatcodegen->getModule()->getOperation()))) {

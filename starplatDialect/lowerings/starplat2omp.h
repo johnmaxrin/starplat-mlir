@@ -25,6 +25,7 @@
 #include "mlir/Support/LogicalResult.h"
 #include "mlir/Support/TypeID.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/LogicalResult.h"
 
 #include "mlir/Transforms/DialectConversion.h" // from @llvm-project
 
@@ -50,7 +51,7 @@ class StarplatToLLVMTypeConverter : public TypeConverter
         addConversion([ctx](mlir::starplat::GraphType graph) -> Type { return createGraphStruct(ctx); });
 
         addTargetMaterialization(
-            [ctx](OpBuilder& builder, Type type, ValueRange inputs, Location loc) -> Value
+            [](OpBuilder& builder, Type type, ValueRange inputs, Location loc) -> Value
             {
                 if (isa<mlir::starplat::GraphType>(type) && inputs.size() == 1 && isa<MemRefType>(inputs[0].getType())) {
                     return inputs[0]; // just forward the memref
@@ -79,7 +80,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
 
         // auto returnType = rewriter.getI64Type(); // up up
 
-        auto i64Type = rewriter.getI64Type();
+        // auto i64Type = rewriter.getI64Type();
 
         // Function signature: (i32, i32) -> i32
         auto oldFuncType = op.getFunctionType();
@@ -91,8 +92,8 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         auto funcName                = op.getSymName();
 
         // Create the LLVM function
-        auto funcOp2 = rewriter.create<mlir::func::FuncOp>(loc, funcName, funcType);
-        // auto funcOp = rewriter.create<LLVM::LLVMFuncOp>(loc, funcName, funcType);
+        auto funcOp2 = mlir::func::FuncOp::create(rewriter, loc, funcName, funcType);
+        // auto funcOp = LLVM::LLVMFuncOp::create(rewriter,loc, funcName, funcType);
 
         // Create an entry block with the right number of arguments
         // Block *entryBlock = rewriter.createBlock(&funcOp.getBody(), {}, paramTypes, {loc, loc});
@@ -118,24 +119,24 @@ struct ConvertAttachNode : public OpConversionPattern<mlir::starplat::AttachNode
 
         auto loc        = op.getLoc();
 
-        auto constZero  = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
-        auto numOfNodes = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
-                                                                rewriter.getDenseI64ArrayAttr({0}));
-        auto step       = rewriter.create<LLVM::ConstantOp>(loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
+        auto constZero  = LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
+        auto numOfNodes = LLVM::ExtractValueOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
+                                                       rewriter.getDenseI64ArrayAttr({0}));
+        auto step       = LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
 
-        rewriter.create<mlir::scf::ForOp>(loc, constZero, numOfNodes, step, mlir::ValueRange{},
-                                          [&](mlir::OpBuilder& builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs)
-                                          {
-                                              auto indexIv = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), iv);
+        mlir::scf::ForOp::create(rewriter, loc, constZero, numOfNodes, step, mlir::ValueRange{},
+                                 [&](mlir::OpBuilder& builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs)
+                                 {
+                                     auto indexIv = arith::IndexCastOp::create(builder, nestedLoc, builder.getIndexType(), iv);
 
-                                              builder.create<mlir::memref::StoreOp>(nestedLoc, adaptor.getOperands()[2], adaptor.getOperands()[1],
-                                                                                    mlir::ValueRange{indexIv});
-                                              builder.create<mlir::scf::YieldOp>(nestedLoc);
-                                          });
+                                     mlir::memref::StoreOp::create(builder, nestedLoc, adaptor.getOperands()[2], adaptor.getOperands()[1],
+                                                                   mlir::ValueRange{indexIv});
+                                     mlir::scf::YieldOp::create(builder, nestedLoc);
+                                 });
 
-        // auto algnIdx = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(),adaptor.getOperands()[1]);
-        // auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(),  algnIdx);
-        // auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        // auto algnIdx = mlir::memref::ExtractAlignedPointerAsIndexOp::create(rewriter,op.getLoc(),adaptor.getOperands()[1]);
+        // auto algnPtrToInt = arith::IndexCastOp::create(rewriter,op.getLoc(), rewriter.getI64Type(),  algnIdx);
+        // auto IdxtoPtr = LLVM::IntToPtrOp::create(rewriter,op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
 
         rewriter.eraseOp(op);
 
@@ -151,27 +152,28 @@ struct ConvertSetNodeProp : public OpConversionPattern<mlir::starplat::SetNodePr
 
         // Check if the node id is greater than the total number of nodes using operand(0) & operand(1)
         // If no, then assign operand(3) to operand(2)[operand(1)]
-        auto numOfNodes = rewriter.create<LLVM::ExtractValueOp>(op.getLoc(), mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
-                                                                rewriter.getDenseI64ArrayAttr({0}));
+        auto numOfNodes = LLVM::ExtractValueOp::create(rewriter, op.getLoc(), mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
+                                                       rewriter.getDenseI64ArrayAttr({0}));
 
-        auto cond = rewriter.create<mlir::arith::CmpIOp>(op.getLoc(), rewriter.getI1Type(), mlir::arith::CmpIPredicate::sgt, numOfNodes.getResult(),
-                                                         adaptor.getOperands()[1]);
+        auto cond = mlir::arith::CmpIOp::create(rewriter, op.getLoc(), rewriter.getI1Type(), mlir::arith::CmpIPredicate::sgt, numOfNodes.getResult(),
+                                                adaptor.getOperands()[1]);
 
-        rewriter.create<mlir::scf::IfOp>(
-            op.getLoc(), cond,
-            [&](mlir::OpBuilder& builder, mlir::Location nestedLoc)
-            {
-                auto index = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), adaptor.getOperands()[1]);
+        mlir::scf::IfOp::create(rewriter, op.getLoc(), cond,
+                                [&](mlir::OpBuilder& builder, mlir::Location nestedLoc)
+                                {
+                                    auto index = arith::IndexCastOp::create(builder, nestedLoc, builder.getIndexType(), adaptor.getOperands()[1]);
 
-                builder.create<mlir::memref::StoreOp>(nestedLoc, adaptor.getOperands()[3], adaptor.getOperands()[2], mlir::ValueRange{index});
-                builder.create<mlir::scf::YieldOp>(nestedLoc);
-            });
+                                    mlir::memref::StoreOp::create(builder, nestedLoc, adaptor.getOperands()[3], adaptor.getOperands()[2],
+                                                                  mlir::ValueRange{index});
+                                    mlir::scf::YieldOp::create(builder, nestedLoc);
+                                });
 
-        auto algnIdx      = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(), adaptor.getOperands()[2]);
-        auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(), algnIdx);
-        // auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        auto algnIdx = mlir::memref::ExtractAlignedPointerAsIndexOp::create(rewriter, op.getLoc(), adaptor.getOperands()[2]);
+        // auto algnPtrToInt =
+        arith::IndexCastOp::create(rewriter, op.getLoc(), rewriter.getI64Type(), algnIdx);
+        // auto IdxtoPtr = LLVM::IntToPtrOp::create(rewriter,op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
 
-        // rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
+        // func::ReturnOp::create(rewriter,op.getLoc(), IdxtoPtr.getResult());
 
         rewriter.eraseOp(op);
 
@@ -184,8 +186,8 @@ struct ConvertReturnOp : public OpConversionPattern<mlir::starplat::ReturnOp>
 
     LogicalResult matchAndRewrite(mlir::starplat::ReturnOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
 
-        // auto retVal = rewriter.create<LLVM::ConstantOp>(op.getLoc(), rewriter.getI32Type(), rewriter.getI32IntegerAttr(0));
-        // rewriter.create<LLVM::ReturnOp>(op.getLoc(), retVal);
+        // auto retVal = LLVM::ConstantOp::create(rewriter,op.getLoc(), rewriter.getI32Type(), rewriter.getI32IntegerAttr(0));
+        // LLVM::ReturnOp::create(rewriter,op.getLoc(), retVal);
 
         rewriter.eraseOp(op);
 
@@ -199,13 +201,14 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
 
     LogicalResult matchAndRewrite(mlir::starplat::AssignmentOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
 
-        auto assign = rewriter.create<mlir::memref::StoreOp>(op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
+        auto assign = mlir::memref::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
         rewriter.replaceOp(op, assign);
 
-        auto algnIdx      = rewriter.create<mlir::memref::ExtractAlignedPointerAsIndexOp>(op.getLoc(), adaptor.getOperands()[0]);
-        auto algnPtrToInt = rewriter.create<arith::IndexCastOp>(op.getLoc(), rewriter.getI64Type(), algnIdx);
-        // auto IdxtoPtr = rewriter.create<LLVM::IntToPtrOp>(op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
-        // rewriter.create<func::ReturnOp>(op.getLoc(), IdxtoPtr.getResult());
+        auto algnIdx = mlir::memref::ExtractAlignedPointerAsIndexOp::create(rewriter, op.getLoc(), adaptor.getOperands()[0]);
+        // auto algnPtrToInt =
+        arith::IndexCastOp::create(rewriter, op.getLoc(), rewriter.getI64Type(), algnIdx);
+        // auto IdxtoPtr = LLVM::IntToPtrOp::create(rewriter,op.getLoc(),LLVM::LLVMPointerType::get(op.getContext()), algnPtrToInt);
+        // func::ReturnOp::create(rewriter,op.getLoc(), IdxtoPtr.getResult());
 
         return success();
     }
@@ -225,9 +228,9 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
 
             auto rescast      = dyn_cast<mlir::starplat::PropNodeType>(resType);
 
-            auto field0       = rewriter.create<LLVM::ExtractValueOp>(loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
-                                                                rewriter.getDenseI64ArrayAttr({0}));
-            Value dynamicSize = rewriter.create<arith::IndexCastOp>(loc, rewriter.getIndexType(), field0);
+            auto field0       = LLVM::ExtractValueOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
+                                                             rewriter.getDenseI64ArrayAttr({0}));
+            Value dynamicSize = arith::IndexCastOp::create(rewriter, loc, rewriter.getIndexType(), field0);
 
             MemRefType memrefType;
             if (rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 1))
@@ -240,7 +243,7 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
                 llvm::outs() << "Error: MemrefType not implemented\n";
                 exit(0);
             }
-            Value allocated = rewriter.create<memref::AllocOp>(loc, memrefType, mlir::ValueRange({dynamicSize}));
+            Value allocated = memref::AllocOp::create(rewriter, loc, memrefType, mlir::ValueRange({dynamicSize}));
 
             rewriter.replaceOp(op, allocated);
         }
@@ -261,7 +264,7 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
                 exit(0);
             }
 
-            Value allocated = rewriter.create<memref::AllocOp>(loc, memrefType);
+            Value allocated = memref::AllocOp::create(rewriter, loc, memrefType);
             rewriter.replaceOp(op, allocated);
         }
 
@@ -289,12 +292,12 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
         auto value = op.getValueAttr();
 
         if (cast<mlir::StringAttr>(value).getValue() == "False") {
-            auto newOp = rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
+            auto newOp = LLVM::ConstantOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
             rewriter.replaceOp(op, newOp);
         }
 
         else if (cast<mlir::StringAttr>(value).getValue() == "True") {
-            auto newOp = rewriter.create<LLVM::ConstantOp>(loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(1));
+            auto newOp = LLVM::ConstantOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(1));
             rewriter.replaceOp(op, newOp);
         }
         else {
@@ -330,20 +333,20 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
                 // Or all the values in the propnode and get an I1
                 auto graph      = op2.getDefiningOp()->getOperands()[0];
 
-                auto constZero  = rewriter.create<LLVM::ConstantOp>(op.getLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
-                auto numOfNodes = rewriter.create<LLVM::ExtractValueOp>(op.getLoc(), mlir::IntegerType::get(op.getContext(), 64), graph,
-                                                                        rewriter.getDenseI64ArrayAttr({0}));
-                auto step       = rewriter.create<LLVM::ConstantOp>(op.getLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
+                auto constZero  = LLVM::ConstantOp::create(rewriter, op.getLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(0));
+                auto numOfNodes = LLVM::ExtractValueOp::create(rewriter, op.getLoc(), mlir::IntegerType::get(op.getContext(), 64), graph,
+                                                               rewriter.getDenseI64ArrayAttr({0}));
+                auto step       = LLVM::ConstantOp::create(rewriter, op.getLoc(), rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
 
-                rewriter.create<mlir::scf::ForOp>(op.getLoc(), constZero, numOfNodes, step, mlir::ValueRange{},
-                                                  [&](mlir::OpBuilder& builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs)
-                                                  {
-                                                      auto indexIv = builder.create<arith::IndexCastOp>(nestedLoc, builder.getIndexType(), iv);
+                mlir::scf::ForOp::create(rewriter, op.getLoc(), constZero, numOfNodes, step, mlir::ValueRange{},
+                                         [&](mlir::OpBuilder& builder, mlir::Location nestedLoc, mlir::Value iv, mlir::ValueRange iterArgs)
+                                         {
+                                             auto indexIv = arith::IndexCastOp::create(builder, nestedLoc, builder.getIndexType(), iv);
 
-                                                      auto val     = builder.create<mlir::memref::LoadOp>(nestedLoc, adaptor.getOperands()[1],
-                                                                                                      mlir::ValueRange{indexIv});
-                                                      builder.create<mlir::scf::YieldOp>(nestedLoc);
-                                                  });
+                                             // auto val     =
+                                             mlir::memref::LoadOp::create(builder, nestedLoc, adaptor.getOperands()[1], mlir::ValueRange{indexIv});
+                                             mlir::scf::YieldOp::create(builder, nestedLoc);
+                                         });
             }
 
             else {
@@ -359,7 +362,7 @@ struct ConvertFixedPointOp : public OpConversionPattern<mlir::starplat::FixedPoi
         // I1 through, or-ing if it is a propNode.
         // And make use of the termination condition.
 
-        // rewriter.create<mlir::scf::WhileOp>(op.getLoc(), );
+        // mlir::scf::WhileOp::create(rewriter,op.getLoc(), );
 
         rewriter.eraseOp(op);
 
@@ -373,7 +376,7 @@ struct ConvertAdd : public OpConversionPattern<mlir::starplat::AddOp>
 
     LogicalResult matchAndRewrite(mlir::starplat::AddOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
 
-        auto addOp = rewriter.create<LLVM::AddOp>(op.getLoc(), adaptor.getOperands()[0], adaptor.getOperands()[1]);
+        auto addOp = LLVM::AddOp::create(rewriter, op.getLoc(), adaptor.getOperands()[0], adaptor.getOperands()[1]);
 
         rewriter.replaceOp(op, addOp.getResult());
         return success();
@@ -384,12 +387,12 @@ namespace mlir
 {
 namespace starplat
 {
-#define GEN_PASS_DEF_CONVERTSTARTPLATIRTOOMPPASS
+#define GEN_PASS_DEF_CONVERTSTARPLATIRTOOMPPASS
 #include "Passes.h.inc"
 
-struct ConvertStartPlatIRToOMPPass : public mlir::starplat::impl::ConvertStartPlatIRToOMPPassBase<ConvertStartPlatIRToOMPPass>
+struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlatIRToOMPPassBase<ConvertStarPlatIRToOMPPass>
 {
-    using ConvertStartPlatIRToOMPPassBase::ConvertStartPlatIRToOMPPassBase;
+    using ConvertStarPlatIRToOMPPassBase::ConvertStarPlatIRToOMPPassBase;
 
     void runOnOperation() override {
 
@@ -446,11 +449,13 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext* context) {
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Graph");
     // Create Node struct type
 
-    auto ptrType = LLVM::LLVMPointerType::get(context);
+    // auto ptrType = LLVM::LLVMPointerType::get(context);
     // Define Graph struct body with (Node*, int)
     // structType.setBody({ptrType, mlir::IntegerType::get(context, 32), ptrType}, /*isPacked=*/false);
 
-    structType.setBody({mlir::IntegerType::get(context, 64)}, /*isPacked=*/false);
+    LogicalResult lr = structType.setBody({mlir::IntegerType::get(context, 64)}, /*isPacked=*/false);
+    if (llvm::succeeded(lr))
+        return structType;
     // structType.setBody({rewriter->getI32Type()}, false);
 
     return structType;
@@ -462,7 +467,9 @@ mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter* rewriter, mlir::ML
     // Create a ptr type
     // auto ptr = mlir::LLVM::LLVMPointerType::get(rewriter->getI32Type());
 
-    structType.setBody({rewriter->getI32Type()}, false);
+    LogicalResult lr = structType.setBody({rewriter->getI32Type()}, false);
+    if (llvm::succeeded(lr))
+        return structType;
 
     return structType;
 }

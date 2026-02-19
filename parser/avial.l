@@ -5,6 +5,8 @@
     extern YYSTYPE yylval;
 %}
 
+%option nounput
+
 %%
 
 

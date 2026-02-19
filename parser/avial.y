@@ -117,9 +117,9 @@ boolexpr : expr LTxx expr 		{}
 
          | expr GT expr             {}
 
-         | expr EQUALS expr           {$$ = new BoolExpr($1, "==", $3);} 
+         | expr EQUALS expr           {$$ = new BoolExpr($1, const_cast<char*>("=="), $3);} 
 
-         | NOT expr                   {$$ = new BoolExpr($2, "!");} 
+         | NOT expr                   {$$ = new BoolExpr($2, const_cast<char*>("!"));} 
          ;
 
 ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement($3, $5);}
