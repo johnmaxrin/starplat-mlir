@@ -1,24 +1,26 @@
-#include "../ast/visitor.h"
+#ifndef ASTDUMP
+#define ASTDUMP
+
 #include "../ast/ast.h"
+#include "../ast/visitor.h"
+#include <iostream>
 #include <map>
 #include <string>
-#include <iostream>
 
 using namespace std;
 
 class CodeGen : public Visitor
 {
 
-public:
+  public:
     CodeGen() : result(0) {}
 
-    virtual void visitDeclarationStmt(const DeclarationStatement *dclstmt) override
-    {
+    virtual void visitDeclarationStmt(const DeclarationStatement* dclstmt) override {
         cout << "Declaration Statememt: {\n";
 
-        TypeExpr *type = static_cast<TypeExpr *>(dclstmt->gettype());
-        Identifier *identifier = static_cast<Identifier *>(dclstmt->getvarname());
-        Number *number = static_cast<Number *>(dclstmt->getnumber());
+        TypeExpr* type         = static_cast<TypeExpr*>(dclstmt->gettype());
+        Identifier* identifier = static_cast<Identifier*>(dclstmt->getvarname());
+        Number* number         = static_cast<Number*>(dclstmt->getnumber());
 
         cout << "\t";
         type->Accept(this);
@@ -32,30 +34,21 @@ public:
         cout << "}\n";
     }
 
-    virtual void visitAdd(const Add *add) override
-    {
+    virtual void visitAdd(const Add* add) override {
         llvm::errs() << "visitAdd not implemented\n";
         std::abort();
     }
 
-    virtual void visitMemberaccessStmt(const MemberacceessStmt *memberAccess) override
-    {
+    virtual void visitMemberaccessStmt(const MemberacceessStmt* memberAccess) override {
         memberAccess->getMemberAccess()->Accept(this);
-        //std::abort();
+        // std::abort();
     }
 
-    virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement *templateDeclStmt)
-    {
-        cout << "Template Declaration\n\n";
-    }
+    virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement* templateDeclStmt) override { cout << "Template Declaration\n\n"; }
 
-    virtual void visitTemplateType(const TemplateType *templateType)
-    {
-        cout << "Template Type\n";
-    }
+    virtual void visitTemplateType(const TemplateType* templateType) override { cout << "Template Type\n"; }
 
-    virtual void visitForallStmt(const ForallStatement *forAllStmt) override
-    {
+    virtual void visitForallStmt(const ForallStatement* forAllStmt) override {
         std::cout << "Forall: {\n";
 
         std::cout << "Loop Var: {\n\t";
@@ -73,72 +66,47 @@ public:
         cout << "}\n";
     }
 
-    virtual void visitIfStmt(const IfStatement *ifStmt) override
-    {
+    virtual void visitIfStmt(const IfStatement* ifStmt) override {
         std::cout << "If Statement: {\n";
         ifStmt->getexpr()->Accept(this);
         ifStmt->getstmt()->Accept(this);
         std::cout << "}\n";
     }
 
-    virtual void visitBoolExpr(const BoolExpr *boolExpr) override
-    {
-        std::cout << "Visit Bool Statement\n";
-    }
+    virtual void visitBoolExpr(const BoolExpr* boolExpr) override { std::cout << "Visit Bool Statement\n"; }
 
-    virtual void visitIncandassignstmt(const Incandassignstmt *incandassignstmt) override
-    {
+    virtual void visitIncandassignstmt(const Incandassignstmt* incandassignstmt) override {
         std::cout << "Increment and Assign Statement: {\n";
-        //incandassignstmt->getIdentifier()->Accept(this);
-        //incandassignstmt->getexpr()->Accept(this);
+        // incandassignstmt->getIdentifier()->Accept(this);
+        // incandassignstmt->getexpr()->Accept(this);
 
         cout << "}\n";
     }
-    
-    void visitAssignment(const Assignment *assignment) override
-    {
 
-    }
+    void visitAssignment(const Assignment* assignment) override {}
 
-    void visitAssignmentStmt(const AssignmentStmt *assignemntStmt) override
-    {
+    void visitAssignmentStmt(const AssignmentStmt* assignemntStmt) override {}
 
-    }
+    virtual void visitIdentifier(const Identifier* identifier) override { cout << "Identifier: " << identifier->getname() << "\n"; }
 
-    virtual void visitIdentifier(const Identifier *identifier) override
-    {
-        cout << "Identifier: " << identifier->getname() << "\n";
-    }
-
-    virtual void visitReturnStmt(const ReturnStmt *returnStmt) override
-    {
-        ASTNode *expr = returnStmt->getexpr();
+    virtual void visitReturnStmt(const ReturnStmt* returnStmt) override {
+        ASTNode* expr = returnStmt->getexpr();
 
         cout << "Return: {\n";
         expr->Accept(this);
         cout << "}";
     }
 
-    virtual void visitParameterAssignment(const ParameterAssignment *paramAssignment)
-    {
-        cout << "Parameter Assignment\n";
-    }
+    virtual void visitParameterAssignment(const ParameterAssignment* paramAssignment) override { cout << "Parameter Assignment\n"; }
 
-    virtual void visitParam(const Param *param)
-    {
-        cout << "Params\n\n";
-    }
+    virtual void visitParam(const Param* param) override { cout << "Params\n\n"; }
 
-    virtual void visitTupleAssignment(const TupleAssignment *tupleAssignment)
-    {
-        cout << "Tuple Assignment\n";
-    }
+    virtual void visitTupleAssignment(const TupleAssignment* tupleAssignment) override { cout << "Tuple Assignment\n"; }
 
-    virtual void visitFunction(const Function *function) override
-    {
-        Arglist *arglist = static_cast<Arglist *>(function->getparams());
-        Identifier *funcName = static_cast<Identifier *>(function->getfuncname());
-        Statementlist *stmtlist = static_cast<Statementlist *>(function->getstmtlist());
+    virtual void visitFunction(const Function* function) override {
+        Arglist* arglist        = static_cast<Arglist*>(function->getparams());
+        Identifier* funcName    = static_cast<Identifier*>(function->getfuncname());
+        Statementlist* stmtlist = static_cast<Statementlist*>(function->getstmtlist());
 
         cout << "Function: " << funcName->getname() << " {\n";
         arglist->Accept(this);
@@ -150,39 +118,27 @@ public:
         cout << "\n}";
     }
 
-    virtual void visitParamlist(const Paramlist *paramlist) override
-    {
-        cout << "ParamList\n\n";
-    }
+    virtual void visitParamlist(const Paramlist* paramlist) override { cout << "ParamList\n\n"; }
 
-    virtual void visitFixedpointUntil(const FixedpointUntil *fixedpointuntil) override
-    {
-        Statementlist *stmtlist = static_cast<Statementlist *>(fixedpointuntil->getstmtlist());
+    virtual void visitFixedpointUntil(const FixedpointUntil* fixedpointuntil) override {
+        Statementlist* stmtlist = static_cast<Statementlist*>(fixedpointuntil->getstmtlist());
         cout << "Fixed Point Until\n";
         stmtlist->Accept(this);
     }
 
-    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt *initialiseAssignmentStmt)
-    {
+    virtual void visitInitialiseAssignmentStmt(const InitialiseAssignmentStmt* initialiseAssignmentStmt) override {
         cout << "Init Assignment Stmt\n";
     }
 
-    virtual void visitMemberAccessAssignment(const MemberAccessAssignment *memberAccessAssignment)
-    {
+    virtual void visitMemberAccessAssignment(const MemberAccessAssignment* memberAccessAssignment) override {
         cout << "Member Access Assignment\n\n";
     }
 
-    virtual void visitKeyword(const Keyword *keyword) override
-    {
-    }
+    virtual void visitKeyword(const Keyword* keyword) override {}
 
-    virtual void visitGraphProperties(const GraphProperties *graphproperties) override
-    {
-        cout << graphproperties->getPropertyType() << " ";
-    }
+    virtual void visitGraphProperties(const GraphProperties* graphproperties) override { cout << graphproperties->getPropertyType() << " "; }
 
-    virtual void visitMethodcall(const Methodcall *methodcall) override
-    {
+    virtual void visitMethodcall(const Methodcall* methodcall) override {
         cout << "Methodcall: {\n\t";
         methodcall->getIdentifier()->Accept(this);
 
@@ -192,8 +148,7 @@ public:
         cout << "}\n";
     }
 
-    virtual void visitMemberaccess(const Memberaccess *memberaccess) override
-    {
+    virtual void visitMemberaccess(const Memberaccess* memberaccess) override {
         cout << "Member Access: {\n\t";
         memberaccess->getIdentifier()->Accept(this);
 
@@ -204,14 +159,12 @@ public:
         cout << "}\n";
     }
 
-    virtual void visitArglist(const Arglist *arglist) override
-    {
-        vector<Arg *> arglistV = arglist->getArgList();
+    virtual void visitArglist(const Arglist* arglist) override {
+        vector<Arg*> arglistV = arglist->getArgList();
 
         cout << "Arguments: {\n";
 
-        for (Arg *arg : arglistV)
-        {
+        for (Arg* arg : arglistV) {
             cout << "Arg: {\n";
 
             arg->Accept(this);
@@ -222,10 +175,8 @@ public:
         cout << "}\n";
     }
 
-    virtual void visitArg(const Arg *arg) override
-    {
-        if (arg->getType())
-        {
+    virtual void visitArg(const Arg* arg) override {
+        if (arg->getType()) {
             cout << "\t";
             arg->getType()->Accept(this);
 
@@ -233,41 +184,30 @@ public:
             arg->getVarName()->Accept(this);
         }
 
-        else if(arg->getTemplateType())
-        {
-            cout<<"\t{";
-            cout<<"PROPxx";
-            cout<<"}";
+        else if (arg->getTemplateType()) {
+            cout << "\t{";
+            cout << "PROPxx";
+            cout << "}";
         }
     }
 
-    virtual void visitStatement(const Statement *statement) override
-    {
-    }
+    virtual void visitStatement(const Statement* statement) override {}
 
-    virtual void visitStatementlist(const Statementlist *stmtlist) override
-    {
-        for (ASTNode *stmt : stmtlist->getStatementList())
-        {
+    virtual void visitStatementlist(const Statementlist* stmtlist) override {
+        for (ASTNode* stmt : stmtlist->getStatementList()) {
             stmt->Accept(this);
         }
     }
 
-    virtual void visitType(const TypeExpr *type) override
-    {
-        cout << "type: " << type->getType() << "\n";
-    }
+    virtual void visitType(const TypeExpr* type) override { cout << "type: " << type->getType() << "\n"; }
 
-    virtual void visitNumber(const Number *number) override
-    {
-        cout << "number: " << number->getnumber() << "\n";
-    }
+    virtual void visitNumber(const Number* number) override { cout << "number: " << number->getnumber() << "\n"; }
 
-    virtual void visitExpression(const Expression *expr) override
-    {
-    }
+    virtual void visitExpression(const Expression* expr) override {}
 
-private:
+  private:
     int result;
     map<string, int> variables;
 };
+
+#endif

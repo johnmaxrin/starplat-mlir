@@ -2,153 +2,103 @@
 #define AVIALAST
 
 #include "visitor.h"
-#include <vector>
-#include <set>
 #include <iostream>
 #include <mlir/IR/SymbolTable.h>
+#include <set>
+#include <vector>
 
 using namespace std;
 using namespace mlir;
 
 class ASTNode
 {
-public:
+  public:
     virtual ~ASTNode() {}
-    virtual void Accept(Visitor *visitor) const = 0;
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const = 0;
+    virtual void Accept(Visitor* visitor) const                                     = 0;
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const = 0;
 };
 
-
-enum ExpressionKind{
-    KIND_NUMBER,
-    KIND_IDENTIFIER,
-    KIND_KEYWORD,
-    KIND_BOOLEXPR,
-    KIND_MEMBERACCESS,
-    KIND_METHODCALL,
-    KIND_ADDOP
-};
-
-
+enum ExpressionKind { KIND_NUMBER, KIND_IDENTIFIER, KIND_KEYWORD, KIND_BOOLEXPR, KIND_MEMBERACCESS, KIND_METHODCALL, KIND_ADDOP };
 
 class Identifier : public ASTNode
 {
-public:
-    Identifier(char *name)
-        : name_(name) {}
+  public:
+    Identifier(char* name) : name_(name) {}
 
     Identifier() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitIdentifier(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitIdentifier(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitIdentifier(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitIdentifier(this, symbolTable); }
 
-    ~Identifier()
-    {
-        delete name_;
-    }
+    ~Identifier() { delete name_; }
 
-    char *getname() const { return name_; }
+    char* getname() const { return name_; }
 
-private:
-    char *name_;
+  private:
+    char* name_;
 };
 
 class GraphProperties : public ASTNode
 {
-public:
-    GraphProperties(char *properties)
-        : properties_(properties) {}
+  public:
+    GraphProperties(char* properties) : properties_(properties) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitGraphProperties(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitGraphProperties(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitGraphProperties(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitGraphProperties(this, symbolTable); }
 
-    ~GraphProperties()
-    {
-        delete properties_;
-    }
+    ~GraphProperties() { delete properties_; }
 
-    char *getPropertyType() const { return properties_; }
+    char* getPropertyType() const { return properties_; }
 
-private:
-    char *properties_;
+  private:
+    char* properties_;
 };
 
 class Statement : public ASTNode
 {
-public:
+  public:
     Statement() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitStatement(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitStatement(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitStatement(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitStatement(this, symbolTable); }
 
-    ~Statement()
-    {
-        delete statement;
-    }
+    ~Statement() { delete statement; }
 
-    ASTNode *getstatement() const { return statement; }
+    ASTNode* getstatement() const { return statement; }
 
-private:
-    ASTNode *statement;
+  private:
+    ASTNode* statement;
 };
 
 class Methodcall : public ASTNode
 {
-public:
-    Methodcall(Identifier *identifier, ASTNode *paramlist)
-        : identifier_(identifier), paramlist_(paramlist), _isBuiltin(checkIfBuiltin(identifier)) {}
+  public:
+    Methodcall(Identifier* identifier, ASTNode* paramlist) : identifier_(identifier), paramlist_(paramlist), _isBuiltin(checkIfBuiltin(identifier)) {}
 
-    Methodcall(Identifier *identifier)
-        : identifier_(identifier), paramlist_(nullptr), _isBuiltin(checkIfBuiltin(identifier)) {}
+    Methodcall(Identifier* identifier) : identifier_(identifier), paramlist_(nullptr), _isBuiltin(checkIfBuiltin(identifier)) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitMethodcall(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitMethodcall(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitMethodcall(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitMethodcall(this, symbolTable); }
 
-    ~Methodcall()
-    {
+    ~Methodcall() {
         delete identifier_;
         delete paramlist_;
     }
 
-    const Identifier *getIdentifier() const { return identifier_; }
-    const ASTNode *getParamLists() const { return paramlist_; }
+    const Identifier* getIdentifier() const { return identifier_; }
+    const ASTNode* getParamLists() const { return paramlist_; }
     bool getIsBuiltin() const { return _isBuiltin; }
 
-private:
-    const Identifier * identifier_;
-    const ASTNode * paramlist_;
-    bool  _isBuiltin;
+  private:
+    const Identifier* identifier_;
+    const ASTNode* paramlist_;
+    bool _isBuiltin;
 
-    static bool checkIfBuiltin(const Identifier *id)
-    {
+    static bool checkIfBuiltin(const Identifier* id) {
         static const std::set<std::string> builtins = {
             "print", "attachNodeProperty", "filter", "get_edge", "neighbors", "nodes", "Min" // Add more built-in methods
         };
@@ -158,883 +108,648 @@ private:
 
 class TupleAssignment : public ASTNode
 {
-public:
-    TupleAssignment(ASTNode *lhsexpr1, ASTNode *lhsexpr2, ASTNode *rhsexpr1, ASTNode *rhsexpr2)
+  public:
+    TupleAssignment(ASTNode* lhsexpr1, ASTNode* lhsexpr2, ASTNode* rhsexpr1, ASTNode* rhsexpr2)
         : lhsexpr1_(lhsexpr1), lhsexpr2_(lhsexpr2), rhsexpr1_(rhsexpr1), rhsexpr2_(rhsexpr2) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitTupleAssignment(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitTupleAssignment(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitTupleAssignment(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitTupleAssignment(this, symbolTable); }
 
-    ~TupleAssignment()
-    {
+    ~TupleAssignment() {
         delete lhsexpr1_;
         delete lhsexpr2_;
         delete rhsexpr1_;
         delete rhsexpr2_;
     }
 
-    const ASTNode *getlhsexpr1() const { return lhsexpr1_; }
-    const ASTNode *getlhsexpr2() const { return lhsexpr2_; }
-    const ASTNode *getrhsexpr1() const { return rhsexpr1_; }
-    const ASTNode *getrhsexpr2() const { return rhsexpr2_; }
+    const ASTNode* getlhsexpr1() const { return lhsexpr1_; }
+    const ASTNode* getlhsexpr2() const { return lhsexpr2_; }
+    const ASTNode* getrhsexpr1() const { return rhsexpr1_; }
+    const ASTNode* getrhsexpr2() const { return rhsexpr2_; }
 
-private:
-    const ASTNode *lhsexpr1_;
-    const ASTNode *lhsexpr2_;
-    const ASTNode *rhsexpr1_;
-    const ASTNode *rhsexpr2_;
+  private:
+    const ASTNode* lhsexpr1_;
+    const ASTNode* lhsexpr2_;
+    const ASTNode* rhsexpr1_;
+    const ASTNode* rhsexpr2_;
 };
-
 
 class MemberacceessStmt : public ASTNode
 {
-    public:
-        MemberacceessStmt(ASTNode *memberAccess) : memberAccess_(memberAccess) {}
+  public:
+    MemberacceessStmt(ASTNode* memberAccess) : memberAccess_(memberAccess) {}
 
-        virtual void Accept(Visitor *visitor) const override
-        {
-            visitor->visitMemberaccessStmt(this);
-        }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitMemberaccessStmt(this); }
 
-        virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-        {
-            visitor->visitMemberaccessStmt(this, symbolTable);
-        }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitMemberaccessStmt(this, symbolTable); }
 
-        const ASTNode *getMemberAccess() const { return memberAccess_; }
+    const ASTNode* getMemberAccess() const { return memberAccess_; }
 
-        ~MemberacceessStmt()
-        {
-            delete memberAccess_;
-        }
+    ~MemberacceessStmt() { delete memberAccess_; }
 
-    private:
-        ASTNode *memberAccess_;
+  private:
+    ASTNode* memberAccess_;
 };
-
 
 class Memberaccess : public ASTNode
 {
-public:
-    Memberaccess(Identifier *identifier1, ASTNode *methodcall)
-        : identifier1_(identifier1), methodcall_(methodcall), identifier2_(nullptr), memberaccessNode_(nullptr) {}
+  public:
+    Memberaccess(Identifier* identifier1, ASTNode* methodcall)
+        : identifier1_(identifier1), identifier2_(nullptr), methodcall_(methodcall), memberaccessNode_(nullptr) {}
 
-    Memberaccess(Identifier *identifier1, Identifier *identifier2)
-        : identifier1_(identifier1), methodcall_(nullptr), identifier2_(identifier2), memberaccessNode_(nullptr) {}
+    Memberaccess(Identifier* identifier1, Identifier* identifier2)
+        : identifier1_(identifier1), identifier2_(identifier2), methodcall_(nullptr), memberaccessNode_(nullptr) {}
 
-    Memberaccess(ASTNode *memberaccessNode, ASTNode *methodcall)
-        : identifier1_(nullptr), methodcall_(methodcall), identifier2_(nullptr), memberaccessNode_(memberaccessNode) {}
+    Memberaccess(ASTNode* memberaccessNode, ASTNode* methodcall)
+        : identifier1_(nullptr), identifier2_(nullptr), methodcall_(methodcall), memberaccessNode_(memberaccessNode) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitMemberaccess(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitMemberaccess(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitMemberaccess(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitMemberaccess(this, symbolTable); }
 
-    ~Memberaccess()
-    {
+    ~Memberaccess() {
         delete identifier1_;
         delete identifier2_;
         delete memberaccessNode_;
         delete methodcall_;
     }
 
-    const Identifier *getIdentifier() const { return identifier1_; }
-    const Identifier *getIdentifier2() const { return identifier2_; }
-    const ASTNode *getMethodCall() const { return methodcall_; }
-    const ASTNode *getMemberAccessNode() const { return memberaccessNode_; }
+    const Identifier* getIdentifier() const { return identifier1_; }
+    const Identifier* getIdentifier2() const { return identifier2_; }
+    const ASTNode* getMethodCall() const { return methodcall_; }
+    const ASTNode* getMemberAccessNode() const { return memberaccessNode_; }
 
-private:
-    const Identifier *identifier1_;
-    const Identifier *identifier2_;
-    const ASTNode *methodcall_;
-    const ASTNode *memberaccessNode_;
+  private:
+    const Identifier* identifier1_;
+    const Identifier* identifier2_;
+    const ASTNode* methodcall_;
+    const ASTNode* memberaccessNode_;
 };
 
 class Statementlist : public ASTNode
 {
-public:
+  public:
     Statementlist() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitStatementlist(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitStatementlist(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        for (ASTNode *stmt : statementlist)
-        {
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override {
+        for (ASTNode* stmt : statementlist) {
             stmt->Accept(visitor, symbolTable);
         }
     }
 
-
-
-    ~Statementlist()
-    {
-        for (ASTNode *param : statementlist)
+    ~Statementlist() {
+        for (ASTNode* param : statementlist)
             delete param;
     }
 
-    const std::vector<ASTNode *> getStatementList() const { return statementlist; }
-    void addstmt(ASTNode *param) { statementlist.push_back(param); }
+    const std::vector<ASTNode*> getStatementList() const { return statementlist; }
+    void addstmt(ASTNode* param) { statementlist.push_back(param); }
 
-private:
-    std::vector<ASTNode *> statementlist;
+  private:
+    std::vector<ASTNode*> statementlist;
 };
 
 class DeclarationStatement : public ASTNode
 {
-public:
-    DeclarationStatement(ASTNode *type, ASTNode *identifier, ASTNode *number)
-        : type(type), varname(identifier), number(number) {}
+  public:
+    DeclarationStatement(ASTNode* type, ASTNode* identifier, ASTNode* number) : type(type), varname(identifier), number(number) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitDeclarationStmt(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitDeclarationStmt(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitDeclarationStmt(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitDeclarationStmt(this, symbolTable); }
 
-    ~DeclarationStatement()
-    {
+    ~DeclarationStatement() {
         delete type;
         delete varname;
         delete number;
     }
 
-    ASTNode *gettype() const { return type; }
-    ASTNode *getvarname() const { return varname; }
-    ASTNode *getnumber() const { return number; }
+    ASTNode* gettype() const { return type; }
+    ASTNode* getvarname() const { return varname; }
+    ASTNode* getnumber() const { return number; }
 
-private:
-    ASTNode *type;
-    ASTNode *varname;
-    ASTNode *number;
+  private:
+    ASTNode* type;
+    ASTNode* varname;
+    ASTNode* number;
 };
-
 
 class InitialiseAssignmentStmt : public ASTNode
 {
-public:
-    InitialiseAssignmentStmt(ASTNode *type,  ASTNode *identifier, ASTNode *expr)
-        : type_(type), identifier_(identifier), expr_(expr) {}
+  public:
+    InitialiseAssignmentStmt(ASTNode* type, ASTNode* identifier, ASTNode* expr) : type_(type), identifier_(identifier), expr_(expr) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitInitialiseAssignmentStmt(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitInitialiseAssignmentStmt(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override {
         visitor->visitInitialiseAssignmentStmt(this, symbolTable);
     }
 
-    ~InitialiseAssignmentStmt()
-    {
+    ~InitialiseAssignmentStmt() {
         delete type_;
         delete identifier_;
         delete expr_;
     }
 
-    ASTNode *gettype() const { return type_; }
-    ASTNode *getidentifier() const { return identifier_; }
-    ASTNode *getexpr() const { return expr_; }
+    ASTNode* gettype() const { return type_; }
+    ASTNode* getidentifier() const { return identifier_; }
+    ASTNode* getexpr() const { return expr_; }
 
-private:
-    ASTNode *type_;
-    ASTNode *identifier_;
-    ASTNode *expr_;
+  private:
+    ASTNode* type_;
+    ASTNode* identifier_;
+    ASTNode* expr_;
 };
 
 class FixedpointUntil : public ASTNode
 {
-public:
-    FixedpointUntil(ASTNode *identifier , ASTNode *expr, ASTNode *stmtlist)
-        : expr_(expr), identifier_(identifier),  stmtlist_(stmtlist)  {}
+  public:
+    FixedpointUntil(ASTNode* identifier, ASTNode* expr, ASTNode* stmtlist) : expr_(expr), identifier_(identifier), stmtlist_(stmtlist) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitFixedpointUntil(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitFixedpointUntil(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-       visitor->visitFixedpointUntil(this, symbolTable); 
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitFixedpointUntil(this, symbolTable); }
 
-    ASTNode *getstmtlist() const{ return stmtlist_; }
-    ASTNode *getidentifier() const{ return identifier_; }
-    ASTNode *getexpr() const{ return expr_; }
+    ASTNode* getstmtlist() const { return stmtlist_; }
+    ASTNode* getidentifier() const { return identifier_; }
+    ASTNode* getexpr() const { return expr_; }
 
-    ~FixedpointUntil()
-    {
+    ~FixedpointUntil() {
         delete stmtlist_;
         delete identifier_;
         delete expr_;
     }
 
-private:
-    ASTNode *expr_;
-    ASTNode *identifier_;
-    ASTNode *stmtlist_;
+  private:
+    ASTNode* expr_;
+    ASTNode* identifier_;
+    ASTNode* stmtlist_;
 };
 
 class ParameterAssignment : public ASTNode
 {
-public:
-    ParameterAssignment(ASTNode *identifier, ASTNode *keyword)
-        : identifier_(identifier), keyword_(keyword) {}
+  public:
+    ParameterAssignment(ASTNode* identifier, ASTNode* keyword) : identifier_(identifier), keyword_(keyword) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitParameterAssignment(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitParameterAssignment(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitParameterAssignment(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitParameterAssignment(this, symbolTable); }
 
-    ~ParameterAssignment()
-    {
+    ~ParameterAssignment() {
         delete identifier_;
         delete keyword_;
     }
 
-    ASTNode *getidentifier() const { return identifier_; }
-    ASTNode *getkeyword() const { return keyword_; }
+    ASTNode* getidentifier() const { return identifier_; }
+    ASTNode* getkeyword() const { return keyword_; }
 
-private:
-    ASTNode *identifier_;
-    ASTNode *keyword_;
+  private:
+    ASTNode* identifier_;
+    ASTNode* keyword_;
 };
 
 class TemplateDeclarationStatement : public ASTNode
 {
-public:
-    TemplateDeclarationStatement(ASTNode *type, ASTNode *identifier)
-        : type(type), varname(identifier) {}
+  public:
+    TemplateDeclarationStatement(ASTNode* type, ASTNode* identifier) : type(type), varname(identifier) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitTemplateDeclarationStmt(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitTemplateDeclarationStmt(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override {
         visitor->visitTemplateDeclarationStmt(this, symbolTable);
     }
 
-    ~TemplateDeclarationStatement()
-    {
+    ~TemplateDeclarationStatement() {
         delete type;
         delete varname;
     }
 
-    ASTNode *gettype() const { return type; }
-    ASTNode *getvarname() const { return varname; }
+    ASTNode* gettype() const { return type; }
+    ASTNode* getvarname() const { return varname; }
 
-private:
-    ASTNode *type;
-    ASTNode *varname;
+  private:
+    ASTNode* type;
+    ASTNode* varname;
 };
 
 class ForallStatement : public ASTNode
 {
-public:
-    ForallStatement(Identifier *loopVar, ASTNode *expr, ASTNode *stmtlist)
-        : loopVar_(loopVar), expr_(expr), stmtlist_(stmtlist) {}
+  public:
+    ForallStatement(Identifier* loopVar, ASTNode* expr, ASTNode* stmtlist) : loopVar_(loopVar), expr_(expr), stmtlist_(stmtlist) {}
 
     ForallStatement() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitForallStmt(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitForallStmt(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitForallStmt(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitForallStmt(this, symbolTable); }
 
-    ~ForallStatement()
-    {
+    ~ForallStatement() {
         delete loopVar_;
         delete expr_;
         delete stmtlist_;
     }
 
-    Identifier *getLoopVar() const { return loopVar_; }
-    ASTNode *getexpr() const { return expr_; }
-    ASTNode *getstmtlist() const { return stmtlist_; }
+    Identifier* getLoopVar() const { return loopVar_; }
+    ASTNode* getexpr() const { return expr_; }
+    ASTNode* getstmtlist() const { return stmtlist_; }
 
-private:
-    Identifier *loopVar_;
-    ASTNode *expr_;
-    ASTNode *stmtlist_;
+  private:
+    Identifier* loopVar_;
+    ASTNode* expr_;
+    ASTNode* stmtlist_;
 };
 
 class IfStatement : public ASTNode
 {
-public:
-    IfStatement(ASTNode *expr, ASTNode *stmt)
-        : expr(expr), stmt(stmt) {}
+  public:
+    IfStatement(ASTNode* expr, ASTNode* stmt) : expr(expr), stmt(stmt) {}
 
     IfStatement() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitIfStmt(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitIfStmt(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitIfStmt(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitIfStmt(this, symbolTable); }
 
-    ~IfStatement()
-    {
+    ~IfStatement() {
         delete expr;
         delete stmt;
     }
 
-    ASTNode *getexpr() const { return expr; }
-    ASTNode *getstmt() const { return stmt; }
+    ASTNode* getexpr() const { return expr; }
+    ASTNode* getstmt() const { return stmt; }
 
-private:
-    ASTNode *expr;
-    ASTNode *stmt;
+  private:
+    ASTNode* expr;
+    ASTNode* stmt;
 };
 
 class BoolExpr : public ASTNode
 {
-public:
-    BoolExpr(ASTNode *expr1, char *op, ASTNode *expr2)
-        : expr1_(expr1), op_(op), expr2_(expr2) {}
+  public:
+    BoolExpr(ASTNode* expr1, char* op, ASTNode* expr2) : expr1_(expr1), expr2_(expr2), op_(op) {}
 
-    BoolExpr(ASTNode *expr1, char *op) 
-        : expr1_(expr1), op_(op), expr2_(nullptr) {}
+    BoolExpr(ASTNode* expr1, char* op) : expr1_(expr1), expr2_(nullptr), op_(op) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitBoolExpr(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitBoolExpr(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitBoolExpr(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitBoolExpr(this, symbolTable); }
 
-    ~BoolExpr()
-    {
+    ~BoolExpr() {
         delete expr1_;
         delete expr2_;
         delete op_;
     }
 
-    ASTNode*getExpr1() const { return expr1_; }
-    ASTNode *getExpr2() const { return expr2_; }
-    char *getop() const { return op_; }
+    ASTNode* getExpr1() const { return expr1_; }
+    ASTNode* getExpr2() const { return expr2_; }
+    char* getop() const { return op_; }
 
-private:
-    ASTNode *expr1_;
-    ASTNode *expr2_;
-    char *op_;
+  private:
+    ASTNode* expr1_;
+    ASTNode* expr2_;
+    char* op_;
 };
-
 
 class Add : public ASTNode
 {
-public:
+  public:
+    Add(ASTNode* operand1, ASTNode* operand2) : operand1_(operand1), operand2_(operand2) {}
 
-    Add(ASTNode *operand1, ASTNode *operand2) 
-        : operand1_(operand1), operand2_(operand2) {}
+    virtual void Accept(Visitor* visitor) const override { visitor->visitAdd(this); }
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitAdd(this);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitAdd(this, symbolTable); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitAdd(this, symbolTable);
-    }
-
-    ~Add()
-    {
+    ~Add() {
         delete operand1_;
         delete operand2_;
     }
 
-    ASTNode *getOperand1() const { return operand1_; }
-    ASTNode *getOperand2() const { return operand2_; }
+    ASTNode* getOperand1() const { return operand1_; }
+    ASTNode* getOperand2() const { return operand2_; }
 
-private:
-    ASTNode *operand1_;
-    ASTNode *operand2_;
+  private:
+    ASTNode* operand1_;
+    ASTNode* operand2_;
 };
 
 class Assignment : public ASTNode
 {
-public:
-    Assignment(char *identifier, ASTNode *expr)
-        : identifier(identifier), expr(expr) {}
+  public:
+    Assignment(char* identifier, ASTNode* expr) : identifier(identifier), expr(expr) {}
 
+    virtual void Accept(Visitor* visitor) const override { visitor->visitAssignment(this); }
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitAssignment(this);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitAssignment(this, symbolTable); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitAssignment(this, symbolTable);
-    }
-
-    ~Assignment()
-    {
+    ~Assignment() {
         delete identifier;
         delete expr;
     }
 
-    char *getIdentifier() const { return identifier; }
-    ASTNode *getexpr() const { return expr; }
+    char* getIdentifier() const { return identifier; }
+    ASTNode* getexpr() const { return expr; }
 
-private:
+  private:
     char* identifier;
-    ASTNode *expr;
+    ASTNode* expr;
 };
-
-
 
 class AssignmentStmt : public ASTNode
 {
-public:
-    AssignmentStmt(ASTNode *assignment)
-        : assignment(assignment) {}
+  public:
+    AssignmentStmt(ASTNode* assignment) : assignment(assignment) {}
 
+    virtual void Accept(Visitor* visitor) const override { visitor->visitAssignmentStmt(this); }
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitAssignmentStmt(this);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitAssignmentStmt(this, symbolTable); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitAssignmentStmt(this, symbolTable);
-    }
+    ~AssignmentStmt() { delete assignment; }
 
-    ~AssignmentStmt()
-    {
-        delete assignment;
-    }
+    ASTNode* getAssignment() const { return assignment; }
 
-    ASTNode *getAssignment() const { return assignment; }
-
-private:
-    ASTNode *assignment;
+  private:
+    ASTNode* assignment;
 };
 
 class Incandassignstmt : public ASTNode
 {
-public:
-    Incandassignstmt(Identifier *identifier, char *op, ASTNode *expr)
-        : identifier(identifier), op(op), expr(expr) {}
+  public:
+    Incandassignstmt(Identifier* identifier, char* op, ASTNode* expr) : identifier(identifier), op(op), expr(expr) {}
 
     Incandassignstmt() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitIncandassignstmt(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitIncandassignstmt(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitIncandassignstmt(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitIncandassignstmt(this, symbolTable); }
 
-    ~Incandassignstmt()
-    {
+    ~Incandassignstmt() {
         delete identifier;
         delete op;
         delete expr;
     }
 
-    Identifier *getIdentifier() const { return identifier; }
-    ASTNode *getexpr() const { return expr; }
+    Identifier* getIdentifier() const { return identifier; }
+    ASTNode* getexpr() const { return expr; }
 
-private:
-    Identifier *identifier;
-    char *op;
-    ASTNode *expr;
+  private:
+    Identifier* identifier;
+    char* op;
+    ASTNode* expr;
 };
 
 class Number : public ASTNode
 {
-public:
-    Number(char *number)
-        : number_(atoi(number)) {}
+  public:
+    Number(char* number) : number_(atoi(number)) {}
 
     Number() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitNumber(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitNumber(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitNumber(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitNumber(this, symbolTable); }
 
     int getnumber() const { return number_; }
 
-private:
+  private:
     int number_;
 };
 
 class ReturnStmt : public ASTNode
 {
-public:
-    ReturnStmt(ASTNode *expr)
-        : expr(expr) {}
+  public:
+    ReturnStmt(ASTNode* expr) : expr(expr) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitReturnStmt(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitReturnStmt(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitReturnStmt(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitReturnStmt(this, symbolTable); }
 
-    ~ReturnStmt()
-    {
-        delete expr;
-    }
+    ~ReturnStmt() { delete expr; }
 
-    ASTNode *getexpr() const { return expr; }
+    ASTNode* getexpr() const { return expr; }
 
-private:
-    ASTNode *expr;
+  private:
+    ASTNode* expr;
 };
 
 class Function : public ASTNode
 {
-public:
-    Function(Identifier *functionname, Arglist *arglist, ASTNode *stmtlist)
-        : functionname(functionname), arglist(arglist), stmtlist(stmtlist)
-    {
+  public:
+    Function(Identifier* functionname, Arglist* arglist, ASTNode* stmtlist) : functionname(functionname), arglist(arglist), stmtlist(stmtlist) {
 
         funcName = functionname->getname();
     }
 
     // Function(){}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitFunction(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitFunction(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitFunction(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitFunction(this, symbolTable); }
 
-    ~Function()
-    {
+    ~Function() {
         delete functionname;
         delete stmtlist;
     }
 
-    ASTNode *getfuncname() const { return functionname; }
-    Arglist *getparams() const { return arglist; }
-    ASTNode *getstmtlist() const { return stmtlist; }
+    ASTNode* getfuncname() const { return functionname; }
+    Arglist* getparams() const { return arglist; }
+    ASTNode* getstmtlist() const { return stmtlist; }
     string getfuncNameIdentifier() const { return funcName; } // Returns the function name as a string.
 
-private:
-    ASTNode *functionname;
-    Arglist *arglist;
-    ASTNode *stmtlist;
+  private:
+    ASTNode* functionname;
+    Arglist* arglist;
+    ASTNode* stmtlist;
     string funcName;
-};
-
-class Paramlist : public ASTNode
-{
-public:
-    Paramlist() {}
-
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitParamlist(this);
-    }
-
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitParamlist(this, symbolTable);
-    }
-
-    ~Paramlist()
-    {
-        for (Param *param : paramlist)
-            delete param;
-    }
-
-    const std::vector<Param *> getParamList() const { return paramlist; }
-    void addparam(Param *param) { paramlist.push_back(param); }
-
-private:
-    std::vector<Param *> paramlist;
 };
 
 class TemplateType : public ASTNode
 {
-public:
-    TemplateType(GraphProperties *graphprop, TypeExpr *type, Identifier *graphName) : 
-        graphproperties_(graphprop), type_(type), graphName_(graphName) {}
+  public:
+    TemplateType(GraphProperties* graphprop, TypeExpr* type, Identifier* graphName)
+        : graphproperties_(graphprop), type_(type), graphName_(graphName) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitTemplateType(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitTemplateType(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitTemplateType(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitTemplateType(this, symbolTable); }
 
-    const GraphProperties *getGraphPropNode() const { return graphproperties_; }
-    const TypeExpr *getType() const { return type_; }
-    const Identifier *getGraphName() const { return graphName_; }
+    const GraphProperties* getGraphPropNode() const { return graphproperties_; }
+    const TypeExpr* getType() const { return type_; }
+    const Identifier* getGraphName() const { return graphName_; }
 
-private:
-    GraphProperties *graphproperties_;
-    TypeExpr *type_;
-    Identifier *graphName_;
+  private:
+    GraphProperties* graphproperties_;
+    TypeExpr* type_;
+    Identifier* graphName_;
 };
 
 class TypeExpr : public ASTNode
 {
-public:
-    TypeExpr(char *type) : type_(type) {}
+  public:
+    TypeExpr(char* type) : type_(type) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitType(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitType(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitType(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitType(this, symbolTable); }
 
-    ~TypeExpr()
-    {
-        delete type_;
-    }
+    ~TypeExpr() { delete type_; }
 
-    const char *getType() const { return type_; }
+    const char* getType() const { return type_; }
 
-private:
-    char *type_;
+  private:
+    char* type_;
 };
 
 class MemberAccessAssignment : public ASTNode
 {
-public:
-    MemberAccessAssignment(ASTNode *memberAccess, ASTNode *expr) : memberAccess_(memberAccess), expr_(expr) {}
+  public:
+    MemberAccessAssignment(ASTNode* memberAccess, ASTNode* expr) : memberAccess_(memberAccess), expr_(expr) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitMemberAccessAssignment(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitMemberAccessAssignment(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override {
         visitor->visitMemberAccessAssignment(this, symbolTable);
     }
 
-    ~MemberAccessAssignment()
-    {
+    ~MemberAccessAssignment() {
         delete memberAccess_;
         delete expr_;
     }
 
-    const ASTNode *getMemberAccess() const { return memberAccess_; }
-    const ASTNode *getExpr() const {return expr_;}
+    const ASTNode* getMemberAccess() const { return memberAccess_; }
+    const ASTNode* getExpr() const { return expr_; }
 
-private:
-    ASTNode *memberAccess_;
-    ASTNode *expr_;
+  private:
+    ASTNode* memberAccess_;
+    ASTNode* expr_;
 };
 
 class Keyword : public ASTNode
 {
-public:
-    Keyword(char *keyword) : keyword_(keyword) {}
+  public:
+    Keyword(char* keyword) : keyword_(keyword) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitKeyword(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitKeyword(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitKeyword(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitKeyword(this, symbolTable); }
 
-    ~Keyword()
-    {
-        delete keyword_;
-    }
+    ~Keyword() { delete keyword_; }
 
-    const char *getKeyword() const { return keyword_; }
+    const char* getKeyword() const { return keyword_; }
 
-private:
-    char *keyword_;
+  private:
+    char* keyword_;
 };
 
 class Arg : public ASTNode
 {
-public:
-    Arg(TypeExpr *type, Identifier *identifier)
-        : type(type), varname(identifier), templatetype(nullptr) {}
-    
-    Arg(TemplateType *type, Identifier *identifier)
-        : templatetype(type), varname(identifier), type(nullptr) {}
+  public:
+    Arg(TypeExpr* type, Identifier* identifier) : type(type), templatetype(nullptr), varname(identifier) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitArg(this);
-    }
+    Arg(TemplateType* type, Identifier* identifier) : type(nullptr), templatetype(type), varname(identifier) {}
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitArg(this, symbolTable);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitArg(this); }
 
-    ~Arg()
-    {
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitArg(this, symbolTable); }
+
+    ~Arg() {
         delete type;
         delete varname;
     }
 
-    const TypeExpr *getType() const { return type; }
-    const TemplateType *getTemplateType() const { return templatetype; }
-    const Identifier *getVarName() const { return varname; }
+    const TypeExpr* getType() const { return type; }
+    const TemplateType* getTemplateType() const { return templatetype; }
+    const Identifier* getVarName() const { return varname; }
 
-private:
-    TypeExpr *type;
-    TemplateType *templatetype;
-    Identifier *varname;
+  private:
+    TypeExpr* type;
+    TemplateType* templatetype;
+    Identifier* varname;
 };
 
 class Arglist : public ASTNode
 {
-public:
+  public:
     Arglist() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitArglist(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitArglist(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitArglist(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitArglist(this, symbolTable); }
 
-    ~Arglist()
-    {
-        for (Arg *arg : arglist)
+    ~Arglist() {
+        for (Arg* arg : arglist)
             delete arg;
     }
 
-    const std::vector<Arg *> getArgList() const { return arglist; }
-    void addarg(Arg *arg) { arglist.push_back(arg); }
+    const std::vector<Arg*> getArgList() const { return arglist; }
+    void addarg(Arg* arg) { arglist.push_back(arg); }
 
-private:
-    std::vector<Arg *> arglist;
+  private:
+    std::vector<Arg*> arglist;
 };
 
+class Expression : public ASTNode
+{
+  public:
+    Expression(ASTNode* node, ExpressionKind kind) : node_(node), kind_(kind) {}
 
+    virtual void Accept(Visitor* visitor) const override { visitor->visitExpression(this); }
 
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitExpression(this, symbolTable); }
+
+    const ASTNode* getExpression() const { return node_; }
+    ExpressionKind getKind() const { return kind_; }
+
+  private:
+    ASTNode* node_;
+    ExpressionKind kind_;
+};
 
 class Param : public ASTNode
 {
-public:
-    Param(Expression *expr)
-        : expr_(expr), paramAssignment_(nullptr) {}
+  public:
+    Param(Expression* expr) : expr_(expr), paramAssignment_(nullptr) {}
 
-    Param(ParameterAssignment *paramAssignment)
-        : paramAssignment_(paramAssignment), expr_(nullptr) {}
+    Param(ParameterAssignment* paramAssignment) : expr_(nullptr), paramAssignment_(paramAssignment) {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitParam(this);
-    }
+    virtual void Accept(Visitor* visitor) const override { visitor->visitParam(this); }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitParam(this, symbolTable);
-    }
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitParam(this, symbolTable); }
 
-
-    ~Param()
-    {
+    ~Param() {
         delete expr_;
         delete paramAssignment_;
     }
 
-    const Expression *getExpr() const { return expr_; }
-    const ParameterAssignment *getParamAssignment() const { return paramAssignment_; }
+    const Expression* getExpr() const { return expr_; }
+    const ParameterAssignment* getParamAssignment() const { return paramAssignment_; }
 
-private:
-    Expression *expr_;
-    ParameterAssignment *paramAssignment_;
+  private:
+    Expression* expr_;
+    ParameterAssignment* paramAssignment_;
 };
 
-
-
-class Expression : public ASTNode
+class Paramlist : public ASTNode
 {
-public:
-    Expression(ASTNode *node, ExpressionKind kind) : node_(node), kind_(kind) {}
+  public:
+    Paramlist() {}
 
-    virtual void Accept(Visitor *visitor) const override
-    {
-        visitor->visitExpression(this);
+    virtual void Accept(Visitor* visitor) const override { visitor->visitParamlist(this); }
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override { visitor->visitParamlist(this, symbolTable); }
+
+    ~Paramlist() {
+        for (Param* param : paramlist)
+            delete param;
     }
 
-    virtual void Accept(MLIRVisitor *visitor, mlir::SymbolTable *symbolTable) const override
-    {
-        visitor->visitExpression(this, symbolTable);
-    }
+    const std::vector<Param*> getParamList() const { return paramlist; }
+    void addparam(Param* param) { paramlist.push_back(param); }
 
-    const ASTNode *getExpression() const { return node_; }
-    const ExpressionKind getKind() const { return kind_; }
-
-private:
-    ASTNode *node_;
-    ExpressionKind kind_;
-
+  private:
+    std::vector<Param*> paramlist;
 };
 
 #endif
