@@ -123,7 +123,7 @@ class StarPlatCodeGen : public MLIRVisitor
     mlir::SymbolTable globalSymbolTable;
 
     std::vector<mlir::SymbolTable*> symbolTables;
-    llvm::DenseMap<StringRef, mlir::Value> nameToArgMap;
+    llvm::DenseMap<llvm::StringRef, mlir::Value> nameToArgMap;
 
     mlir::Value globalLookupOp(llvm::StringRef name);
 };

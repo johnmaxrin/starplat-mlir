@@ -360,7 +360,7 @@ void StarPlatCodeGen::visitAssignmentStmt(const AssignmentStmt* assignemntStmt, 
         auto rhs                = globalLookupOp(rhsId->getname());
 
         if (lhs && rhs)
-            starplat::StoreOp::create(builder, builder.getUnknownLoc(), lhs, rhs);
+            mlir::starplat::StoreOp::create(builder, builder.getUnknownLoc(), lhs, rhs);
         else {
             llvm::errs() << "Not Implemented\n";
             exit(0);
@@ -525,7 +525,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                     auto id1Op = globalLookupOp(id1->getname());
                     auto id2Op = globalLookupOp(id2->getname());
 
-                    if (isa<mlir::starplat::NodeType>(id1Op.getType())) {
+                    if (mlir::isa<mlir::starplat::NodeType>(id1Op.getType())) {
                         // Generate get node property.
                         llvm::StringRef nameRef(id2->getname());
                         gOperand2 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), id1Op, id2Op,
@@ -560,7 +560,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                         auto op1id1op = globalLookupOp(op1Id1->getname());
                         auto op1id2op = globalLookupOp(op1Id2->getname());
 
-                        if (isa<mlir::starplat::NodeType>(op1id1op.getType())) {
+                        if (mlir::isa<mlir::starplat::NodeType>(op1id1op.getType())) {
                             // Generate getNodeProp
                             auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
                             op1          = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op1id1op,
@@ -594,7 +594,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                         auto op2id1op = globalLookupOp(op2Id1->getname());
                         auto op2id2op = globalLookupOp(op2Id2->getname());
 
-                        if (isa<mlir::starplat::EdgeType>(op2id1op.getType())) {
+                        if (mlir::isa<mlir::starplat::EdgeType>(op2id1op.getType())) {
                             // Generate getNodeProp
                             auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
                             op2          = mlir::starplat::GetEdgePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op2id1op,
@@ -712,10 +712,10 @@ void StarPlatCodeGen::visitFunction(const Function* function, mlir::SymbolTable*
 
     int idx          = 0;
     for (auto arg : funcType.getInputs()) {
-        auto argval                                                  = entryBlock.addArgument(arg, builder.getUnknownLoc());
-        auto argName                                                 = argNames[idx++];
+        auto argval                                                        = entryBlock.addArgument(arg, builder.getUnknownLoc());
+        auto argName                                                       = argNames[idx++];
 
-        nameToArgMap[dyn_cast<mlir::StringAttr>(argName).getValue()] = argval;
+        nameToArgMap[mlir::dyn_cast<mlir::StringAttr>(argName).getValue()] = argval;
     }
 
     // Visit the function body.
@@ -918,7 +918,7 @@ void StarPlatCodeGen::visitMemberAccessAssignment(const MemberAccessAssignment* 
 
     mlir::Type type = id1.getType();
 
-    if (isa<mlir::starplat::NodeType>(type)) {
+    if (mlir::isa<mlir::starplat::NodeType>(type)) {
         // Set Node Property
         if (expr->getKind() == ExpressionKind::KIND_NUMBER) {
             const Number* number = static_cast<const Number*>(expr->getExpression());
@@ -1021,7 +1021,7 @@ void StarPlatCodeGen::visitNumber(const Number* number, mlir::SymbolTable* symbo
 void StarPlatCodeGen::visitExpression(const Expression* expr, mlir::SymbolTable* symbolTable) { expr->getExpression()->Accept(this, symbolTable); }
 
 void StarPlatCodeGen::print() {
-    LogicalResult lr = verify(module);
+    mlir::LogicalResult lr = verify(module);
     if (llvm::succeeded(lr))
         module.dump();
 }
