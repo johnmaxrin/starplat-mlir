@@ -8,3 +8,5 @@ build
 avial.code-workspace
 .cache/clangd/index
 .nvimrc
+main.cpp
+tags
