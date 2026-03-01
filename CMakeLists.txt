@@ -67,7 +67,10 @@ include_directories(
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc coconutpng.cpp codegen/astdump.cpp codegen/starplatIR.cpp ast/ast.cpp starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
+
+file(GLOB APP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cc") # Track cocunut 🥸
+
+add_llvm_executable(app ${APP_SOURCES}  codegen/astdump.cpp codegen/starplatIR.cpp ast/ast.cpp starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
         DEPENDS 
           MLIRStarPlatIncGen  )
 
