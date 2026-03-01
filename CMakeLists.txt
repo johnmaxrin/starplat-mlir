@@ -67,7 +67,7 @@ include_directories(
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
+add_llvm_executable(app main.cc coconutpng.cpp codegen/astdump.cpp codegen/starplatIR.cpp ast/ast.cpp starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
         DEPENDS 
           MLIRStarPlatIncGen  )
 
