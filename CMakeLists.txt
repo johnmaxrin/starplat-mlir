@@ -67,7 +67,7 @@ include_directories(
 )
 
 # Add executable and link it with the parser library
-add_llvm_executable(app main.cc coconutpng.cpp codegen/astdump.cpp codegen/starplatIR.cpp ast/ast.cpp starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
+add_llvm_executable(app main.cc codegen/astdump.cpp codegen/starplatIR.cpp ast/ast.cpp starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
         DEPENDS 
           MLIRStarPlatIncGen  )
 
@@ -88,3 +88,9 @@ target_link_libraries(app
           MLIRSupport
           MLIRSideEffectInterfaces
           MLIRTransforms)
+add_custom_target(test
+    COMMAND ${CMAKE_SOURCE_DIR}/run.sh ${CMAKE_SOURCE_DIR}/tests/buildup.avl
+    DEPENDS app
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running run.sh with tests/buildup.avl"
+)

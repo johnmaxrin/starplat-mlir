@@ -6,7 +6,7 @@
 
 #include "ast/ast.h"
 // #include "ast/visitor.h"
-#include "astdump.h"
+// #include "astdump.h"
 #include "avial.tab.h"
 #include "starplatIR.h"
 
@@ -69,11 +69,11 @@ int main(int argc, char* argv[]) {
 
     printf("Parsing Complete\n");
 
-    CodeGen* codegen = new CodeGen;
-
-    if (root != nullptr)
-        // Accept(codegen) just dumps the AST
-        root->Accept(codegen);
+    // CodeGen* codegen = new CodeGen;
+    //
+    // if (root != nullptr)
+    //     // Accept(codegen) just dumps the AST
+    //     root->Accept(codegen);
 
     StarPlatCodeGen* starplatcodegen = new StarPlatCodeGen;
 
