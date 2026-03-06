@@ -27,7 +27,7 @@
 // #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
 // #include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 
-#include "lowerings/starplat2llvm.h"
+#include "lowerings/starplat2llvmconversions.h"
 
 // #include "lowerings/starplat2omp.h"
 
