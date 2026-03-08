@@ -6,6 +6,7 @@
 #include "includes/StarPlatTypes.h"
 #include "mlir/Conversion/Passes.h"
 #include "mlir/IR/Builders.h"
+#include "mlir/IR/OpImplementation.h"
 #include "mlir/Pass/PassManager.h"
 
 #include "includes/StarPlatDialect.h"
@@ -36,6 +37,16 @@ class StarPlatTypeConverter : public TypeConverter
 
         addConversion([ctx](starplat::GraphType type) -> std::optional<Type> { return LLVM::LLVMPointerType::get(ctx); });
         addConversion([ctx](starplat::NodeType type) -> std::optional<Type> { return LLVM::LLVMPointerType::get(ctx); });
+        addConversion([ctx](starplat::PropNodeType type) -> std::optional<Type>
+                      { // llvm::errs() << type.getGraphId();
+                          // return type.getParameter();
+                          return LLVM::LLVMPointerType::get(ctx);
+                      });
+        addConversion([ctx](starplat::PropEdgeType type) -> std::optional<Type>
+                      { // llvm::errs() << type.getGraphId();
+                          // return type.getParameter();
+                          return LLVM::LLVMPointerType::get(ctx);
+                      });
 
         addSourceMaterialization(
             [](OpBuilder& builder, Type resultType, ValueRange inputs, Location loc) -> Value

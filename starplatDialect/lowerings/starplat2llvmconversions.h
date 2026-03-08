@@ -2,33 +2,25 @@
 #define STARPLAT2OMP
 
 #include "includes/StarPlatOps.h"
-#include "mlir/Conversion/Passes.h"
 #include "mlir/Dialect/LLVMIR/LLVMTypes.h"
 #include "mlir/IR/Types.h"
 #include "mlir/Pass/PassManager.h"
 
-#include "includes/StarPlatDialect.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
-#include "mlir/Dialect/OpenMP/OpenMPDialect.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
 
 #include "mlir/IR/BuiltinAttributes.h"
-#include "mlir/IR/BuiltinDialect.h"
-#include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/Diagnostics.h"
-#include "mlir/IR/DialectRegistry.h"
 #include "mlir/IR/PatternMatch.h"
-#include "mlir/IR/ValueRange.h"
 #include "mlir/Support/LLVM.h"
 #include "mlir/Support/LogicalResult.h"
-#include "mlir/Support/TypeID.h"
-#include "llvm/Support/Casting.h"
 #include "llvm/Support/LogicalResult.h"
 
+#include "mlir/Dialect/LLVMIR/FunctionCallUtils.h"
 #include "mlir/Transforms/DialectConversion.h" // from @llvm-project
 
 #include "typeconverter.h"
@@ -84,8 +76,10 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
 
         for (auto [idx, argType] : llvm::enumerate(op.getArgumentTypes())) {
             auto convertedType = getTypeConverter()->convertType(argType);
-            if (!convertedType)
+            if (!convertedType) {
+                llvm::errs() << "Invalid conversion\n";
                 return failure();
+            }
             sigConversion.addInputs(idx, convertedType);
         }
 
@@ -133,9 +127,79 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         if (failed(rewriter.convertRegionTypes(&funcOp2.getBody(), *getTypeConverter(), &sigConversion)))
             return failure();
 
+        // TODO: add attributes to generated function
         rewriter.eraseOp(op);
+        // auto module = op->getParentOfType<mlir::ModuleOp>();
+        // FailureOr<LLVM::LLVMFuncOp> graphAddEdgeFn = LLVM::lookupOrCreateFn(rewriter, module, "graph_add_edge", {}, rewriter.getI32Type());
 
         // Replace original starplat.func
+        return success();
+    }
+};
+
+struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
+{
+    ConvertDeclareOp(mlir::MLIRContext* context) : OpConversionPattern<mlir::starplat::DeclareOp>(context) {}
+
+    using OpConversionPattern<mlir::starplat::DeclareOp>::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(mlir::starplat::DeclareOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
+
+        auto resType = op->getResult(0).getType();
+        if (isa<mlir::starplat::PropNodeType>(resType)) {
+            auto loc          = op->getLoc();
+
+            auto rescast      = dyn_cast<mlir::starplat::PropNodeType>(resType);
+
+            auto field0       = LLVM::ExtractValueOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
+                                                             rewriter.getDenseI64ArrayAttr({0}));
+            Value dynamicSize = arith::IndexCastOp::create(rewriter, loc, rewriter.getIndexType(), field0);
+
+            MemRefType memrefType;
+            if (rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 1))
+                memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
+
+            else if (rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 64))
+                memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI64Type());
+
+            else {
+                llvm::outs() << "Error: MemrefType not implemented\n";
+                exit(0);
+            }
+            Value allocated = memref::AllocOp::create(rewriter, loc, memrefType, mlir::ValueRange({dynamicSize}));
+
+            rewriter.replaceOp(op, allocated);
+        }
+
+        else if (isa<mlir::IntegerType>(resType)) {
+            auto loc     = op->getLoc();
+            auto resCast = dyn_cast<mlir::IntegerType>(resType);
+
+            MemRefType memrefType;
+
+            if (resCast.getWidth() == 64)
+                memrefType = MemRefType::get({}, rewriter.getI64Type());
+            else if (resCast.getWidth() == 1)
+                memrefType = MemRefType::get({}, rewriter.getI1Type());
+
+            else {
+                llvm::outs() << "Error: MemrefType Integer type not implemented.\n";
+                exit(0);
+            }
+
+            Value allocated = memref::AllocOp::create(rewriter, loc, memrefType);
+            rewriter.replaceOp(op, allocated);
+        }
+
+        else if (isa<mlir::starplat::NodeType>(resType)) {
+            llvm::outs() << "Hello\n";
+        }
+
+        else {
+            llvm::outs() << "Error: This DeclareOp lowering not yet implemented.";
+            return failure();
+        }
+
         return success();
     }
 };
@@ -170,8 +234,8 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         target.addLegalDialect<mlir::func::FuncDialect>();
         target.addLegalDialect<mlir::arith::ArithDialect>();
 
-        target.addIllegalOp<mlir::starplat::AddOp>();
-        target.addIllegalOp<mlir::starplat::FuncOp>();
+        // target.addIllegalOp<mlir::starplat::AddOp>();
+        // target.addIllegalOp<mlir::starplat::FuncOp>();
         // target.addIllegalOp<mlir::starplat::DeclareOp>();
         // target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
         // target.addIllegalOp<mlir::starplat::ConstOp>();
@@ -185,6 +249,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
 
         // patterns.add<ConvertAdd>(context);
         patterns.add<ConvertFunc>(typeConverter, context);
+        // patterns.add<ConvertDeclareOp>(typeConverter, context);
 
         // populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns, typeConverter);
         // target.addDynamicallyLegalOp<mlir::starplat::FuncOp>([&](starplat::FuncOp op)
