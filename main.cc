@@ -6,7 +6,7 @@
 
 #include "ast/ast.h"
 // #include "ast/visitor.h"
-#include "astdump.h"
+// #include "astdump.h"
 #include "avial.tab.h"
 #include "starplatIR.h"
 
@@ -27,7 +27,7 @@
 // #include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
 // #include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
 
-// #include "lowerings/starplat2omp.h"
+#include "lowerings/starplat2llvmconversions.h"
 
 // #include "lowerings/starplat2omp.h"
 
@@ -69,11 +69,11 @@ int main(int argc, char* argv[]) {
 
     printf("Parsing Complete\n");
 
-    CodeGen* codegen = new CodeGen;
-
-    if (root != nullptr)
-        // Accept(codegen) just dumps the AST
-        root->Accept(codegen);
+    // CodeGen* codegen = new CodeGen;
+    //
+    // if (root != nullptr)
+    //     // Accept(codegen) just dumps the AST
+    //     root->Accept(codegen);
 
     StarPlatCodeGen* starplatcodegen = new StarPlatCodeGen;
 
@@ -84,18 +84,18 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
 
-    starplatcodegen->print();
-
-    // PassManager pm(starplatcodegen->getContext());
-    // pm.addPass(mlir::starplat::createConvertStarPlatIRToOMPPass());
-    //
-    // // // RUN the pass on the module
-    // if (mlir::failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
-    //     llvm::errs() << "StarPlat → OMP lowering failed\n";
-    //     return 0;
-    // }
-    //
     // starplatcodegen->print();
+
+    PassManager pm(starplatcodegen->getContext());
+    pm.addPass(mlir::starplat::createConvertStarPlatIRToOMPPass());
+
+    // // RUN the pass on the module
+    if (mlir::failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
+        llvm::errs() << "StarPlat → OMP lowering failed\n";
+        return 0;
+    }
+
+    starplatcodegen->print();
 
     // Work on Conversion of OMP
     // Working on Generating a hello world program in LLVM - Done

@@ -738,7 +738,7 @@ void StarPlatCodeGen::visitFunction(const Function* function, mlir::SymbolTable*
     //     builder.getStringAttr("public")); funcSymbolTable.insert(argOp);
     // }
 
-    printf("Visiting Body!!\n");
+    // printf("Visiting Body!!\n");
 
     if (stmtlist->getStatementList().size() != 0) {
         printf("Inside If %zu\n", stmtlist->getStatementList().size());
