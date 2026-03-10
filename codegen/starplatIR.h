@@ -126,6 +126,12 @@ class StarPlatCodeGen : public MLIRVisitor
     llvm::DenseMap<llvm::StringRef, mlir::Value> nameToArgMap;
 
     mlir::Value globalLookupOp(llvm::StringRef name);
+
+    uint64_t const_count;
+
+    int get_const_count() {
+      return const_count++;
+    }
 };
 
 #endif
