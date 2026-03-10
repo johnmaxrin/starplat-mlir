@@ -8,6 +8,21 @@
 
 using namespace std;
 
+// for neat printing
+
+class Beautifier {
+public:
+  Beautifier();
+  void operator++();
+  void operator--();
+  void print_tab();
+
+private:
+  size_t tab_space;
+  size_t tab_size;
+
+};
+
 class CodeGen : public Visitor
 {
 
@@ -81,6 +96,7 @@ class CodeGen : public Visitor
   private:
     int result;
     map<string, int> variables;
+    Beautifier beautifier;
 };
 
 #endif

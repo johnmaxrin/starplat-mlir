@@ -10,4 +10,5 @@ avial.code-workspace
 .nvimrc
 main.cpp
 tags
+workspace/*
 todiscuss
