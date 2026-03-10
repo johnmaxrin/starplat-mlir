@@ -234,7 +234,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         target.addLegalDialect<mlir::func::FuncDialect>();
         target.addLegalDialect<mlir::arith::ArithDialect>();
 
-        // target.addIllegalOp<mlir::starplat::AddOp>();
+        target.addIllegalOp<mlir::starplat::AddOp>();
         target.addIllegalOp<mlir::starplat::FuncOp>();
         // target.addIllegalOp<mlir::starplat::DeclareOp>();
         // target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
