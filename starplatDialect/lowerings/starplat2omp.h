@@ -444,7 +444,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
 } // namespace starplat
 } // namespace mlir
 
-mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext* context) {
+inline mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext* context) {
 
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Graph");
     // Create Node struct type
@@ -461,7 +461,7 @@ mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext* context) {
     return structType;
 }
 
-mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter* rewriter, mlir::MLIRContext* context) {
+inline mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter* rewriter, mlir::MLIRContext* context) {
     auto structType = LLVM::LLVMStructType::getIdentified(context, "Node");
 
     // Create a ptr type
