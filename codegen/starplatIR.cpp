@@ -375,7 +375,9 @@ void StarPlatCodeGen::visitAssignmentStmt(const AssignmentStmt* assignemntStmt, 
 
 void StarPlatCodeGen::visitIdentifier(const Identifier* identifier, mlir::SymbolTable* symbolTable) {}
 
-void StarPlatCodeGen::visitReturnStmt(const ReturnStmt* returnStmt, mlir::SymbolTable* symbolTable) {}
+void StarPlatCodeGen::visitReturnStmt(const ReturnStmt* returnStmt, mlir::SymbolTable* symbolTable) {
+    mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
+}
 
 void StarPlatCodeGen::visitParameterAssignment(const ParameterAssignment* paramAssignment, mlir::SymbolTable* symbolTable) {
     Identifier* identifier = static_cast<Identifier*>(paramAssignment->getidentifier());
@@ -747,7 +749,7 @@ void StarPlatCodeGen::visitFunction(const Function* function, mlir::SymbolTable*
 
     // Create end operation.
     // auto returnOp =
-    mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
+    // mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
 }
 
 void StarPlatCodeGen::visitParamlist(const Paramlist* paramlist, mlir::SymbolTable* symbolTable) {
