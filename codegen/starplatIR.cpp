@@ -30,7 +30,36 @@ StarPlatCodeGen::StarPlatCodeGen()
     symbolTables.push_back(&globalSymbolTable);
 }
 
-void StarPlatCodeGen::visitDeclarationStmt(const DeclarationStatement* dclstmt, mlir::SymbolTable* symbolTable) {}
+void StarPlatCodeGen::visitDeclarationStmt(const DeclarationStatement* dclstmt, mlir::SymbolTable* symbolTable) {
+    TypeExpr* Type = static_cast<TypeExpr*>(dclstmt->gettype());
+    Identifier* Id = static_cast<Identifier*>(dclstmt->getvarname());
+    Number* Num    = static_cast<Number*>(dclstmt->getnumber());
+
+    mlir::Type type;
+    if (std::string(Type->getType()) == "int")
+        type = builder.getI32Type();
+    auto declareOp = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), type, builder.getStringAttr(Id->getname()),
+                                                        builder.getStringAttr("public"));
+
+    if (!globalLookupOp(Id->getname()))
+        symbolTable->insert(declareOp);
+
+    if (Num) {
+        // Declaration of the type "type IDENTIFIER EQ NUMBER SEMIC"
+        mlir::Value lhs = declareOp;
+
+        mlir::Value rhs = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(),
+                                                          builder.getI32IntegerAttr(Num->getnumber()), "", builder.getStringAttr("private"));
+        mlir::starplat::AssignmentOp::create(builder, builder.getUnknownLoc(), lhs, rhs);
+    }
+    // llvm::errs() << (num->getnumber());
+
+    // llvm::StringRef graphID = "g";
+    // if(std::string(Type->getType())=="int")
+    // llvm::errs() << std::string(static_cast<TemplateType*>(dclstmt->gettype())->getType());
+    // auto declareOp = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()),
+    // visibility, graph); llvm::errs() << "decl happening\n"; mlir::starplat
+}
 
 void StarPlatCodeGen::visitTemplateDeclarationStmt(const TemplateDeclarationStatement* templateDeclStmt, mlir::SymbolTable* symbolTable) {
 
@@ -743,7 +772,7 @@ void StarPlatCodeGen::visitFunction(const Function* function, mlir::SymbolTable*
     // printf("Visiting Body!!\n");
 
     if (stmtlist->getStatementList().size() != 0) {
-        printf("Inside If %zu\n", stmtlist->getStatementList().size());
+        // printf("Inside If %zu\n", stmtlist->getStatementList().size());
         stmtlist->Accept(this, &funcSymbolTable);
     }
 
