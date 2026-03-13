@@ -127,6 +127,26 @@ def DeclareOp : StarplatBaseOp<"declare">
 
 }
 
+def DeclareOp2 : StarplatBaseOp<"declare2">
+{
+  let summary = "Declares a variable of a specified type and returns its SSA value.";
+  let description = [{
+                          The declare operation is used to define a variable within the Starplat dialect. 
+                          The variable is associated with a specific type (e.g., integers, 
+                          floating-point numbers, or custom types such as propNode), 
+                          and it returns an SSA value representing the declared variable. 
+  }];
+
+  let arguments = (ins  
+                                SymbolNameAttr:$sym_name,
+                                SymbolNameAttr:$sym_visibility
+                                );
+
+
+  let results = (outs AnyType);
+
+}
+
 def ArgOp : StarplatBaseOp<"arg">
 {
   let summary = "For handling the argument.";
