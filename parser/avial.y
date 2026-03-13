@@ -72,7 +72,12 @@ memberaccessAssignment : memberaccess EQUAL expr SEMICLN        {$$ = new Member
                         ;
 
 
-declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration statement\n");}
+declarationstmt : type IDENTIFIER SEMICLN                   {
+		Identifier* identifier = new Identifier($2);
+		Number* number = nullptr;
+		$$ = new DeclarationStatement($1,identifier,number);
+		// printf("Declaration statement\n");
+		}
 
                 | type IDENTIFIER EQUAL NUMBER SEMICLN  {
                                                                 Identifier* identifier = new Identifier($2);
