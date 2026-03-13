@@ -69,7 +69,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
     using OpConversionPattern<mlir::starplat::FuncOp>::OpConversionPattern;
 
     LogicalResult matchAndRewrite(mlir::starplat::FuncOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
-        llvm::errs() << "I came here!!\n";
+        // llvm::errs() << "I came here!!\n";
         auto loc = op.getLoc();
 
         TypeConverter::SignatureConversion sigConversion(op.getArgNames()->size());
@@ -234,8 +234,8 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         target.addLegalDialect<mlir::func::FuncDialect>();
         target.addLegalDialect<mlir::arith::ArithDialect>();
 
-        target.addIllegalOp<mlir::starplat::AddOp>();
-        target.addIllegalOp<mlir::starplat::FuncOp>();
+        // target.addIllegalOp<mlir::starplat::AddOp>();
+        // target.addIllegalOp<mlir::starplat::FuncOp>();
         // target.addIllegalOp<mlir::starplat::DeclareOp>();
         // target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
         // target.addIllegalOp<mlir::starplat::ConstOp>();
