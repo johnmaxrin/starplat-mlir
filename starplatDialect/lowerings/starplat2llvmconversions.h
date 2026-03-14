@@ -154,6 +154,8 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp2>
             rewriter.replaceOp(op, allocaop);
         }
         else {
+            llvm::outs() << "Error: This DeclareOp lowering not yet implemented.";
+            exit(0);
         }
         // auto resType = op->getResult(0).getType();
         // if (isa<mlir::starplat::PropNodeType>(resType)) {
@@ -214,6 +216,43 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp2>
     }
 };
 
+struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(mlir::starplat::ConstOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
+
+        auto loc   = op.getLoc();
+
+        auto value = op.getValueAttr();
+
+        if (isa<mlir::IntegerAttr>(value)) {
+            auto newOp = LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(), value);
+            rewriter.replaceOp(op, newOp);
+        }
+        else {
+            llvm::outs() << "Error: This ConstantOp lowering not yet implemented.";
+            exit(0);
+        }
+
+        // if (cast<mlir::StringAttr>(value).getValue() == "False") {
+        // auto newOp = LLVM::ConstantOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
+        //     rewriter.replaceOp(op, newOp);
+        // }
+        //
+        // else if (cast<mlir::StringAttr>(value).getValue() == "True") {
+        //     auto newOp = LLVM::ConstantOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(1));
+        //     rewriter.replaceOp(op, newOp);
+        // }
+        // else {
+        //     llvm::outs() << "Error: This ConstantOp lowering not yet implemented.";
+        //     exit(0);
+        // }
+
+        return success();
+    }
+};
+
 namespace mlir
 {
 namespace starplat
@@ -245,8 +284,8 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         target.addLegalDialect<mlir::arith::ArithDialect>();
 
         // target.addIllegalOp<mlir::starplat::AddOp>();
-        // target.addIllegalOp<mlir::starplat::FuncOp>();
-        // target.addIllegalOp<mlir::starplat::DeclareOp>();
+        target.addIllegalOp<mlir::starplat::FuncOp>();
+        target.addIllegalOp<mlir::starplat::DeclareOp>();
         // target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
         // target.addIllegalOp<mlir::starplat::ConstOp>();
         // target.addIllegalOp<mlir::starplat::AssignmentOp>();
@@ -260,6 +299,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         // patterns.add<ConvertAdd>(context);
         patterns.add<ConvertFunc>(typeConverter, context);
         patterns.add<ConvertDeclareOp>(typeConverter, context);
+        patterns.add<ConvertConstOp>(typeConverter, context);
         // patterns.add<ConvertDeclareOp>(typeConverter, context);
 
         // populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns, typeConverter);
