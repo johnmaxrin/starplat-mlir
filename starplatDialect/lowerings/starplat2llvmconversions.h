@@ -253,6 +253,32 @@ struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
     }
 };
 
+struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(mlir::starplat::AssignmentOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
+        // llvm::errs() << "=== ConvertAssignOp firing ===\n";
+        // llvm::errs() << "Original operand 0 type: " << op->getOperand(0).getType() << "\n";
+        // llvm::errs() << "Original operand 1 type: " << op->getOperand(1).getType() << "\n";
+        // llvm::errs() << "Adaptor operand 0 type:  " << adaptor.getOperands()[0].getType() << "\n";
+        // llvm::errs() << "Adaptor operand 1 type:  " << adaptor.getOperands()[1].getType() << "\n";
+        //
+        // // also dump the defining op of operand 0
+        // llvm::errs() << "Operand 0 defined by: ";
+        // adaptor.getOperands()[0].getDefiningOp()->dump();
+        // llvm::errs() << "Operand 1 defined by: ";
+        // adaptor.getOperands()[1].getDefiningOp()->dump();
+        //
+        //
+        auto storeop = LLVM::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
+
+        rewriter.replaceOp(op, storeop);
+
+        return success();
+    }
+};
+
 namespace mlir
 {
 namespace starplat
@@ -285,10 +311,10 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
 
         // target.addIllegalOp<mlir::starplat::AddOp>();
         target.addIllegalOp<mlir::starplat::FuncOp>();
-        target.addIllegalOp<mlir::starplat::DeclareOp>();
+        target.addIllegalOp<mlir::starplat::DeclareOp2>();
         // target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
-        // target.addIllegalOp<mlir::starplat::ConstOp>();
-        // target.addIllegalOp<mlir::starplat::AssignmentOp>();
+        target.addIllegalOp<mlir::starplat::ConstOp>();
+        target.addIllegalOp<mlir::starplat::AssignmentOp>();
         // target.addIllegalOp<mlir::starplat::SetNodePropertyOp>();
         // target.addIllegalOp<mlir::starplat::FixedPointUntilOp>();
 
@@ -300,6 +326,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         patterns.add<ConvertFunc>(typeConverter, context);
         patterns.add<ConvertDeclareOp>(typeConverter, context);
         patterns.add<ConvertConstOp>(typeConverter, context);
+        patterns.add<ConvertAssignOp>(context);
         // patterns.add<ConvertDeclareOp>(typeConverter, context);
 
         // populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns, typeConverter);
@@ -311,6 +338,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
 
         //     return isSignatureLegal && isLegal; });
 
+        module->dump();
         if (failed(applyPartialConversion(module, target, std::move(patterns)))) {
             signalPassFailure();
         }
