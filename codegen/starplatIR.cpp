@@ -12,6 +12,7 @@
 // #include "mlir/IR/BuiltinOps.h"
 // #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Verifier.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 // #include "mlir/Parser/Parser.h"
 // #include <string>
 //
@@ -27,6 +28,7 @@ StarPlatCodeGen::StarPlatCodeGen()
     : context(), builder(&context), module(mlir::ModuleOp::create(builder.getUnknownLoc())), globalSymbolTable(module) {
     // Load Dialects here.
     context.getOrLoadDialect<mlir::starplat::StarPlatDialect>();
+    context.getOrLoadDialect<mlir::scf::SCFDialect>();
     symbolTables.push_back(&globalSymbolTable);
     const_count = 0;
 }
@@ -476,11 +478,78 @@ void StarPlatCodeGen::visitMemberaccessStmt(const MemberacceessStmt* Memberaccee
     }
 }
 
-void StarPlatCodeGen::visitIfStmt(const IfStatement* ifStmt, mlir::SymbolTable* symbolTable) {}
+void StarPlatCodeGen::visitIfStmt(const IfStatement* ifStmt, mlir::SymbolTable* symbolTable) {
+    const Expression* condExpr = static_cast<const Expression*>(ifStmt->getexpr());
+    const Memberaccess* memberaccess = static_cast<const Memberaccess*>(condExpr->getExpression());
+
+    auto graphSymbol = globalLookupOp(memberaccess->getIdentifier()->getname());
+    if (!graphSymbol) {
+        llvm::outs() << "Error: Graph not found in visitIfStmt\n";
+        return;
+    }
+
+    const Methodcall* methodcall = static_cast<const Methodcall*>(memberaccess->getMethodCall());
+    const Paramlist* paramlist = static_cast<const Paramlist*>(methodcall->getParamLists());
+    auto params = paramlist->getParamList();
+
+    const Identifier* id1 = static_cast<const Identifier*>(params[0]->getExpr()->getExpression());
+    const Identifier* id2 = static_cast<const Identifier*>(params[1]->getExpr()->getExpression());
+
+    auto node1Symbol = globalLookupOp(id1->getname());
+    auto node2Symbol = globalLookupOp(id2->getname());
+
+    if (!node1Symbol || !node2Symbol) {
+        llvm::outs() << "Error: Node symbols not found in visitIfStmt\n";
+        return;
+    }
+
+    auto isEdgeOp = mlir::starplat::IsEdgeOp::create(builder, builder.getUnknownLoc(),
+                                                      mlir::IntegerType::get(builder.getContext(), 1),
+                                                      graphSymbol, node1Symbol, node2Symbol);
+
+    // scf.if
+    auto ifOp = mlir::scf::IfOp::create(builder, builder.getUnknownLoc(), isEdgeOp->getResult(0), false);
+
+    // Set insertion point to then block
+    mlir::Block* thenBlock = &ifOp.getThenRegion().front();
+    builder.setInsertionPointToStart(thenBlock);
+
+    const ASTNode* body = ifStmt->getstmt();
+    body->Accept(this, symbolTable);
+
+    builder.setInsertionPointToEnd(thenBlock);
+    llvm::outs() << "thenBlock ops count: " << thenBlock->getOperations().size() << "\n";
+    for (auto& op : thenBlock->getOperations())
+        llvm::outs() << "  op: " << op.getName() << "\n";
+
+    // Restore insertion point to after the if op
+    builder.setInsertionPointAfter(ifOp);
+}
 
 void StarPlatCodeGen::visitBoolExpr(const BoolExpr* boolExpr, mlir::SymbolTable* symbolTable) {}
 
-void StarPlatCodeGen::visitIncandassignstmt(const Incandassignstmt* incandassignstmt, mlir::SymbolTable* symbolTable) {}
+void StarPlatCodeGen::visitIncandassignstmt(const Incandassignstmt* stmt, mlir::SymbolTable* symbolTable) {
+    auto lhsSymbol = globalLookupOp(stmt->getIdentifier()->getname());
+    if (!lhsSymbol) {
+        llvm::outs() << "Error: Identifier '" << stmt->getIdentifier()->getname() << "' not declared.\n";
+        return;
+    }
+
+    const Expression* rhsExpr = static_cast<const Expression*>(stmt->getexpr());
+    const Number* number = static_cast<const Number*>(rhsExpr->getExpression());
+
+    mlir::Type intType = mlir::IntegerType::get(builder.getContext(), 64);
+    auto constAttr = mlir::IntegerAttr::get(intType, number->getnumber());
+    auto constOp = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), intType, constAttr,
+                                                    builder.getStringAttr(std::string("const_") + stmt->getIdentifier()->getname()),
+                                                    builder.getStringAttr("public"));
+
+    auto addOp = mlir::starplat::AddOp::create(builder, builder.getUnknownLoc(), intType,
+                                                lhsSymbol, constOp->getResult(0));
+
+    mlir::starplat::AssignmentOp::create(builder, builder.getUnknownLoc(),
+                                          lhsSymbol, addOp->getResult(0));
+}
 
 void StarPlatCodeGen::visitAssignment(const Assignment* assignment, mlir::SymbolTable* symbolTable) {
     static_cast<Expression*>(assignment->getexpr())->Accept(this, symbolTable);
