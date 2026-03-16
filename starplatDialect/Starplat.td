@@ -339,6 +339,17 @@ def StoreOp : StarplatBaseOp<"store">
     let summary = "End of the Function";
  }
 
+ def IsEdgeOp : StarplatBaseOp<"isedge">
+{
+    let summary = "Check if edge exists between two nodes";
+    let arguments = (ins
+        AnyType : $graph,
+        AnyType : $node1,
+        AnyType : $node2
+    );
+    let results = (outs I1 : $result);
+}
+
 
 
 
