@@ -3,6 +3,7 @@
 
 #include "includes/StarPlatOps.h"
 #include "mlir/Dialect/LLVMIR/LLVMTypes.h"
+#include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/Types.h"
 #include "mlir/Pass/PassManager.h"
 
@@ -44,7 +45,7 @@ inline mlir::LLVM::LLVMStructType createGraphStruct(mlir::MLIRContext* context) 
     llvm::LogicalResult lr = structType.setBody({mlir::IntegerType::get(context, 64)}, /*isPacked=*/false);
     if (llvm::succeeded(lr))
         return structType;
-    // structType.setBody({rewriter->getI32Type()}, false);
+    // structType.setBody({rewriter->getI64Type()}, false);
 
     return structType;
 }
@@ -53,9 +54,9 @@ inline mlir::LLVM::LLVMStructType createNodeStruct(mlir::IRRewriter* rewriter, m
     auto structType = mlir::LLVM::LLVMStructType::getIdentified(context, "Node");
 
     // Create a ptr type
-    // auto ptr = mlir::LLVM::LLVMPointerType::get(rewriter->getI32Type());
+    // auto ptr = mlir::LLVM::LLVMPointerType::get(rewriter->getI64Type());
 
-    llvm::LogicalResult lr = structType.setBody({rewriter->getI32Type()}, false);
+    llvm::LogicalResult lr = structType.setBody({rewriter->getI64Type()}, false);
     if (llvm::succeeded(lr))
         return structType;
 
@@ -130,7 +131,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
         // TODO: add attributes to generated function
         rewriter.eraseOp(op);
         // auto module = op->getParentOfType<mlir::ModuleOp>();
-        // FailureOr<LLVM::LLVMFuncOp> graphAddEdgeFn = LLVM::lookupOrCreateFn(rewriter, module, "graph_add_edge", {}, rewriter.getI32Type());
+        // FailureOr<LLVM::LLVMFuncOp> graphAddEdgeFn = LLVM::lookupOrCreateFn(rewriter, module, "graph_add_edge", {}, rewriter.getI64Type());
 
         // Replace original starplat.func
         return success();
@@ -149,8 +150,8 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp2>
         if (isa<IntegerType>(resType)) {
             auto loc                   = op->getLoc();
             mlir::MLIRContext* context = getContext();
-            auto allocaop              = LLVM::AllocaOp::create(rewriter, loc, LLVM::LLVMPointerType::get(context), rewriter.getI32Type(),
-                                                                LLVM::ConstantOp::create(rewriter, loc, rewriter.getI32Type(), rewriter.getI32IntegerAttr(1)), 0);
+            auto allocaop              = LLVM::AllocaOp::create(rewriter, loc, LLVM::LLVMPointerType::get(context), rewriter.getI64Type(),
+                                                                LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1)), 0);
             rewriter.replaceOp(op, allocaop);
         }
         else {
@@ -279,6 +280,71 @@ struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp
     }
 };
 
+struct ConvertForAllOp : public OpConversionPattern<mlir::starplat::ForAllOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(mlir::starplat::ForAllOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
+        auto loc = op.getLoc();
+        // Value zero = arith::ConstantIndexOp::create(rewriter, loc, 0);
+        Value five = arith::ConstantIndexOp::create(rewriter, loc, 5);
+        Value one  = arith::ConstantIndexOp::create(rewriter, loc, 1);
+        // llvm::errs() << "=== ConvertAssignOp firing ===\n";
+        // llvm::errs() << "Original operand 0 type: " << op->getOperand(0).getType() << "\n";
+        // llvm::errs() << "Original operand 1 type: " << op->getOperand(1).getType() << "\n";
+        // llvm::errs() << "Adaptor operand 0 type:  " << adaptor.getOperands()[0].getType() << "\n";
+        // llvm::errs() << "Adaptor operand 1 type:  " << adaptor.getOperands()[1].getType() << "\n";
+        //
+        // // also dump the defining op of operand 0
+        // llvm::errs() << "Operand 0 defined by: ";
+        // adaptor.getOperands()[0].getDefiningOp()->dump();
+        // llvm::errs() << "Operand 1 defined by: ";
+        // adaptor.getOperands()[1].getDefiningOp()->dump();
+        //
+        //
+        // auto storeop = LLVM::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
+        //
+        auto forallOp     = scf::ForallOp::create(rewriter, loc, ArrayRef<OpFoldResult>{OpFoldResult(one)}, // lower bounds
+                                                  ArrayRef<OpFoldResult>{OpFoldResult(five)},               // upper bounds
+                                                  ArrayRef<OpFoldResult>{OpFoldResult(one)},                // steps
+                                                  ValueRange{},                                             // shared outputs (none)
+                                                  std::nullopt                                              // mapping attr (none = no device mapping)
+            );
+
+        Block* forallBody = forallOp.getBody();
+        // rewriter.setInsertionPointToStart(forallBody);
+        rewriter.setInsertionPoint(forallBody->getTerminator());
+
+        auto module                = op->getParentOfType<mlir::ModuleOp>();
+        mlir::MLIRContext* context = getContext();
+        FailureOr<LLVM::LLVMFuncOp> graphAddEdgeFn =
+            LLVM::lookupOrCreateFn(rewriter, module, "get_num_nodes", {LLVM::LLVMPointerType::get(context)}, rewriter.getI64Type());
+        // llvm::errs() << "\n";
+        // llvm::errs() << adaptor.getOperands()[0] << "\n";
+        // llvm::errs() << adaptor.getOperands()[1] << "\n";
+        // llvm::errs() << "\n";
+        LLVM::CallOp::create(rewriter, loc, *graphAddEdgeFn, ValueRange{adaptor.getOperands()[0]});
+        // LLVM::CallOp::create(rewriter, loc, *graphAddEdgeFn, ValueRange{});
+
+        // rewriter.inlineBlockBefore(&op.getBody().front(), forallBody, forallBody->end());
+
+        Block& srcBlock = op.getBody().front();
+        for (auto& innerOp : llvm::make_early_inc_range(srcBlock)) {
+
+            // llvm::errs() << "hi\n";
+            if (isa<starplat::endOp>(&innerOp)) {
+                rewriter.eraseOp(&innerOp); // erase starplat.end, keep scf terminator
+                continue;
+            }
+            rewriter.moveOpBefore(&innerOp, forallBody->getTerminator());
+        }
+
+        rewriter.eraseOp(op);
+
+        return success();
+    }
+};
+
 namespace mlir
 {
 namespace starplat
@@ -327,6 +393,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         patterns.add<ConvertDeclareOp>(typeConverter, context);
         patterns.add<ConvertConstOp>(typeConverter, context);
         patterns.add<ConvertAssignOp>(context);
+        patterns.add<ConvertForAllOp>(typeConverter, context);
         // patterns.add<ConvertDeclareOp>(typeConverter, context);
 
         // populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns, typeConverter);
