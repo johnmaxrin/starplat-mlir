@@ -69,7 +69,7 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
     using OpConversionPattern<mlir::starplat::FuncOp>::OpConversionPattern;
 
     LogicalResult matchAndRewrite(mlir::starplat::FuncOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
-        llvm::errs() << "I came here!!\n";
+        // llvm::errs() << "I came here!!\n";
         auto loc = op.getLoc();
 
         TypeConverter::SignatureConversion sigConversion(op.getArgNames()->size());
@@ -137,68 +137,143 @@ struct ConvertFunc : public OpConversionPattern<mlir::starplat::FuncOp>
     }
 };
 
-struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp>
+struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp2>
 {
-    ConvertDeclareOp(mlir::MLIRContext* context) : OpConversionPattern<mlir::starplat::DeclareOp>(context) {}
+    ConvertDeclareOp(mlir::MLIRContext* context) : OpConversionPattern<mlir::starplat::DeclareOp2>(context) {}
 
-    using OpConversionPattern<mlir::starplat::DeclareOp>::OpConversionPattern;
+    using OpConversionPattern<mlir::starplat::DeclareOp2>::OpConversionPattern;
 
-    LogicalResult matchAndRewrite(mlir::starplat::DeclareOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
+    LogicalResult matchAndRewrite(mlir::starplat::DeclareOp2 op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
 
         auto resType = op->getResult(0).getType();
-        if (isa<mlir::starplat::PropNodeType>(resType)) {
-            auto loc          = op->getLoc();
-
-            auto rescast      = dyn_cast<mlir::starplat::PropNodeType>(resType);
-
-            auto field0       = LLVM::ExtractValueOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
-                                                             rewriter.getDenseI64ArrayAttr({0}));
-            Value dynamicSize = arith::IndexCastOp::create(rewriter, loc, rewriter.getIndexType(), field0);
-
-            MemRefType memrefType;
-            if (rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 1))
-                memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
-
-            else if (rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 64))
-                memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI64Type());
-
-            else {
-                llvm::outs() << "Error: MemrefType not implemented\n";
-                exit(0);
-            }
-            Value allocated = memref::AllocOp::create(rewriter, loc, memrefType, mlir::ValueRange({dynamicSize}));
-
-            rewriter.replaceOp(op, allocated);
+        if (isa<IntegerType>(resType)) {
+            auto loc                   = op->getLoc();
+            mlir::MLIRContext* context = getContext();
+            auto allocaop              = LLVM::AllocaOp::create(rewriter, loc, LLVM::LLVMPointerType::get(context), rewriter.getI32Type(),
+                                                                LLVM::ConstantOp::create(rewriter, loc, rewriter.getI32Type(), rewriter.getI32IntegerAttr(1)), 0);
+            rewriter.replaceOp(op, allocaop);
         }
-
-        else if (isa<mlir::IntegerType>(resType)) {
-            auto loc     = op->getLoc();
-            auto resCast = dyn_cast<mlir::IntegerType>(resType);
-
-            MemRefType memrefType;
-
-            if (resCast.getWidth() == 64)
-                memrefType = MemRefType::get({}, rewriter.getI64Type());
-            else if (resCast.getWidth() == 1)
-                memrefType = MemRefType::get({}, rewriter.getI1Type());
-
-            else {
-                llvm::outs() << "Error: MemrefType Integer type not implemented.\n";
-                exit(0);
-            }
-
-            Value allocated = memref::AllocOp::create(rewriter, loc, memrefType);
-            rewriter.replaceOp(op, allocated);
-        }
-
-        else if (isa<mlir::starplat::NodeType>(resType)) {
-            llvm::outs() << "Hello\n";
-        }
-
         else {
             llvm::outs() << "Error: This DeclareOp lowering not yet implemented.";
-            return failure();
+            exit(0);
         }
+        // auto resType = op->getResult(0).getType();
+        // if (isa<mlir::starplat::PropNodeType>(resType)) {
+        //     auto loc          = op->getLoc();
+        //
+        //     auto rescast      = dyn_cast<mlir::starplat::PropNodeType>(resType);
+        //
+        //     auto field0       = LLVM::ExtractValueOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 64), adaptor.getOperands()[0],
+        //                                                      rewriter.getDenseI64ArrayAttr({0}));
+        //     Value dynamicSize = arith::IndexCastOp::create(rewriter, loc, rewriter.getIndexType(), field0);
+        //
+        //     MemRefType memrefType;
+        //     if (rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 1))
+        //         memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI1Type());
+        //
+        //     else if (rescast.getParameter() == mlir::IntegerType::get(rewriter.getContext(), 64))
+        //         memrefType = MemRefType::get({mlir::ShapedType::kDynamic}, rewriter.getI64Type());
+        //
+        //     else {
+        //         llvm::outs() << "Error: MemrefType not implemented\n";
+        //         exit(0);
+        //     }
+        //     Value allocated = memref::AllocOp::create(rewriter, loc, memrefType, mlir::ValueRange({dynamicSize}));
+        //
+        //     rewriter.replaceOp(op, allocated);
+        // }
+        //
+        // else if (isa<mlir::IntegerType>(resType)) {
+        //     auto loc     = op->getLoc();
+        //     auto resCast = dyn_cast<mlir::IntegerType>(resType);
+        //
+        //     MemRefType memrefType;
+        //
+        //     if (resCast.getWidth() == 64)
+        //         memrefType = MemRefType::get({}, rewriter.getI64Type());
+        //     else if (resCast.getWidth() == 1)
+        //         memrefType = MemRefType::get({}, rewriter.getI1Type());
+        //
+        //     else {
+        //         llvm::outs() << "Error: MemrefType Integer type not implemented.\n";
+        //         exit(0);
+        //     }
+        //
+        //     Value allocated = memref::AllocOp::create(rewriter, loc, memrefType);
+        //     rewriter.replaceOp(op, allocated);
+        // }
+        //
+        // else if (isa<mlir::starplat::NodeType>(resType)) {
+        //     llvm::outs() << "Hello\n";
+        // }
+        //
+        // else {
+        //     llvm::outs() << "Error: This DeclareOp lowering not yet implemented.";
+        //     return failure();
+        // }
+
+        return success();
+    }
+};
+
+struct ConvertConstOp : public OpConversionPattern<mlir::starplat::ConstOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(mlir::starplat::ConstOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
+
+        auto loc   = op.getLoc();
+
+        auto value = op.getValueAttr();
+
+        if (isa<mlir::IntegerAttr>(value)) {
+            auto newOp = LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(), value);
+            rewriter.replaceOp(op, newOp);
+        }
+        else {
+            llvm::outs() << "Error: This ConstantOp lowering not yet implemented.";
+            exit(0);
+        }
+
+        // if (cast<mlir::StringAttr>(value).getValue() == "False") {
+        // auto newOp = LLVM::ConstantOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(0));
+        //     rewriter.replaceOp(op, newOp);
+        // }
+        //
+        // else if (cast<mlir::StringAttr>(value).getValue() == "True") {
+        //     auto newOp = LLVM::ConstantOp::create(rewriter, loc, mlir::IntegerType::get(op.getContext(), 1), rewriter.getBoolAttr(1));
+        //     rewriter.replaceOp(op, newOp);
+        // }
+        // else {
+        //     llvm::outs() << "Error: This ConstantOp lowering not yet implemented.";
+        //     exit(0);
+        // }
+
+        return success();
+    }
+};
+
+struct ConvertAssignOp : public OpConversionPattern<mlir::starplat::AssignmentOp>
+{
+    using OpConversionPattern::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(mlir::starplat::AssignmentOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
+        // llvm::errs() << "=== ConvertAssignOp firing ===\n";
+        // llvm::errs() << "Original operand 0 type: " << op->getOperand(0).getType() << "\n";
+        // llvm::errs() << "Original operand 1 type: " << op->getOperand(1).getType() << "\n";
+        // llvm::errs() << "Adaptor operand 0 type:  " << adaptor.getOperands()[0].getType() << "\n";
+        // llvm::errs() << "Adaptor operand 1 type:  " << adaptor.getOperands()[1].getType() << "\n";
+        //
+        // // also dump the defining op of operand 0
+        // llvm::errs() << "Operand 0 defined by: ";
+        // adaptor.getOperands()[0].getDefiningOp()->dump();
+        // llvm::errs() << "Operand 1 defined by: ";
+        // adaptor.getOperands()[1].getDefiningOp()->dump();
+        //
+        //
+        auto storeop = LLVM::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
+
+        rewriter.replaceOp(op, storeop);
 
         return success();
     }
@@ -234,12 +309,12 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
         target.addLegalDialect<mlir::func::FuncDialect>();
         target.addLegalDialect<mlir::arith::ArithDialect>();
 
-        target.addIllegalOp<mlir::starplat::AddOp>();
+        // target.addIllegalOp<mlir::starplat::AddOp>();
         target.addIllegalOp<mlir::starplat::FuncOp>();
-        // target.addIllegalOp<mlir::starplat::DeclareOp>();
+        target.addIllegalOp<mlir::starplat::DeclareOp2>();
         // target.addIllegalOp<mlir::starplat::AttachNodePropertyOp>();
-        // target.addIllegalOp<mlir::starplat::ConstOp>();
-        // target.addIllegalOp<mlir::starplat::AssignmentOp>();
+        target.addIllegalOp<mlir::starplat::ConstOp>();
+        target.addIllegalOp<mlir::starplat::AssignmentOp>();
         // target.addIllegalOp<mlir::starplat::SetNodePropertyOp>();
         // target.addIllegalOp<mlir::starplat::FixedPointUntilOp>();
 
@@ -249,6 +324,9 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
 
         // patterns.add<ConvertAdd>(context);
         patterns.add<ConvertFunc>(typeConverter, context);
+        patterns.add<ConvertDeclareOp>(typeConverter, context);
+        patterns.add<ConvertConstOp>(typeConverter, context);
+        patterns.add<ConvertAssignOp>(context);
         // patterns.add<ConvertDeclareOp>(typeConverter, context);
 
         // populateFunctionOpInterfaceTypeConversionPattern<mlir::starplat::FuncOp>(patterns, typeConverter);
@@ -260,6 +338,7 @@ struct ConvertStarPlatIRToOMPPass : public mlir::starplat::impl::ConvertStarPlat
 
         //     return isSignatureLegal && isLegal; });
 
+        module->dump();
         if (failed(applyPartialConversion(module, target, std::move(patterns)))) {
             signalPassFailure();
         }

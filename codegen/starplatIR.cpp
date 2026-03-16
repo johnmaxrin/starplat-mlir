@@ -32,27 +32,34 @@ StarPlatCodeGen::StarPlatCodeGen()
 }
 
 void StarPlatCodeGen::visitDeclarationStmt(const DeclarationStatement* dclstmt, mlir::SymbolTable* symbolTable) {
-    const Identifier* identifier = static_cast<const Identifier*>(dclstmt->getvarname());
-    const Number* number = static_cast<const Number*>(dclstmt->getnumber());
+    TypeExpr* Type = static_cast<TypeExpr*>(dclstmt->gettype());
+    Identifier* Id = static_cast<Identifier*>(dclstmt->getvarname());
+    Number* Num    = static_cast<Number*>(dclstmt->getnumber());
 
-    // make int 64 bits for now..
-    mlir::Type intType = mlir::IntegerType::get(builder.getContext(), 64);
+    mlir::Type type;
+    if (std::string(Type->getType()) == "int")
+        type = builder.getI32Type();
+    auto declareOp = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), type, builder.getStringAttr(Id->getname()),
+                                                        builder.getStringAttr("public"));
 
-    mlir::Value graph = NULL;
-    auto declareOp = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), intType,
-                                                        builder.getStringAttr(identifier->getname()),
-                                                        builder.getStringAttr("public"), graph);
-    symbolTable->insert(declareOp);
-    nameToArgMap[identifier->getname()] = declareOp->getResult(0);
+    if (!globalLookupOp(Id->getname()))
+        symbolTable->insert(declareOp);
 
-    auto constAttr = mlir::IntegerAttr::get(intType, number->getnumber());
-    auto constOp = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), intType, constAttr,
-                                                    builder.getStringAttr(std::string("const_") + std::to_string(this->get_const_count())),
-                                                    builder.getStringAttr("public"));
+    if (Num) {
+        // Declaration of the type "type IDENTIFIER EQ NUMBER SEMIC"
+        mlir::Value lhs = declareOp;
 
-    mlir::starplat::AssignmentOp::create(builder, builder.getUnknownLoc(),
-                                          declareOp->getResult(0),
-                                          constOp->getResult(0));
+        mlir::Value rhs = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(),
+                                                          builder.getI32IntegerAttr(Num->getnumber()), "", builder.getStringAttr("private"));
+        mlir::starplat::AssignmentOp::create(builder, builder.getUnknownLoc(), lhs, rhs);
+    }
+    // llvm::errs() << (num->getnumber());
+
+    // llvm::StringRef graphID = "g";
+    // if(std::string(Type->getType())=="int")
+    // llvm::errs() << std::string(static_cast<TemplateType*>(dclstmt->gettype())->getType());
+    // auto declareOp = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()),
+    // visibility, graph); llvm::errs() << "decl happening\n"; mlir::starplat
 }
 
 void StarPlatCodeGen::visitTemplateDeclarationStmt(const TemplateDeclarationStatement* templateDeclStmt, mlir::SymbolTable* symbolTable) {
@@ -508,7 +515,7 @@ void StarPlatCodeGen::visitAssignmentStmt(const AssignmentStmt* assignemntStmt, 
 void StarPlatCodeGen::visitIdentifier(const Identifier* identifier, mlir::SymbolTable* symbolTable) {}
 
 void StarPlatCodeGen::visitReturnStmt(const ReturnStmt* returnStmt, mlir::SymbolTable* symbolTable) {
-    
+    mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
 }
 
 void StarPlatCodeGen::visitParameterAssignment(const ParameterAssignment* paramAssignment, mlir::SymbolTable* symbolTable) {
@@ -875,13 +882,13 @@ void StarPlatCodeGen::visitFunction(const Function* function, mlir::SymbolTable*
     // printf("Visiting Body!!\n");
 
     if (stmtlist->getStatementList().size() != 0) {
-        printf("Inside If %zu\n", stmtlist->getStatementList().size());
+        // printf("Inside If %zu\n", stmtlist->getStatementList().size());
         stmtlist->Accept(this, &funcSymbolTable);
     }
 
     // Create end operation.
     // auto returnOp =
-    mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
+    // mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
 }
 
 void StarPlatCodeGen::visitParamlist(const Paramlist* paramlist, mlir::SymbolTable* symbolTable) {
