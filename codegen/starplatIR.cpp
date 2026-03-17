@@ -163,9 +163,8 @@ void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::S
 
             if (strcmp(innerMethodcallIdentifier->getname(), "nodes") == 0) {
                 loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                mlir::Value graph = NULL;
-                loopVarOp         = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                      builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
+                loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+                                                                      builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
                 ops.push_back(loopVarOp);
                 symbolTable->insert(loopVarOp);
                 // debug
@@ -201,11 +200,9 @@ void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::S
 
                 // Sets the type of the loop variable, ig that was self explanatory..
                 loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                // operation is not tied to some graph (ex: propNode). So this can be NULL
-                mlir::Value graph = NULL;
                 // Creates the MLIR operation
-                loopVarOp         = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                      builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
+                loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+                                                                      builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
                 // Not sure what this does...
                 ops.push_back(loopVarOp);
                 // Saves the Operation in the symbol table.
@@ -232,9 +229,8 @@ void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::S
             if (methodcallin->getIsBuiltin()) {
                 if (strcmp(methodcallin->getIdentifier()->getname(), "nodes") == 0) {
                     loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                    mlir::Value graph = NULL;
-                    loopVarOp         = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                        builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
+                    loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+                                                                        builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
                     ops.push_back(loopVarOp);
                     symbolTable->insert(loopVarOp);
                     // debug
@@ -279,9 +275,8 @@ void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::S
                     }
 
                     loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                    mlir::Value graph = NULL;
-                    loopVarOp         = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                          builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"), graph);
+                    loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+                                                                          builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
                     ops.push_back(loopVarOp);
                     symbolTable->insert(loopVarOp);
                     loopOperands.push_back(loopVarOp->getResult(0));
@@ -293,32 +288,21 @@ void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::S
                 return;
             }
         }
-        llvm::outs() << "outermethodcall: " << (outermethodcall ? outermethodcall->getIdentifier()->getname() : "null") << "\n";
+        // llvm::outs() << "outermethodcall: " << (outermethodcall ? outermethodcall->getIdentifier()->getname() : "null") << "\n";
         if (outermethodcall->getIsBuiltin()) {
 
             const Identifier* identifier1 = static_cast<const Identifier*>(outermethodcall->getIdentifier());
             if (strcmp(identifier1->getname(), "filter") == 0) {
 
-                llvm::outs() << "hello\n";
-
                 // loopAttr.push_back(builder.getStringAttr("filter"));
                 filter                        = builder.getBoolAttr(1);
-                llvm::outs() << "hello\n";
 
                 const Expression* outer       = static_cast<const Expression*>(outermethodcall->getParamLists());
                 const BoolExpr* outerBoolExpr = static_cast<const BoolExpr*>(outer->getExpression());
-                llvm::outs() << "hello\n";
 
                 const Expression* lhsExpr     = static_cast<const Expression*>(outerBoolExpr->getExpr1());
                 const Expression* rhsExpr     = static_cast<const Expression*>(outerBoolExpr->getExpr2());
                 const char* op                = outerBoolExpr->getop();
-                llvm::outs() << "hello\n";
-
-                llvm::outs() << "outer kind: " << outer->getKind() << "\n";
-
-                llvm::outs() << op << "\n";
-
-                llvm::outs() << "TEST\n";
 
                 if (strcmp(op, "==") == 0)
                     loopAttr.push_back(builder.getStringAttr("EQS"));
@@ -330,7 +314,6 @@ void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::S
                     llvm::outs() << "Error: Operator not implemented.\n";
                     return;
                 }
-                llvm::outs() << "hello\n";
 
                 if (lhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER && rhsExpr->getKind() == ExpressionKind::KIND_KEYWORD) {
                     const Identifier* lhsIdentifier = static_cast<const Identifier*>(lhsExpr->getExpression());
@@ -584,9 +567,18 @@ void StarPlatCodeGen::visitAssignmentStmt(const AssignmentStmt* assignemntStmt, 
 void StarPlatCodeGen::visitIdentifier(const Identifier* identifier, mlir::SymbolTable* symbolTable) {}
 
 void StarPlatCodeGen::visitReturnStmt(const ReturnStmt* returnStmt, mlir::SymbolTable* symbolTable) {
-    mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc());
-}
+    const Expression* expr = static_cast<const Expression*>(returnStmt->getexpr());
+    const Identifier* identifier = static_cast<const Identifier*>(expr->getExpression());
+    
+    auto retSymbol = globalLookupOp(identifier->getname());
+    if (!retSymbol) {
+        llvm::outs() << "Error: Return value '" << identifier->getname() << "' not found.\n";
+        mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc(), mlir::ValueRange{});
+        return;
+    }
 
+    mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc(), mlir::ValueRange{retSymbol});
+}
 void StarPlatCodeGen::visitParameterAssignment(const ParameterAssignment* paramAssignment, mlir::SymbolTable* symbolTable) {
     Identifier* identifier = static_cast<Identifier*>(paramAssignment->getidentifier());
     Keyword* keyword       = static_cast<Keyword*>(paramAssignment->getkeyword());

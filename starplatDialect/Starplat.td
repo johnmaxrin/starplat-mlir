@@ -334,10 +334,11 @@ def StoreOp : StarplatBaseOp<"store">
     let summary = "End of the operation";
  }
 
- def ReturnOp : StarplatBaseOp<"return", [Terminator]>
- {
+def ReturnOp : StarplatBaseOp<"return", [Terminator]>
+{
     let summary = "End of the Function";
- }
+    let arguments = (ins Variadic<AnyType>:$operands);
+}
 
  def IsEdgeOp : StarplatBaseOp<"isedge">
 {
