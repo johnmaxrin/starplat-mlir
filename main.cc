@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     printf("Parsing Complete\n");
 
     // CodeGen* codegen = new CodeGen;
-    
+
     // if (root != nullptr)
     //     // Accept(codegen) just dumps the AST
     //     root->Accept(codegen);
@@ -84,18 +84,18 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
 
-    starplatcodegen->print();
-
-    // PassManager pm(starplatcodegen->getContext());
-    // pm.addPass(mlir::starplat::createConvertStarPlatIRToOMPPass());
-
-    // // // RUN the pass on the module
-    // if (mlir::failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
-    //     llvm::errs() << "StarPlat → OMP lowering failed\n";
-    //     return 0;
-    // }
-
     // starplatcodegen->print();
+
+    PassManager pm(starplatcodegen->getContext());
+    pm.addPass(mlir::starplat::createConvertStarPlatIRToOMPPass());
+
+    // // RUN the pass on the module
+    if (mlir::failed(pm.run(starplatcodegen->getModule()->getOperation()))) {
+        llvm::errs() << "StarPlat → OMP lowering failed\n";
+        return 0;
+    }
+
+    starplatcodegen->print();
 
     // Work on Conversion of OMP
     // Working on Generating a hello world program in LLVM - Done

@@ -4,7 +4,7 @@ function Compute_TC(Graph g) {
 # triangle_count += 1;
 # triangle_count=0;
 forall(v in g.nodes()) {
-int triangle_count;
+# int triangle_count;
   # forall(u in g.neighbors(v).filter(u < v)) {
   #   forall(w in g.neighbors(v).filter(w > v)) {
   #     if (g.is_an_edge(u, w)) {
