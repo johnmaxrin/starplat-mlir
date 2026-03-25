@@ -155,6 +155,13 @@ struct ConvertDeclareOp : public OpConversionPattern<mlir::starplat::DeclareOp2>
                                                                 LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1)), 0);
             rewriter.replaceOp(op, allocaop);
         }
+        else if (isa<starplat::NodeType>(resType)) {
+            auto loc                   = op->getLoc();
+            mlir::MLIRContext* context = getContext();
+            auto allocaop = LLVM::AllocaOp::create(rewriter, loc, LLVM::LLVMPointerType::get(context), LLVM::LLVMPointerType::get(context),
+                                                   LLVM::ConstantOp::create(rewriter, loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1)), 0);
+            rewriter.replaceOp(op, allocaop);
+        }
         else {
             llvm::outs() << "Error: This DeclareOp lowering not yet implemented.";
             exit(0);
@@ -286,81 +293,87 @@ struct ConvertForAllOp : public OpConversionPattern<mlir::starplat::ForAllOp>
     using OpConversionPattern::OpConversionPattern;
 
     LogicalResult matchAndRewrite(mlir::starplat::ForAllOp op, OpAdaptor adaptor, ConversionPatternRewriter& rewriter) const override {
-        auto loc   = op.getLoc();
-        Value zero = arith::ConstantIndexOp::create(rewriter, loc, 0);
-        Value one  = arith::ConstantIndexOp::create(rewriter, loc, 1);
-        // llvm::errs() << "=== ConvertAssignOp firing ===\n";
-        // llvm::errs() << "Original operand 0 type: " << op->getOperand(0).getType() << "\n";
-        // llvm::errs() << "Original operand 1 type: " << op->getOperand(1).getType() << "\n";
-        // llvm::errs() << "Adaptor operand 0 type:  " << adaptor.getOperands()[0].getType() << "\n";
-        // llvm::errs() << "Adaptor operand 1 type:  " << adaptor.getOperands()[1].getType() << "\n";
-        //
-        // // also dump the defining op of operand 0
-        // llvm::errs() << "Operand 0 defined by: ";
-        // adaptor.getOperands()[0].getDefiningOp()->dump();
-        // llvm::errs() << "Operand 1 defined by: ";
-        // adaptor.getOperands()[1].getDefiningOp()->dump();
-        //
-        //
-        // auto storeop = LLVM::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
-        //
-        auto module                = op->getParentOfType<mlir::ModuleOp>();
-        mlir::MLIRContext* context = getContext();
-        FailureOr<LLVM::LLVMFuncOp> graphCountNodes =
-            LLVM::lookupOrCreateFn(rewriter, module, "get_num_nodes", {LLVM::LLVMPointerType::get(context)}, rewriter.getI64Type());
-        FailureOr<LLVM::LLVMFuncOp> graphNodeArray =
-            LLVM::lookupOrCreateFn(rewriter, module, "get_nodes", {LLVM::LLVMPointerType::get(context)}, LLVM::LLVMPointerType::get(context));
-        auto num_nodes  = LLVM::CallOp::create(rewriter, loc, *graphCountNodes, ValueRange{adaptor.getOperands()[0]});
-        auto node_array = LLVM::CallOp::create(rewriter, loc, *graphNodeArray, ValueRange{adaptor.getOperands()[0]});
-        // Value five        = arith::ConstantIndexOp::create(rewriter, loc, num_nodes);
-        Value node_count = arith::IndexCastOp::create(rewriter, loc, rewriter.getIndexType(), num_nodes.getResult());
-        auto forallOp    = scf::ForallOp::create(rewriter, loc, ArrayRef<OpFoldResult>{OpFoldResult(zero)}, // lower bounds
-                                                 ArrayRef<OpFoldResult>{OpFoldResult(node_count)},          // uper bounds
-                                                 ArrayRef<OpFoldResult>{OpFoldResult(one)},                 // steps
-                                                 ValueRange{},                                              // shared outputs (none)
-                                                 std::nullopt,                                              // mapping attr (none = no device mapping)
-                                                 [&](OpBuilder& b, Location loc, ValueRange args)
-                                                 {
-                                                  mlir::Value iv      = args[0];
-                                                  mlir::Value ivI64   = arith::IndexCastOp::create(b, loc, b.getI64Type(), iv);
-
-                                                  mlir::Value elemPtr = LLVM::GEPOp::create(b, loc, LLVM::LLVMPointerType::get(context),
-                                                                                               LLVM::LLVMPointerType::get(context),
-                                                                                               node_array.getResult(), ValueRange{ivI64});
-                                                  mlir::Value node    = LLVM::LoadOp::create(b, loc, LLVM::LLVMPointerType::get(context), elemPtr);
-
-                                                  scf::InParallelOp::create(b, loc);
-                                              });
-
-        // auto nodes        = LLVM::CallOp::create(rewriter, loc, *graphAddEdgeFn, ValueRange{adaptor.getOperands()[0]});
-        // auto storeop = LLVM::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
-        Block* forallBody = forallOp.getBody();
-        rewriter.setInsertionPoint(forallBody->getTerminator());
-
-        // rewriter.moveOpBefore(nodes, forallBody->getTerminator());
-
-        // rewriter.setInsertionPointToStart(forallBody);
-
-        // llvm::errs() << "\n";
-        // llvm::errs() << adaptor.getOperands()[0] << "\n";
-        // llvm::errs() << adaptor.getOperands()[1] << "\n";
-        // llvm::errs() << "\n";
-        // LLVM::CallOp::create(rewriter, loc, *graphAddEdgeFn, ValueRange{});
-
-        // rewriter.inlineBlockBefore(&op.getBody().front(), forallBody, forallBody->end());
-
-        Block& srcBlock = op.getBody().front();
-        for (auto& innerOp : llvm::make_early_inc_range(srcBlock)) {
-
-            // llvm::errs() << "hi\n";
-            if (isa<starplat::endOp>(&innerOp)) {
-                rewriter.eraseOp(&innerOp); // erase starplat.end, keep scf terminator
-                continue;
-            }
-            rewriter.moveOpBefore(&innerOp, forallBody->getTerminator());
+        auto loc      = op.getLoc();
+        bool isFilter = mlir::cast<mlir::BoolAttr>(op->getAttr("filter")).getValue();
+        if (isFilter) {
         }
+        else {
+            Value zero = arith::ConstantIndexOp::create(rewriter, loc, 0);
+            Value one  = arith::ConstantIndexOp::create(rewriter, loc, 1);
+            // llvm::errs() << "=== ConvertAssignOp firing ===\n";
+            // llvm::errs() << "Original operand 0 type: " << op->getOperand(0).getType() << "\n";
+            // llvm::errs() << "Original operand 1 type: " << op->getOperand(1).getType() << "\n";
+            // llvm::errs() << "Adaptor operand 0 type:  " << adaptor.getOperands()[0].getType() << "\n";
+            // llvm::errs() << "Adaptor operand 1 type:  " << adaptor.getOperands()[1].getType() << "\n";
+            //
+            // // also dump the defining op of operand 0
+            // llvm::errs() << "Operand 0 defined by: ";
+            // adaptor.getOperands()[0].getDefiningOp()->dump();
+            // llvm::errs() << "Operand 1 defined by: ";
+            // adaptor.getOperands()[1].getDefiningOp()->dump();
+            //
+            //
+            // auto storeop = LLVM::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
+            //
+            auto module                = op->getParentOfType<mlir::ModuleOp>();
+            mlir::MLIRContext* context = getContext();
+            FailureOr<LLVM::LLVMFuncOp> graphCountNodes =
+                LLVM::lookupOrCreateFn(rewriter, module, "get_num_nodes", {LLVM::LLVMPointerType::get(context)}, rewriter.getI64Type());
+            FailureOr<LLVM::LLVMFuncOp> graphNodeArray =
+                LLVM::lookupOrCreateFn(rewriter, module, "get_nodes", {LLVM::LLVMPointerType::get(context)}, LLVM::LLVMPointerType::get(context));
+            auto num_nodes  = LLVM::CallOp::create(rewriter, loc, *graphCountNodes, ValueRange{adaptor.getOperands()[0]});
+            auto node_array = LLVM::CallOp::create(rewriter, loc, *graphNodeArray, ValueRange{adaptor.getOperands()[0]});
+            // Value five        = arith::ConstantIndexOp::create(rewriter, loc, num_nodes);
+            Value node_count = arith::IndexCastOp::create(rewriter, loc, rewriter.getIndexType(), num_nodes.getResult());
+            auto forallOp    = scf::ForallOp::create(rewriter, loc, ArrayRef<OpFoldResult>{OpFoldResult(zero)}, // lower bounds
+                                                     ArrayRef<OpFoldResult>{OpFoldResult(node_count)},          // uper bounds
+                                                     ArrayRef<OpFoldResult>{OpFoldResult(one)},                 // steps
+                                                     ValueRange{},                                              // shared outputs (none)
+                                                     std::nullopt, // mapping attr (none = no device mapping)
+                                                     [&](OpBuilder& b, Location loc, ValueRange args)
+                                                     {
+                                                      mlir::Value iv      = args[0];
+                                                      mlir::Value ivI64   = arith::IndexCastOp::create(b, loc, b.getI64Type(), iv);
 
-        rewriter.eraseOp(op);
+                                                      mlir::Value elemPtr = LLVM::GEPOp::create(b, loc, LLVM::LLVMPointerType::get(context),
+                                                                                                   LLVM::LLVMPointerType::get(context),
+                                                                                                   node_array.getResult(), ValueRange{ivI64});
+                                                      mlir::Value node = LLVM::LoadOp::create(b, loc, LLVM::LLVMPointerType::get(context), elemPtr);
+                                                      auto storeop     = LLVM::StoreOp::create(b, loc, node, adaptor.getOperands()[1]);
+
+                                                      scf::InParallelOp::create(b, loc);
+                                                  });
+
+            // auto nodes        = LLVM::CallOp::create(rewriter, loc, *graphAddEdgeFn, ValueRange{adaptor.getOperands()[0]});
+            // auto storeop = LLVM::StoreOp::create(rewriter, op.getLoc(), adaptor.getOperands()[1], adaptor.getOperands()[0]);
+            Block* forallBody = forallOp.getBody();
+            rewriter.setInsertionPoint(forallBody->getTerminator());
+
+            // rewriter.moveOpBefore(nodes, forallBody->getTerminator());
+
+            // rewriter.setInsertionPointToStart(forallBody);
+
+            // llvm::errs() << "\n";
+            // llvm::errs() << adaptor.getOperands()[0] << "\n";
+            // llvm::errs() << adaptor.getOperands()[1] << "\n";
+            // llvm::errs() << "\n";
+            // LLVM::CallOp::create(rewriter, loc, *graphAddEdgeFn, ValueRange{});
+
+            // rewriter.inlineBlockBefore(&op.getBody().front(), forallBody, forallBody->end());
+
+            Block& srcBlock = op.getBody().front();
+            for (auto& innerOp : llvm::make_early_inc_range(srcBlock)) {
+
+                // llvm::errs() << "hi\n";
+                if (isa<starplat::endOp>(&innerOp)) {
+                    rewriter.eraseOp(&innerOp); // erase starplat.end, keep scf terminator
+                    continue;
+                }
+                rewriter.moveOpBefore(&innerOp, forallBody->getTerminator());
+            }
+
+            rewriter.eraseOp(op);
+        }
 
         return success();
     }
