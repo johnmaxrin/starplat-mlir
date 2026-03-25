@@ -271,6 +271,39 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     
     let regions = (region AnyRegion:$body);
  }
+def ForAllNodesOp : StarplatBaseOp<"forallnodes", [SymbolTable, Symbol]>
+{
+    let summary = "ForAll over all nodes in a graph";
+    let arguments = (ins
+        AnyType:$graph,
+        AnyType:$loopVar,
+        SymbolNameAttr:$sym_name
+    );
+    let regions = (region AnyRegion:$body);
+}
+
+def ForAllNeighboursOp : StarplatBaseOp<"forallneighbours", [SymbolTable, Symbol]>
+{
+    let summary = "ForAll over neighbours of a node";
+    let arguments = (ins
+        AnyType:$graph,
+        AnyType:$node,
+        AnyType:$loopVar,
+        SymbolNameAttr:$sym_name
+    );
+    let regions = (region AnyRegion:$body);
+}
+
+def NodeCmpOp : StarplatBaseOp<"nodecmp">
+{
+    let summary = "Compare two nodes or values";
+    let arguments = (ins
+        AnyType:$lhs,
+        AnyType:$rhs,
+        Builtin_StringAttr:$op
+    );
+    let results = (outs I1:$result);
+}
 
  def GetEdgeOp : StarplatBaseOp<"getedge">
  {
@@ -349,6 +382,15 @@ def ReturnOp : StarplatBaseOp<"return", [Terminator]>
         AnyType : $node2
     );
     let results = (outs I1 : $result);
+}
+def StarPlatIfOp : StarplatBaseOp<"spif", [SymbolTable, Symbol]>
+{
+    let summary = "StarPlat If operation";
+    let arguments = (ins
+        I1:$condition,
+        SymbolNameAttr:$sym_name
+    );
+    let regions = (region AnyRegion:$body);
 }
 
 
