@@ -115,285 +115,462 @@ void StarPlatCodeGen::visitTemplateDeclarationStmt(const TemplateDeclarationStat
 
 void StarPlatCodeGen::visitTemplateType(const TemplateType* templateType, mlir::SymbolTable* symbolTable) {}
 
+// void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::SymbolTable* symbolTable) {
+
+//     Identifier* loopVar           = static_cast<Identifier*>(forAllStmt->getLoopVar());
+//     const Expression* expr        = static_cast<const Expression*>(forAllStmt->getexpr());
+//     const Statementlist* stmtlist = static_cast<const Statementlist*>(forAllStmt->getstmtlist());
+//     std::vector<mlir::Operation*> ops; // For new SymbolTable
+
+//     auto loopVarSymbol = globalLookupOp(loopVar->getname());
+//     mlir::Type loopVarType;
+//     mlir::Operation* loopVarOp;
+//     mlir::SmallVector<mlir::Attribute> loopAttr;
+//     mlir::SmallVector<mlir::Value> loopOperands;
+//     mlir::BoolAttr filter = builder.getBoolAttr(0);
+
+//     if (loopVarSymbol) {
+//         llvm::outs() << "Error: Identifier '" << loopVar->getname() << "' already in declared.\n";
+//         exit(0);
+//     }
+
+//     // Chumma
+//     // get the type of expr inorder to get the type of loopVar.
+//     if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS) {
+//         const Memberaccess* memberaccess  = static_cast<const Memberaccess*>(expr->getExpression());
+//         const Methodcall* outermethodcall = static_cast<const Methodcall*>(memberaccess->getMethodCall()); // Filter Methodcall.
+
+//         // const Paramlist* paramlisttz      = static_cast<const
+//         // Paramlist*>(outermethodcall->getParamLists());
+
+//         // Check if this is with nested access.
+//         // TODO: Do this recursively!
+//         if (memberaccess->getMemberAccessNode()) {
+
+//             const Memberaccess* nestedMemberaccess = static_cast<const Memberaccess*>(memberaccess->getMemberAccessNode());
+//             const Identifier* identifier           = nestedMemberaccess->getIdentifier(); // g
+//             const Methodcall* innerMethodcall      = static_cast<const Methodcall*>(nestedMemberaccess->getMethodCall());
+//             auto idSymbol                          = globalLookupOp(identifier->getname());
+
+//             if (!idSymbol) {
+//                 llvm::outs() << "Error: Identifier '" << identifier->getname() << "' not declared.\n";
+//                 exit(0);
+//             }
+
+//             loopOperands.push_back(idSymbol);
+
+//             const Identifier* innerMethodcallIdentifier = innerMethodcall->getIdentifier();
+
+//             if (strcmp(innerMethodcallIdentifier->getname(), "nodes") == 0) {
+//                 loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
+//                 loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+//                                                                       builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
+//                 ops.push_back(loopVarOp);
+//                 symbolTable->insert(loopVarOp);
+//                 // debug
+//                 auto test = symbolTable->lookup("v");
+//                 if (test)
+//                     llvm::outs() << "v successfully inserted\n";
+//                 else
+//                     llvm::outs() << "v insert FAILED\n";
+//                 // adds the loop var so that inner forAlls can access it
+//                 nameToArgMap[loopVar->getname()] = loopVarOp->getResult(0);
+//                 loopOperands.push_back(loopVarOp->getResult(0));
+
+//                 loopAttr.push_back(builder.getStringAttr("nodes"));
+//             }
+
+//             // Got this conclusion from TC that this is suppoed to be here.. I think its because
+//             // This is inside memberAccessNode and not just memberAccess
+//             else if(strcmp(innerMethodcallIdentifier->getname(), "neighbors") == 0) {
+
+//                 // Param List only contains one expression
+//                 const Expression* idExpr = static_cast<const Expression*>(innerMethodcall->getParamLists());
+
+//                 // Extracting the identifier from the Expression
+//                 const Identifier* idParam = static_cast<const Identifier*>(idExpr->getExpression());
+
+//                 // To make sure that the var was declared..
+//                 auto idSymbol = globalLookupOp(idParam->getname());
+//                 if (!idSymbol) {
+//                     llvm::outs() << "Error: Identifier '" << idParam->getname() << "' not declared.\n";
+//                     exit(0);
+//                 }
+//                 loopOperands.push_back(idSymbol);
+
+//                 // Sets the type of the loop variable, ig that was self explanatory..
+//                 loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
+//                 // Creates the MLIR operation
+//                 loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+//                                                                       builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
+//                 // Not sure what this does...
+//                 ops.push_back(loopVarOp);
+//                 // Saves the Operation in the symbol table.
+//                 symbolTable->insert(loopVarOp);
+//                 // adds the loop var so that inner forAlls can access it
+//                 nameToArgMap[loopVar->getname()] = loopVarOp->getResult(0);
+//                 llvm::outs() << "idSymbol is: " << (idSymbol ? "valid" : "null") << "\n";
+//                 // ??
+//                 loopOperands.push_back(loopVarOp->getResult(0));
+//                 llvm::outs() << "loopVarOp pushed\n";
+//                 // ??
+//                 loopAttr.push_back(builder.getStringAttr("neighbor"));
+//                 llvm::outs() << "builder pushed\n";
+//             }
+
+//             else {
+//                 llvm::outs() << "Error: Methodcall '" << innerMethodcallIdentifier->getname() << "' not Implemented.\n";
+//                 return;
+//             }
+//         }
+
+//         else if (memberaccess->getMethodCall()) {
+//             const Methodcall* methodcallin = static_cast<const Methodcall*>(memberaccess->getMethodCall());
+//             if (methodcallin->getIsBuiltin()) {
+//                 if (strcmp(methodcallin->getIdentifier()->getname(), "nodes") == 0) {
+//                     loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
+//                     loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+//                                                                         builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
+//                     ops.push_back(loopVarOp);
+//                     symbolTable->insert(loopVarOp);
+//                     // debug
+//                     auto test = symbolTable->lookup("v");
+//                     if (test)
+//                         llvm::outs() << "v successfully inserted\n";
+//                     else
+//                         llvm::outs() << "v insert FAILED\n";
+//                     // adds the loop var so that inner forAlls can access it
+//                     nameToArgMap[loopVar->getname()] = loopVarOp->getResult(0);
+//                     auto graphSymbol = globalLookupOp(memberaccess->getIdentifier()->getname());
+//                     if (!graphSymbol) {
+//                         llvm::outs() << "Error: Graph not declared.\n";
+//                         return;
+//                     }
+//                     loopOperands.push_back(graphSymbol);
+//                     loopOperands.push_back(loopVarOp->getResult(0));
+
+//                     loopAttr.push_back(builder.getStringAttr("nodes"));
+//                 }
+//                 if (strcmp(methodcallin->getIdentifier()->getname(), "neighbors") == 0) {
+//                     const Expression* idExpr = static_cast<const Expression*>(methodcallin->getParamLists());
+
+//                     if (idExpr->getKind() == ExpressionKind::KIND_IDENTIFIER) {
+//                         const Identifier* idParam = static_cast<const Identifier*>(idExpr->getExpression());
+//                         llvm::outs() << "Symbol: " << idParam->getname() << "\n";
+
+//                         auto idSymbol = globalLookupOp(idParam->getname());
+
+//                         if (idSymbol)
+//                             loopOperands.push_back(idSymbol);
+
+//                         else {
+//                             llvm::errs() << "Symbol not found at neighbors.\n";
+//                             exit(0);
+//                         }
+//                     }
+
+//                     else {
+//                         llvm::errs() << "Error: at Neighbours\n";
+//                         exit(0);
+//                     }
+
+//                     loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
+//                     loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+//                                                                           builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
+//                     ops.push_back(loopVarOp);
+//                     symbolTable->insert(loopVarOp);
+//                     loopOperands.push_back(loopVarOp->getResult(0));
+//                     loopAttr.push_back(builder.getStringAttr("neighbours"));
+//                 }
+//             }
+//             else {
+//                 llvm::outs() << "Undefined method call: " << methodcallin->getIdentifier()->getname();
+//                 return;
+//             }
+//         }
+//         // llvm::outs() << "outermethodcall: " << (outermethodcall ? outermethodcall->getIdentifier()->getname() : "null") << "\n";
+//         if (outermethodcall->getIsBuiltin()) {
+
+//             const Identifier* identifier1 = static_cast<const Identifier*>(outermethodcall->getIdentifier());
+//             if (strcmp(identifier1->getname(), "filter") == 0) {
+
+//                 // loopAttr.push_back(builder.getStringAttr("filter"));
+//                 filter                        = builder.getBoolAttr(1);
+
+//                 const Expression* outer       = static_cast<const Expression*>(outermethodcall->getParamLists());
+//                 const BoolExpr* outerBoolExpr = static_cast<const BoolExpr*>(outer->getExpression());
+
+//                 const Expression* lhsExpr     = static_cast<const Expression*>(outerBoolExpr->getExpr1());
+//                 const Expression* rhsExpr     = static_cast<const Expression*>(outerBoolExpr->getExpr2());
+//                 const char* op                = outerBoolExpr->getop();
+
+//                 if (strcmp(op, "==") == 0)
+//                     loopAttr.push_back(builder.getStringAttr("EQS"));
+//                 else if(strcmp(op, "<") == 0) 
+//                     loopAttr.push_back(builder.getStringAttr("LT"));
+//                 else if(strcmp(op, ">") == 0)
+//                     loopAttr.push_back(builder.getStringAttr("GT"));
+//                 else {
+//                     llvm::outs() << "Error: Operator not implemented.\n";
+//                     return;
+//                 }
+
+//                 if (lhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER && rhsExpr->getKind() == ExpressionKind::KIND_KEYWORD) {
+//                     const Identifier* lhsIdentifier = static_cast<const Identifier*>(lhsExpr->getExpression());
+//                     const Keyword* rhsKeyword       = static_cast<const Keyword*>(rhsExpr->getExpression());
+
+//                     auto lhsidSymbol                = globalLookupOp(lhsIdentifier->getname());
+//                     auto rhsKeywordSymbol           = globalLookupOp(rhsKeyword->getKeyword());
+
+//                     if (!rhsKeywordSymbol)
+//                         rhsKeyword->Accept(this, symbolTable);
+
+//                     if (!lhsidSymbol) {
+//                         llvm::outs() << "Error DXB: Identifier '" << lhsIdentifier->getname() << "' not declared.\n";
+//                         return;
+//                     }
+
+//                     loopOperands.push_back(lhsidSymbol);
+//                     loopOperands.push_back(globalLookupOp(rhsKeyword->getKeyword()));
+//                 }
+
+//                 else if (lhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER && rhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER) {
+//                     const Identifier* lhsIdentifier = static_cast<const Identifier*>(lhsExpr->getExpression());
+//                     const Identifier* rhsIdentifier = static_cast<const Identifier*>(rhsExpr->getExpression());
+
+//                     auto lhsSymbol = globalLookupOp(lhsIdentifier->getname());
+//                     auto rhsSymbol = globalLookupOp(rhsIdentifier->getname());
+
+//                     if (!lhsSymbol) {
+//                         llvm::outs() << "Error: Identifier '" << lhsIdentifier->getname() << "' not declared.\n";
+//                         return;
+//                     }
+//                     if (!rhsSymbol) {
+//                         llvm::outs() << "Error: Identifier '" << rhsIdentifier->getname() << "' not declared.\n";
+//                         return;
+//                     }
+
+//                     loopOperands.push_back(lhsSymbol);
+//                     loopOperands.push_back(rhsSymbol);
+//                 }
+
+//                 else {
+//                     llvm::outs() << "Error: Not implemented. Syntax Error\n";
+//                     return;
+//                 }
+//             }
+//         }
+//     }
+
+//     mlir::ArrayAttr loopAttrArray = builder.getArrayAttr(loopAttr);
+//     mlir::StringAttr loopa        = builder.getStringAttr("loopa");
+
+//     auto loopOp                   = mlir::starplat::ForAllOp::create(builder, builder.getUnknownLoc(), loopOperands, loopAttrArray, filter, loopa);
+
+//     loopOp.setNested();
+
+//     auto& loopBlock = loopOp.getBody().emplaceBlock();
+
+//     /*
+//     // Visit the function body.
+//             mlir::SymbolTable funcSymbolTable(func);
+
+//             for (auto op : ops)
+//                 funcSymbolTable.insert(op->clone());
+
+//             stmtlist->Accept(this, &funcSymbolTable);
+
+//     */
+
+//     // Copy Everything from Symbol table to forAllSymbolTable.
+
+//     builder.setInsertionPointToStart(&loopBlock);
+
+//     mlir::SymbolTable forAllSymbolTable(loopOp);
+//     symbolTables.push_back(&forAllSymbolTable);
+
+//     stmtlist->Accept(this, &forAllSymbolTable);
+
+//     mlir::starplat::endOp::create(builder, builder.getUnknownLoc());
+//     builder.setInsertionPointAfter(loopOp);
+// }
+
 void StarPlatCodeGen::visitForallStmt(const ForallStatement* forAllStmt, mlir::SymbolTable* symbolTable) {
 
     Identifier* loopVar           = static_cast<Identifier*>(forAllStmt->getLoopVar());
     const Expression* expr        = static_cast<const Expression*>(forAllStmt->getexpr());
     const Statementlist* stmtlist = static_cast<const Statementlist*>(forAllStmt->getstmtlist());
-    std::vector<mlir::Operation*> ops; // For new SymbolTable
 
-    auto loopVarSymbol = globalLookupOp(loopVar->getname());
-    mlir::Type loopVarType;
-    mlir::Operation* loopVarOp;
-    mlir::SmallVector<mlir::Attribute> loopAttr;
-    mlir::SmallVector<mlir::Value> loopOperands;
-    mlir::BoolAttr filter = builder.getBoolAttr(0);
-
-    if (loopVarSymbol) {
-        llvm::outs() << "Error: Identifier '" << loopVar->getname() << "' already in declared.\n";
+    // Check if loop var is already declared
+    if (globalLookupOp(loopVar->getname())) {
+        llvm::outs() << "Error: Identifier '" << loopVar->getname() << "' already declared.\n";
         exit(0);
     }
 
-    // Chumma
-    // get the type of expr inorder to get the type of loopVar.
-    if (expr->getKind() == ExpressionKind::KIND_MEMBERACCESS) {
-        const Memberaccess* memberaccess  = static_cast<const Memberaccess*>(expr->getExpression());
-        const Methodcall* outermethodcall = static_cast<const Methodcall*>(memberaccess->getMethodCall()); // Filter Methodcall.
+    if (expr->getKind() != ExpressionKind::KIND_MEMBERACCESS) {
+        llvm::outs() << "Error: Expected member access expression in forall.\n";
+        return;
+    }
 
-        // const Paramlist* paramlisttz      = static_cast<const
-        // Paramlist*>(outermethodcall->getParamLists());
+    const Memberaccess* memberaccess  = static_cast<const Memberaccess*>(expr->getExpression());
+    const Methodcall* outermethodcall = static_cast<const Methodcall*>(memberaccess->getMethodCall());
 
-        // Check if this is with nested access.
-        // TODO: Do this recursively!
-        if (memberaccess->getMemberAccessNode()) {
+    // Determine if nodes or neighbours, and if there's a filter
+    bool isNeighbours = false;
+    bool hasFilter    = false;
+    mlir::Value graphSymbol;
+    mlir::Value nodeSymbol;   // only for neighbours
+    mlir::Value lhsFilterSymbol;
+    mlir::Value rhsFilterSymbol;
+    std::string filterOp;
 
-            const Memberaccess* nestedMemberaccess = static_cast<const Memberaccess*>(memberaccess->getMemberAccessNode());
-            const Identifier* identifier           = nestedMemberaccess->getIdentifier(); // g
-            const Methodcall* innerMethodcall      = static_cast<const Methodcall*>(nestedMemberaccess->getMethodCall());
-            auto idSymbol                          = globalLookupOp(identifier->getname());
+    // Declare the loop variable
+    mlir::Type loopVarType = mlir::starplat::NodeType::get(builder.getContext());
+    auto loopVarOp = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
+                                                         builder.getStringAttr(loopVar->getname()),
+                                                         builder.getStringAttr("public"));
+    symbolTable->insert(loopVarOp);
+    nameToArgMap[loopVar->getname()] = loopVarOp->getResult(0);
 
-            if (!idSymbol) {
-                llvm::outs() << "Error: Identifier '" << identifier->getname() << "' not declared.\n";
-                exit(0);
-            }
+    // ---- CHAINED: g.neighbors(v).filter(...) ----
+    if (memberaccess->getMemberAccessNode()) {
+        const Memberaccess* inner = static_cast<const Memberaccess*>(memberaccess->getMemberAccessNode());
+        const Methodcall* innerMethod = static_cast<const Methodcall*>(inner->getMethodCall());
 
-            loopOperands.push_back(idSymbol);
-
-            const Identifier* innerMethodcallIdentifier = innerMethodcall->getIdentifier();
-
-            if (strcmp(innerMethodcallIdentifier->getname(), "nodes") == 0) {
-                loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                      builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
-                ops.push_back(loopVarOp);
-                symbolTable->insert(loopVarOp);
-                // debug
-                auto test = symbolTable->lookup("v");
-                if (test)
-                    llvm::outs() << "v successfully inserted\n";
-                else
-                    llvm::outs() << "v insert FAILED\n";
-                // adds the loop var so that inner forAlls can access it
-                nameToArgMap[loopVar->getname()] = loopVarOp->getResult(0);
-                loopOperands.push_back(loopVarOp->getResult(0));
-
-                loopAttr.push_back(builder.getStringAttr("nodes"));
-            }
-
-            // Got this conclusion from TC that this is suppoed to be here.. I think its because
-            // This is inside memberAccessNode and not just memberAccess
-            else if (strcmp(innerMethodcallIdentifier->getname(), "neighbors") == 0) {
-
-                // Param List only contains one expression
-                const Expression* idExpr = static_cast<const Expression*>(innerMethodcall->getParamLists());
-
-                // Extracting the identifier from the Expression
-                const Identifier* idParam = static_cast<const Identifier*>(idExpr->getExpression());
-
-                // To make sure that the var was declared..
-                auto idSymbol = globalLookupOp(idParam->getname());
-                if (!idSymbol) {
-                    llvm::outs() << "Error: Identifier '" << idParam->getname() << "' not declared.\n";
-                    exit(0);
-                }
-                loopOperands.push_back(idSymbol);
-
-                // Sets the type of the loop variable, ig that was self explanatory..
-                loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                // Creates the MLIR operation
-                loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                      builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
-                // Not sure what this does...
-                ops.push_back(loopVarOp);
-                // Saves the Operation in the symbol table.
-                symbolTable->insert(loopVarOp);
-                // adds the loop var so that inner forAlls can access it
-                nameToArgMap[loopVar->getname()] = loopVarOp->getResult(0);
-                llvm::outs() << "idSymbol is: " << (idSymbol ? "valid" : "null") << "\n";
-                // ??
-                loopOperands.push_back(loopVarOp->getResult(0));
-                llvm::outs() << "loopVarOp pushed\n";
-                // ??
-                loopAttr.push_back(builder.getStringAttr("neighbor"));
-                llvm::outs() << "builder pushed\n";
-            }
-
-            else {
-                llvm::outs() << "Error: Methodcall '" << innerMethodcallIdentifier->getname() << "' not Implemented.\n";
-                return;
-            }
+        graphSymbol = globalLookupOp(inner->getIdentifier()->getname());
+        if (!graphSymbol) {
+            llvm::outs() << "Error: Graph not found.\n";
+            return;
         }
 
-        else if (memberaccess->getMethodCall()) {
-            const Methodcall* methodcallin = static_cast<const Methodcall*>(memberaccess->getMethodCall());
-            if (methodcallin->getIsBuiltin()) {
-                if (strcmp(methodcallin->getIdentifier()->getname(), "nodes") == 0) {
-                    loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                    loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                        builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
-                    ops.push_back(loopVarOp);
-                    symbolTable->insert(loopVarOp);
-                    // debug
-                    auto test = symbolTable->lookup("v");
-                    if (test)
-                        llvm::outs() << "v successfully inserted\n";
-                    else
-                        llvm::outs() << "v insert FAILED\n";
-                    // adds the loop var so that inner forAlls can access it
-                    nameToArgMap[loopVar->getname()] = loopVarOp->getResult(0);
-                    auto graphSymbol                 = globalLookupOp(memberaccess->getIdentifier()->getname());
-                    if (!graphSymbol) {
-                        llvm::outs() << "Error: Graph not declared.\n";
-                        return;
-                    }
-                    loopOperands.push_back(graphSymbol);
-                    loopOperands.push_back(loopVarOp->getResult(0));
-
-                    loopAttr.push_back(builder.getStringAttr("nodes"));
-                }
-                if (strcmp(methodcallin->getIdentifier()->getname(), "neighbors") == 0) {
-                    const Expression* idExpr = static_cast<const Expression*>(methodcallin->getParamLists());
-
-                    if (idExpr->getKind() == ExpressionKind::KIND_IDENTIFIER) {
-                        const Identifier* idParam = static_cast<const Identifier*>(idExpr->getExpression());
-                        llvm::outs() << "Symbol: " << idParam->getname() << "\n";
-
-                        auto idSymbol = globalLookupOp(idParam->getname());
-
-                        if (idSymbol)
-                            loopOperands.push_back(idSymbol);
-
-                        else {
-                            llvm::errs() << "Symbol not found at neighbors.\n";
-                            exit(0);
-                        }
-                    }
-
-                    else {
-                        llvm::errs() << "Error: at Neighbours\n";
-                        exit(0);
-                    }
-
-                    loopVarType       = mlir::starplat::NodeType::get(builder.getContext());
-                    loopVarOp         = mlir::starplat::DeclareOp2::create(builder, builder.getUnknownLoc(), loopVarType,
-                                                                          builder.getStringAttr(loopVar->getname()), builder.getStringAttr("public"));
-                    ops.push_back(loopVarOp);
-                    symbolTable->insert(loopVarOp);
-                    loopOperands.push_back(loopVarOp->getResult(0));
-                    loopAttr.push_back(builder.getStringAttr("neighbours"));
-                }
-            }
-            else {
-                llvm::outs() << "Undefined method call: " << methodcallin->getIdentifier()->getname();
+        if (strcmp(innerMethod->getIdentifier()->getname(), "neighbors") == 0) {
+            isNeighbours = true;
+            const Expression* paramExpr = static_cast<const Expression*>(innerMethod->getParamLists());
+            const Identifier* paramId   = static_cast<const Identifier*>(paramExpr->getExpression());
+            nodeSymbol = globalLookupOp(paramId->getname());
+            if (!nodeSymbol) {
+                llvm::outs() << "Error: Node '" << paramId->getname() << "' not found.\n";
                 return;
             }
+        } else if (strcmp(innerMethod->getIdentifier()->getname(), "nodes") == 0) {
+            isNeighbours = false;
+        } else {
+            llvm::outs() << "Error: Unknown method '" << innerMethod->getIdentifier()->getname() << "'.\n";
+            return;
         }
-        // llvm::outs() << "outermethodcall: " << (outermethodcall ? outermethodcall->getIdentifier()->getname() : "null") << "\n";
-        if (outermethodcall->getIsBuiltin()) {
 
-            const Identifier* identifier1 = static_cast<const Identifier*>(outermethodcall->getIdentifier());
-            if (strcmp(identifier1->getname(), "filter") == 0) {
+        // Check for filter
+        if (outermethodcall && outermethodcall->getIsBuiltin() &&
+            strcmp(outermethodcall->getIdentifier()->getname(), "filter") == 0) {
+            hasFilter = true;
+            const Expression* filterExpr     = static_cast<const Expression*>(outermethodcall->getParamLists());
+            const BoolExpr* boolExpr         = static_cast<const BoolExpr*>(filterExpr->getExpression());
+            const Expression* lhsExpr        = static_cast<const Expression*>(boolExpr->getExpr1());
+            const Expression* rhsExpr        = static_cast<const Expression*>(boolExpr->getExpr2());
+            filterOp                         = std::string(boolExpr->getop());
 
-                // loopAttr.push_back(builder.getStringAttr("filter"));
-                filter                        = builder.getBoolAttr(1);
+            // Just blindly look up lhs and rhs as expressions
+            lhsExpr->Accept(this, symbolTable);
+            rhsExpr->Accept(this, symbolTable);
 
-                const Expression* outer       = static_cast<const Expression*>(outermethodcall->getParamLists());
-                const BoolExpr* outerBoolExpr = static_cast<const BoolExpr*>(outer->getExpression());
-
-                const Expression* lhsExpr     = static_cast<const Expression*>(outerBoolExpr->getExpr1());
-                const Expression* rhsExpr     = static_cast<const Expression*>(outerBoolExpr->getExpr2());
-                const char* op                = outerBoolExpr->getop();
-
-                if (strcmp(op, "==") == 0)
-                    loopAttr.push_back(builder.getStringAttr("EQS"));
-                else if (strcmp(op, "<") == 0)
-                    loopAttr.push_back(builder.getStringAttr("LT"));
-                else if (strcmp(op, ">") == 0)
-                    loopAttr.push_back(builder.getStringAttr("GT"));
-                else {
-                    llvm::outs() << "Error: Operator not implemented.\n";
-                    return;
-                }
-
-                if (lhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER && rhsExpr->getKind() == ExpressionKind::KIND_KEYWORD) {
-                    const Identifier* lhsIdentifier = static_cast<const Identifier*>(lhsExpr->getExpression());
-                    const Keyword* rhsKeyword       = static_cast<const Keyword*>(rhsExpr->getExpression());
-
-                    auto lhsidSymbol                = globalLookupOp(lhsIdentifier->getname());
-                    auto rhsKeywordSymbol           = globalLookupOp(rhsKeyword->getKeyword());
-
-                    if (!rhsKeywordSymbol)
-                        rhsKeyword->Accept(this, symbolTable);
-
-                    if (!lhsidSymbol) {
-                        llvm::outs() << "Error DXB: Identifier '" << lhsIdentifier->getname() << "' not declared.\n";
-                        return;
-                    }
-
-                    loopOperands.push_back(lhsidSymbol);
-                    loopOperands.push_back(globalLookupOp(rhsKeyword->getKeyword()));
-                }
-
-                else if (lhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER && rhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER) {
-                    const Identifier* lhsIdentifier = static_cast<const Identifier*>(lhsExpr->getExpression());
-                    const Identifier* rhsIdentifier = static_cast<const Identifier*>(rhsExpr->getExpression());
-
-                    auto lhsSymbol                  = globalLookupOp(lhsIdentifier->getname());
-                    auto rhsSymbol                  = globalLookupOp(rhsIdentifier->getname());
-
-                    if (!lhsSymbol) {
-                        llvm::outs() << "Error: Identifier '" << lhsIdentifier->getname() << "' not declared.\n";
-                        return;
-                    }
-                    if (!rhsSymbol) {
-                        llvm::outs() << "Error: Identifier '" << rhsIdentifier->getname() << "' not declared.\n";
-                        return;
-                    }
-
-                    loopOperands.push_back(lhsSymbol);
-                    loopOperands.push_back(rhsSymbol);
-                }
-
-                else {
-                    llvm::outs() << "Error: Not implemented. Syntax Error\n";
-                    return;
-                }
+            // For now handle IDENTIFIER op IDENTIFIER and IDENTIFIER op KEYWORD
+            if (lhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER) {
+                const Identifier* lhsId = static_cast<const Identifier*>(lhsExpr->getExpression());
+                lhsFilterSymbol = globalLookupOp(lhsId->getname());
+            }
+            if (rhsExpr->getKind() == ExpressionKind::KIND_IDENTIFIER) {
+                const Identifier* rhsId = static_cast<const Identifier*>(rhsExpr->getExpression());
+                rhsFilterSymbol = globalLookupOp(rhsId->getname());
+            } else if (rhsExpr->getKind() == ExpressionKind::KIND_KEYWORD) {
+                const Keyword* rhsKw = static_cast<const Keyword*>(rhsExpr->getExpression());
+                rhsFilterSymbol = globalLookupOp(rhsKw->getKeyword());
+                if (!rhsFilterSymbol)
+                    rhsKw->Accept(this, symbolTable);
+                rhsFilterSymbol = globalLookupOp(rhsKw->getKeyword());
             }
         }
     }
 
-    mlir::ArrayAttr loopAttrArray = builder.getArrayAttr(loopAttr);
-    mlir::StringAttr loopa        = builder.getStringAttr("loopa");
+    // ---- SIMPLE: g.nodes() or g.neighbors(v) ----
+    else if (memberaccess->getMethodCall()) {
+        const Methodcall* method = static_cast<const Methodcall*>(memberaccess->getMethodCall());
 
-    auto loopOp                   = mlir::starplat::ForAllOp::create(builder, builder.getUnknownLoc(), loopOperands, loopAttrArray, filter, loopa);
+        graphSymbol = globalLookupOp(memberaccess->getIdentifier()->getname());
+        if (!graphSymbol) {
+            llvm::outs() << "Error: Graph not found.\n";
+            return;
+        }
 
-    loopOp.setNested();
+        if (strcmp(method->getIdentifier()->getname(), "nodes") == 0) {
+            isNeighbours = false;
+        } else if (strcmp(method->getIdentifier()->getname(), "neighbors") == 0) {
+            isNeighbours = true;
+            const Expression* paramExpr = static_cast<const Expression*>(method->getParamLists());
+            const Identifier* paramId   = static_cast<const Identifier*>(paramExpr->getExpression());
+            nodeSymbol = globalLookupOp(paramId->getname());
+            if (!nodeSymbol) {
+                llvm::outs() << "Error: Node '" << paramId->getname() << "' not found.\n";
+                return;
+            }
+        } else {
+            llvm::outs() << "Error: Unknown method '" << method->getIdentifier()->getname() << "'.\n";
+            return;
+        }
 
-    auto& loopBlock = loopOp.getBody().emplaceBlock();
+        // Check for filter (outermethodcall would be nodes/neighbors itself here, no filter)
+        // Simple case has no filter
+    }
 
-    /*
-    // Visit the function body.
-            mlir::SymbolTable funcSymbolTable(func);
+    // ---- Create the ForAll op ----
+    mlir::Operation* loopOp;
+    mlir::StringAttr loopa = builder.getStringAttr("loopa");
 
-            for (auto op : ops)
-                funcSymbolTable.insert(op->clone());
+    if (!isNeighbours) {
+        loopOp = mlir::starplat::ForAllNodesOp::create(builder, builder.getUnknownLoc(),
+                                                        graphSymbol, loopVarOp->getResult(0), loopa);
+    } else {
+        loopOp = mlir::starplat::ForAllNeighboursOp::create(builder, builder.getUnknownLoc(),
+                                                             graphSymbol, nodeSymbol,
+                                                             loopVarOp->getResult(0), loopa);
+    }
 
-            stmtlist->Accept(this, &funcSymbolTable);
-
-    */
-
-    // Copy Everything from Symbol table to forAllSymbolTable.
+    // ---- Set up the body ----
+    auto& loopBlock = (isNeighbours ?
+        llvm::cast<mlir::starplat::ForAllNeighboursOp>(loopOp).getBody() :
+        llvm::cast<mlir::starplat::ForAllNodesOp>(loopOp).getBody()).emplaceBlock();
 
     builder.setInsertionPointToStart(&loopBlock);
 
     mlir::SymbolTable forAllSymbolTable(loopOp);
     symbolTables.push_back(&forAllSymbolTable);
 
-    stmtlist->Accept(this, &forAllSymbolTable);
+    if (hasFilter) {
+        // Create NodeCmpOp for the filter condition
+        auto cmpOp = mlir::starplat::NodeCmpOp::create(builder, builder.getUnknownLoc(),
+                                                        mlir::IntegerType::get(builder.getContext(), 1),
+                                                        lhsFilterSymbol, rhsFilterSymbol,
+                                                        builder.getStringAttr(filterOp));
+
+        // Wrap body in StarPlatIfOp
+        auto ifOp = mlir::starplat::StarPlatIfOp::create(builder, builder.getUnknownLoc(),
+                                                  cmpOp->getResult(0),
+                                                  builder.getStringAttr("spif"));
+        auto& ifBlock = ifOp.getBody().emplaceBlock();
+        builder.setInsertionPointToStart(&ifBlock);
+
+        stmtlist->Accept(this, &forAllSymbolTable);
+
+        mlir::starplat::endOp::create(builder, builder.getUnknownLoc());
+        builder.setInsertionPointAfter(ifOp);
+    } else {
+        stmtlist->Accept(this, &forAllSymbolTable);
+    }
 
     mlir::starplat::endOp::create(builder, builder.getUnknownLoc());
     builder.setInsertionPointAfter(loopOp);
 }
+
+
 
 void StarPlatCodeGen::visitMemberaccessStmt(const MemberacceessStmt* MemberacceessStmt, mlir::SymbolTable* symbolTable) {
     const Memberaccess* memberaccessnode = static_cast<const Memberaccess*>(MemberacceessStmt->getMemberAccess());
@@ -491,21 +668,17 @@ void StarPlatCodeGen::visitIfStmt(const IfStatement* ifStmt, mlir::SymbolTable* 
                                                       graphSymbol, node1Symbol, node2Symbol);
 
     // scf.if
-    auto ifOp = mlir::scf::IfOp::create(builder, builder.getUnknownLoc(), isEdgeOp->getResult(0), false);
+    auto ifOp = mlir::starplat::StarPlatIfOp::create(builder, builder.getUnknownLoc(),
+                                                  isEdgeOp->getResult(0),
+                                                  builder.getStringAttr("spif"));
 
-    // Set insertion point to then block
-    mlir::Block* thenBlock = &ifOp.getThenRegion().front();
-    builder.setInsertionPointToStart(thenBlock);
+    auto& ifBlock = ifOp.getBody().emplaceBlock();
+    builder.setInsertionPointToStart(&ifBlock);
 
     const ASTNode* body = ifStmt->getstmt();
     body->Accept(this, symbolTable);
 
-    builder.setInsertionPointToEnd(thenBlock);
-    llvm::outs() << "thenBlock ops count: " << thenBlock->getOperations().size() << "\n";
-    for (auto& op : thenBlock->getOperations())
-        llvm::outs() << "  op: " << op.getName() << "\n";
-
-    // Restore insertion point to after the if op
+    mlir::starplat::endOp::create(builder, builder.getUnknownLoc());
     builder.setInsertionPointAfter(ifOp);
 }
 
@@ -568,16 +741,32 @@ void StarPlatCodeGen::visitIdentifier(const Identifier* identifier, mlir::Symbol
 
 void StarPlatCodeGen::visitReturnStmt(const ReturnStmt* returnStmt, mlir::SymbolTable* symbolTable) {
     const Expression* expr = static_cast<const Expression*>(returnStmt->getexpr());
-    const Identifier* identifier = static_cast<const Identifier*>(expr->getExpression());
-    
-    auto retSymbol = globalLookupOp(identifier->getname());
-    if (!retSymbol) {
-        llvm::outs() << "Error: Return value '" << identifier->getname() << "' not found.\n";
-        mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc(), mlir::ValueRange{});
-        return;
+
+    if(expr->getKind() == KIND_NUMBER) {
+        const Number* number = static_cast<const Number*>(expr->getExpression());
+        mlir::Type intType = mlir::IntegerType::get(builder.getContext(), 64);
+        auto constAttr = mlir::IntegerAttr::get(intType, number->getnumber());
+        int const_count = get_const_count();
+        auto constOp = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), intType, constAttr,
+                                                        builder.getStringAttr(std::string("const_") + to_string(const_count)),
+                                                        builder.getStringAttr("public"));
+        auto retSymbol = constOp->getResult(0);
+        mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc(), mlir::ValueRange{retSymbol});
     }
 
-    mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc(), mlir::ValueRange{retSymbol});
+    else if(expr->getKind() == KIND_IDENTIFIER) {
+        const Identifier* identifier = static_cast<const Identifier*>(expr->getExpression());
+        
+        auto retSymbol = globalLookupOp(identifier->getname());
+        if (!retSymbol) {
+            llvm::outs() << "Error: Return value '" << identifier->getname() << "' not found.\n";
+            mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc(), mlir::ValueRange{});
+            return;
+        }
+    
+        mlir::starplat::ReturnOp::create(builder, builder.getUnknownLoc(), mlir::ValueRange{retSymbol});
+    }
+
 }
 void StarPlatCodeGen::visitParameterAssignment(const ParameterAssignment* paramAssignment, mlir::SymbolTable* symbolTable) {
     Identifier* identifier = static_cast<Identifier*>(paramAssignment->getidentifier());
