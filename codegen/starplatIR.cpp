@@ -105,7 +105,7 @@ void StarPlatCodeGen::visitTemplateDeclarationStmt(const TemplateDeclarationStat
 
     else if (std::string(Type->getGraphPropNode()->getPropertyType()) == "propEdge") {
 
-        auto type         = builder.getType<mlir::starplat::PropEdgeType>(builder.getI32Type(), graphId);
+        auto type         = builder.getType<mlir::starplat::PropEdgeType>(builder.getI64Type(), graphId);
         mlir::Value graph = NULL;
         auto declare      = mlir::starplat::DeclareOp::create(builder, builder.getUnknownLoc(), type, builder.getStringAttr(identifier->getname()),
                                                               builder.getStringAttr("public"), graph);
@@ -833,7 +833,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                 if (globalLookupOp(lhs1MemberAccess->getIdentifier()->getname())) {
                     mlir::Value propOp = globalLookupOp(lhs1MemberAccess->getIdentifier2()->getname());
                     mlir::Value varOp  = globalLookupOp(lhs1MemberAccess->getIdentifier()->getname());
-                    gOperand1 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp,
+                    gOperand1 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), varOp, propOp,
                                                                           builder.getStringAttr(lhs1MemberAccess->getIdentifier2()->getname()));
                 }
                 else {
@@ -864,7 +864,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                 if (globalLookupOp(lhs2MemberAccess->getIdentifier()->getname())) {
                     mlir::Value propOp = globalLookupOp(lhs2MemberAccess->getIdentifier2()->getname());
                     mlir::Value varOp  = globalLookupOp(lhs2MemberAccess->getIdentifier()->getname());
-                    gOperand1 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), varOp, propOp,
+                    gOperand1 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), varOp, propOp,
                                                                           builder.getStringAttr(lhs2MemberAccess->getIdentifier2()->getname()));
                 }
                 else {
@@ -919,7 +919,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                     if (mlir::isa<mlir::starplat::NodeType>(id1Op.getType())) {
                         // Generate get node property.
                         llvm::StringRef nameRef(id2->getname());
-                        gOperand2 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), id1Op, id2Op,
+                        gOperand2 = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), id1Op, id2Op,
                                                                               builder.getStringAttr(nameRef));
                     }
                 }
@@ -954,7 +954,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                         if (mlir::isa<mlir::starplat::NodeType>(op1id1op.getType())) {
                             // Generate getNodeProp
                             auto getProp = builder.getStringAttr(op1Id2->getname()); // TODO: Add check here
-                            op1          = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op1id1op,
+                            op1          = mlir::starplat::GetNodePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), op1id1op,
                                                                                      op1id2op, getProp);
                         }
 
@@ -988,7 +988,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
                         if (mlir::isa<mlir::starplat::EdgeType>(op2id1op.getType())) {
                             // Generate getNodeProp
                             auto getProp = builder.getStringAttr(op2Id2->getname()); // TODO: Add check here
-                            op2          = mlir::starplat::GetEdgePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op2id1op,
+                            op2          = mlir::starplat::GetEdgePropertyOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), op2id1op,
                                                                                      op2id2op, getProp);
                         }
 
@@ -1010,7 +1010,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
 
                 // Create add OP
                 gOperand3 =
-                    mlir::starplat::AddOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), op1->getResult(0), op2->getResult(0));
+                    mlir::starplat::AddOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), op1->getResult(0), op2->getResult(0));
             }
             else {
                 llvm::outs() << "Error: Not implemented @ Tuple Assignment.\n";
@@ -1036,7 +1036,7 @@ void StarPlatCodeGen::visitTupleAssignment(const TupleAssignment* tupleAssignmen
         // Create the Min Tupple
 
         // auto minOp =
-        mlir::starplat::MinOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(), gOperand2->getResult(0), gOperand1->getResult(0),
+        mlir::starplat::MinOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(), gOperand2->getResult(0), gOperand1->getResult(0),
                                       gOperand2->getResult(0), gOperand3->getResult(0), gOperand4);
     }
     else {
@@ -1076,14 +1076,14 @@ void StarPlatCodeGen::visitFunction(const Function* function, mlir::SymbolTable*
             llvm::StringRef graphId = arg->getTemplateType()->getGraphName()->getname();
 
             if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propNode") {
-                argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId));
-                auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
+                argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI64Type(), graphId));
+                auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI64Type(), graphId);
                 // auto typeAttr =
                 ::mlir::TypeAttr::get(type);
             }
             else if (std::string(arg->getTemplateType()->getGraphPropNode()->getPropertyType()) == "propEdge") {
-                argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId));
-                auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI32Type(), graphId);
+                argTypes.push_back(builder.getType<mlir::starplat::PropNodeType>(builder.getI64Type(), graphId));
+                auto type = builder.getType<mlir::starplat::PropNodeType>(builder.getI64Type(), graphId);
                 // auto typeAttr =
                 ::mlir::TypeAttr::get(type);
             }
@@ -1124,7 +1124,7 @@ void StarPlatCodeGen::visitFunction(const Function* function, mlir::SymbolTable*
 
     //     auto argOp =
     //     mlir::starplat::ArgOp::create(builder,builder.getUnknownLoc(),
-    //     builder.getI32Type(), argTypes[idx++],
+    //     builder.getI64Type(), argTypes[idx++],
     //     builder.getStringAttr(argItr->getVarName()->getname()),
     //     builder.getStringAttr("public")); funcSymbolTable.insert(argOp);
     // }
@@ -1403,7 +1403,7 @@ void StarPlatCodeGen::visitNumber(const Number* number, mlir::SymbolTable* symbo
     if (globalLookupOp(std::to_string(number->getnumber())))
         return;
 
-    auto constant = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI32Type(),
+    auto constant = mlir::starplat::ConstOp::create(builder, builder.getUnknownLoc(), builder.getI64Type(),
                                                     builder.getStringAttr(std::to_string(number->getnumber())),
                                                     builder.getStringAttr(std::to_string(number->getnumber())), builder.getStringAttr("public"));
     symbolTable->insert(constant);
