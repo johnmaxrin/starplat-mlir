@@ -18,11 +18,21 @@
 
 
 %token<id> FUNCTION LPAREN RPAREN LCURLY RCURLY RETURN IDENTIFIER ASGN NUMBER LTxx GT FORALL FOR EQUALS EDGE NODE
-%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS TRUE NOT BOOL
+%token<id> INT IF SEMICLN DOT IN COMMA EQUAL GRAPH PLUSEQUAL PROPNODE PROPEDGE FALSE INF FIXEDPOINT UNTIL COLON PLUS TRUE NOT BOOL FLOAT DO WHILE MINUS TIMES DIVIDE AND OR GTE LTE DECIMAL INCREMENT
 
 %type<astNode>  methodcall memberaccess expr type paramlist arglist arg function boolexpr declarationstmt stmt 
-stmtlist ifstmt forstmt returnstmt forallstmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt memberaccessstmt assignmentStmt
-addExpr properties templateType templateDecl paramAssignment param memberaccessAssignment KEYWORDS 
+stmtlist ifstmt forstmt returnstmt forallstmt dowhileStmt incandassignstmt assignment initializestmt fixedPointStmt tuppleAssignmentstmt memberaccessstmt assignmentStmt
+addExpr properties templateType templateDecl paramAssignment param memberaccessAssignment KEYWORDS subExpr mulExpr divExpr andExpr orExpr ifelsestmt incstmt
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
+
+%left OR
+%left AND
+%left EQUALS GTE LTE
+%left LTxx GT
+%left PLUS MINUS
+%left TIMES DIVIDE
 
 
 %%
@@ -53,10 +63,12 @@ stmtlist :                  {
 stmt :  assignmentStmt                              {$$ = $1;}
         |   declarationstmt                             {$$ = $1;}
         |   ifstmt			                {$$ = $1;}
+        |   ifelsestmt			                {$$ = $1;}
         |   forstmt 			                {$$ = $1;}
         |   returnstmt 			                {$$ = $1;}
         |   forallstmt			                {$$ = $1;}
         |   incandassignstmt	                        {$$ = $1;}
+        |   incstmt                                     {$$ = $1;}
         |   templateDecl                                {$$ = $1;}
         |   /*epsilon*/                                 {$$ = nullptr;}
         |   memberaccessstmt                            {$$ = $1;}
@@ -64,6 +76,7 @@ stmt :  assignmentStmt                              {$$ = $1;}
         |   memberaccessAssignment                      {$$ = $1;}
         |   fixedPointStmt                              {$$ = $1;}
         |   tuppleAssignmentstmt                        {$$ = $1;}
+        |   dowhileStmt                                 {$$ = $1;}
         ;
 
 
@@ -72,9 +85,20 @@ memberaccessAssignment : memberaccess EQUAL expr SEMICLN        {$$ = new Member
                         ;
 
 
-declarationstmt : type IDENTIFIER SEMICLN                   {printf("Declaration statement\n");}
+declarationstmt : type IDENTIFIER SEMICLN                   {
+		Identifier* identifier = new Identifier($2);
+		Number* number = nullptr;
+		$$ = new DeclarationStatement($1,identifier,number);
+		// printf("Declaration statement\n");
+		}
 
                 | type IDENTIFIER EQUAL NUMBER SEMICLN  {
+                                                                Identifier* identifier = new Identifier($2);
+                                                                Number* number =   new Number($4);
+                                                                $$ = new DeclarationStatement($1, identifier, number);
+                                                        
+                                                        }
+                | type IDENTIFIER EQUAL DECIMAL SEMICLN  {
                                                                 Identifier* identifier = new Identifier($2);
                                                                 Number* number =   new Number($4);
                                                                 $$ = new DeclarationStatement($1, identifier, number);
@@ -100,10 +124,12 @@ initializestmt : type IDENTIFIER EQUAL expr SEMICLN {
 
 paramAssignment : IDENTIFIER EQUAL KEYWORDS  {
                                                 Identifier *identifier = new Identifier($1);
-                                                $$ = new ParameterAssignment(identifier, $3);
-
-
-}
+                                                $$ = new ParameterAssignment(identifier, $3,true);
+                                        }
+                | IDENTIFIER EQUAL expr {
+                        Identifier* identifier = new Identifier($1);
+                        $$ = new ParameterAssignment(identifier, $3,false);
+                }
 
 fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stmtlist RCURLY         { 
                                                                                                                 Identifier *identifier = new Identifier($4);
@@ -112,21 +138,32 @@ fixedPointStmt : FIXEDPOINT UNTIL LPAREN IDENTIFIER COLON expr RPAREN LCURLY stm
 
 tuppleAssignmentstmt : LTxx expr COMMA expr GT EQUAL LTxx expr COMMA expr GT SEMICLN               {$$ = new TupleAssignment($2, $4, $8, $10);}
 
-boolexpr : expr LTxx expr 		{}
+dowhileStmt : DO LCURLY stmtlist RCURLY WHILE LPAREN expr RPAREN SEMICLN               {$$ = new DoWhileStatement($7, $3);}
 
-         | expr GT expr             {}
+boolexpr : expr LTxx expr 		{$$ = new BoolExpr($1, strdup("<"), $3);}
 
-         | expr EQUALS expr           {$$ = new BoolExpr($1, const_cast<char*>("=="), $3);} 
+         | expr GT expr                 {$$ = new BoolExpr($1, strdup(">"), $3);}
 
-         | NOT expr                   {$$ = new BoolExpr($2, const_cast<char*>("!"));} 
+         | expr EQUALS expr             {$$ = new BoolExpr($1, const_cast<char*>("=="), $3);} 
+
+         | expr GTE expr                {$$ = new BoolExpr($1, const_cast<char*>(">="), $3);} 
+         
+         | expr LTE expr                {$$ = new BoolExpr($1, const_cast<char*>("<="), $3);} 
+
+         | NOT expr                     {$$ = new BoolExpr($2, const_cast<char*>("!"));} 
          ;
 
-ifstmt : IF LPAREN expr RPAREN stmt         {$$ = new IfStatement($3, $5);}
-        | IF LPAREN expr RPAREN LCURLY stmtlist RCURLY     {$$ = new IfStatement($3, $6);}
-        ;
+ifstmt : IF LPAREN expr RPAREN stmt          %prec LOWER_THAN_ELSE { $$ = new IfStatement($3, $5); }
+       | IF LPAREN expr RPAREN LCURLY stmtlist RCURLY { $$ = new IfStatement($3, $6); }
+       ;
+
+ifelsestmt : IF LPAREN expr RPAREN stmt ELSE stmt { $$ = new IfElseStatement($3, $5, $7); }
+           | IF LPAREN expr RPAREN LCURLY stmtlist RCURLY ELSE LCURLY stmtlist RCURLY { $$ = new IfElseStatement($3, $6, $10); }
+           ;
 
 
-forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY      { $$ = new ForallStatement(); }
+forstmt : FOR LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY      { Identifier* identifier = new Identifier($3);
+                                                                  $$ = new ForStatement(identifier, $5, $8); }
 
 forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY    {
                                                                   Identifier* identifier = new Identifier($3);
@@ -136,19 +173,41 @@ forallstmt : FORALL LPAREN IDENTIFIER IN expr RPAREN LCURLY stmtlist RCURLY    {
 expr :  IDENTIFIER              {$$ = new Expression( new Identifier($1), KIND_IDENTIFIER);} 
      |  boolexpr                {$$ = new Expression ($1, KIND_BOOLEXPR);}
      |  NUMBER                  {$$ = new Expression( new Number($1), KIND_NUMBER);}
+     |  DECIMAL                 {$$ = new Expression( new Number($1), KIND_NUMBER);}
      |  memberaccess            {$$ = new Expression ($1, KIND_MEMBERACCESS);}
      |  KEYWORDS                {$$ = new Expression ($1, KIND_KEYWORD);}
      |  methodcall              {$$ = new Expression ($1, KIND_METHODCALL);}
      |  addExpr                 {$$ = new Expression ($1, KIND_ADDOP);}
+     |  subExpr                 {$$ = new Expression ($1, KIND_SUBOP);}
+     |  mulExpr                 {$$ = new Expression ($1, KIND_MULOP);}
+     |  divExpr                 {$$ = new Expression ($1, KIND_DIVOP);}
+     |  andExpr                 {$$ = new Expression ($1, KIND_ANDOP);}
+     |  orExpr                  {$$ = new Expression ($1, KIND_OROP);}
+     |  LPAREN expr RPAREN      {$$ = $2;}       
      ;
 
 addExpr : expr PLUS expr      {$$ = new Add($1, $3);}
+
+subExpr : expr MINUS expr      {$$ = new Sub($1, $3);}
+
+mulExpr : expr TIMES expr      {$$ = new Mul($1, $3);}
+
+divExpr : expr DIVIDE expr      {$$ = new Div($1, $3);}
+
+andExpr : expr AND expr      {$$ = new And($1, $3);}
+
+orExpr : expr OR expr      {$$ = new Or($1, $3);}
 
 incandassignstmt : IDENTIFIER PLUSEQUAL expr SEMICLN  {
                                                         Identifier* identifier = new Identifier($1);
                                                         $$ = new Incandassignstmt(identifier, $2, $3);
                                                       }
              ;
+
+incstmt : IDENTIFIER INCREMENT SEMICLN
+{ Identifier* identifier = new Identifier($1); 
+  $$ = new Incstmt(identifier);
+}
 
 returnstmt : RETURN expr SEMICLN        {$$ = new ReturnStmt($2);}
            ;
@@ -226,7 +285,7 @@ param : expr                    {       Expression *expr = static_cast<Expressio
 
                                         if(expr->getKind() == KIND_IDENTIFIER) {
                                                 const Identifier *identifier = static_cast<const Identifier *>(expr->getExpression());
-                                                printf("Param: %s\n", identifier->getname());
+                                                // printf("Param: %s\n", identifier->getname());
                                         }
                                                 
                                 }
@@ -274,9 +333,9 @@ properties : PROPEDGE                   {$$ = new GraphProperties($1);}
 type : INT              {       
                                 $$ = new TypeExpr($1);
                         }
-      | BOOL             {
-                                  $$ = new TypeExpr($1);
-                         }
+      | BOOL            {
+                                $$ = new TypeExpr($1);
+                        }
 
      | GRAPH            {
                                 $$ = new TypeExpr($1);
@@ -286,6 +345,9 @@ type : INT              {
                                 $$ = new TypeExpr($1);
                         }
      |  NODE            {
+                                $$ = new TypeExpr($1);
+                        }
+     | FLOAT            {
                                 $$ = new TypeExpr($1);
                         }
      ;

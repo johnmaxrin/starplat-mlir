@@ -4,6 +4,7 @@
 
 #include "includes/StarPlatOps.h"
 #include "includes/StarPlatTypes.h"
+#include "mlir/Conversion/LinalgToStandard/LinalgToStandard.h"
 #include "mlir/Conversion/Passes.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/OpImplementation.h"
@@ -37,15 +38,23 @@ class StarPlatTypeConverter : public TypeConverter
 
         addConversion([ctx](starplat::GraphType type) -> std::optional<Type> { return LLVM::LLVMPointerType::get(ctx); });
         addConversion([ctx](starplat::NodeType type) -> std::optional<Type> { return LLVM::LLVMPointerType::get(ctx); });
-        addConversion([ctx](starplat::PropNodeType type) -> std::optional<Type>
+        addConversion([ctx](starplat::EdgeType type) -> std::optional<Type> { return LLVM::LLVMPointerType::get(ctx); });
+        addConversion([ctx](starplat::SPIntType type) -> std::optional<Type> { return LLVM::LLVMPointerType::get(ctx); });
+        addConversion([ctx](starplat::SPFloatType type) -> std::optional<Type> { return LLVM::LLVMPointerType::get(ctx); });
+        addConversion([](starplat::PropNodeType type) -> std::optional<Type>
                       { // llvm::errs() << type.getGraphId();
-                          // return type.getParameter();
-                          return LLVM::LLVMPointerType::get(ctx);
+                        // return type.getParameter();
+                          Type elem = type.getParameter();
+                          // i1 propNodes get widened to i8 so atomic_rmw assign is legal.
+                          if (elem.isInteger(1))
+                              elem = IntegerType::get(type.getContext(), 8);
+                          return MemRefType::get({ShapedType::kDynamic}, elem);
+                          // return MemRefType::get({ShapedType::kDynamic}, mlir::IntegerType());
                       });
-        addConversion([ctx](starplat::PropEdgeType type) -> std::optional<Type>
+        addConversion([](starplat::PropEdgeType type) -> std::optional<Type>
                       { // llvm::errs() << type.getGraphId();
                           // return type.getParameter();
-                          return LLVM::LLVMPointerType::get(ctx);
+                          return MemRefType::get({ShapedType::kDynamic}, type.getParameter());
                       });
 
         addSourceMaterialization(

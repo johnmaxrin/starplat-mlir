@@ -36,6 +36,8 @@ include_directories(${MLIR_INCLUDE_DIRS})
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
+find_program(MLIR_TRANSLATE mlir-translate REQUIRED)
+
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 get_property(extension_libs GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
 get_property(translation_libs GLOBAL PROPERTY MLIR_TRANSLATION_LIBS)
@@ -68,31 +70,76 @@ include_directories(
 
 # Add executable and link it with the parser library
 
-file(GLOB APP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cc") # Track cocunut 🥸
+add_library(app_lib STATIC
+    codegen/astdump.cpp
+    codegen/starplatIR.cpp
+    ast/ast.cpp
+    starplatDialect/libs/StarPlatDialect.cc
+    starplatDialect/libs/StarPlatTransforms.cc
+)
+add_dependencies(app_lib MLIRStarPlatIncGen)
 
-add_llvm_executable(app ${APP_SOURCES}  codegen/astdump.cpp codegen/starplatIR.cpp ast/ast.cpp starplatDialect/libs/StarPlatDialect.cc  starplatDialect/libs/StarPlatTransforms.cc
-        DEPENDS 
-          MLIRStarPlatIncGen  )
-
-
-target_link_libraries(app 
-    PRIVATE
-    parser_lib 
+target_link_libraries(app_lib
+    PUBLIC
+    parser_lib
     ${dialect_libs}
-    ${FLEX_LIBRARIES} 
-    ${BISON_LIBRARIES} 
+    ${FLEX_LIBRARIES}
+    ${BISON_LIBRARIES}
     ${extension_libs}
     ${translation_libs}
-      MLIRAnalysis
-          MLIRIR
-          MLIRParser
-          MLIRPass
-          MLIRTranslateLib
-          MLIRSupport
-          MLIRSideEffectInterfaces
-          MLIRTransforms)
+    MLIRAnalysis
+    MLIRIR
+    MLIRParser
+    MLIRPass
+    MLIRTranslateLib
+    MLIROpenMPToLLVM
+    MLIRSupport
+    MLIRSideEffectInterfaces
+    MLIRTransforms)
+
+add_llvm_executable(app main.cc)
+
+target_link_libraries(app PRIVATE app_lib)
+add_llvm_executable(starplat-opt starplat-opt.cc starplatDialect/libs/StarPlatDialect.cc
+    DEPENDS
+      MLIRStarPlatIncGen)
+
+target_link_libraries(starplat-opt
+    PRIVATE
+    ${dialect_libs}
+    ${extension_libs}
+    ${translation_libs}
+    MLIRAnalysis
+    MLIRIR
+    MLIRParser
+    MLIRPass
+    MLIROptLib
+    MLIRRegisterAllDialects
+    MLIRRegisterAllPasses
+    MLIRSupport
+    MLIRSideEffectInterfaces
+    MLIRTransforms
+    MLIROpenMPToLLVM
+    MLIRSCFToOpenMP
+    MLIRLinalgDialect
+    MLIRLinalgTransforms)
+
 add_custom_target(test
-    COMMAND ${CMAKE_SOURCE_DIR}/run.sh ${CMAKE_SOURCE_DIR}/tests/buildup.avl
+    COMMAND ${CMAKE_SOURCE_DIR}/run.sh ${CMAKE_SOURCE_DIR}/testing/buildup.avl
+    DEPENDS app starplat-opt
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Running run.sh with tests/buildup.avl"
+)
+add_custom_target(lower_to_llvm
+    COMMAND bash -c "set -o pipefail && ${CMAKE_BINARY_DIR}/bin/app ${CMAKE_SOURCE_DIR}/tests/buildup.avl | ${CMAKE_BINARY_DIR}/bin/starplat-opt - --starplat-to-llvm | ${MLIR_TRANSLATE} --mlir-to-llvmir -o ${CMAKE_SOURCE_DIR}/testing/out.ll"
+    DEPENDS app starplat-opt
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "StarPlat -> MLIR -> LLVM dialect -> testing/out.ll"
+    VERBATIM
+)
+
+add_custom_target(test_full
+    COMMAND ${CMAKE_SOURCE_DIR}/run_full.sh ${CMAKE_SOURCE_DIR}/tests/buildup.avl
     DEPENDS app
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Running run.sh with tests/buildup.avl"

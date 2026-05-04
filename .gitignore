@@ -10,4 +10,11 @@ avial.code-workspace
 .nvimrc
 main.cpp
 tags
+workspace/*
 todiscuss
+StarPlatIR.docs
+run_full.sh
+run_full.sh
+tests/my_test.avl
+Makefile
+testing/a.out

@@ -56,6 +56,16 @@ def EdgeType : StarPlatDialectType<"Edge", "edge">
   let summary = "Starplat Edge Type";
 }
 
+def StarPlatIntType: StarPlatDialectType<"SPInt", "spint">
+{
+  let summary = "StarPlay Int type";
+}
+
+def StarPlatFloatType: StarPlatDialectType<"SPFloat", "spfloat">
+{
+  let summary = "StarPlay Float type";
+}
+
 def PropNodeType : StarPlatDialectType<"PropNode", "propNode">{
   let summary = "Property of Node";
   let parameters = (ins "Type":$parameter, StringRefParameter<"Graph Identifier">:$graphId);
@@ -120,6 +130,26 @@ def DeclareOp : StarplatBaseOp<"declare">
                                 SymbolNameAttr:$sym_name,
                                 SymbolNameAttr:$sym_visibility,
                                  Optional<StarPlat_GraphType>:$graph
+                                );
+
+
+  let results = (outs AnyType);
+
+}
+
+def DeclareOp2 : StarplatBaseOp<"declare2">
+{
+  let summary = "Declares a variable of a specified type and returns its SSA value.";
+  let description = [{
+                          The declare operation is used to define a variable within the Starplat dialect. 
+                          The variable is associated with a specific type (e.g., integers, 
+                          floating-point numbers, or custom types such as propNode), 
+                          and it returns an SSA value representing the declared variable. 
+  }];
+
+  let arguments = (ins  
+                                SymbolNameAttr:$sym_name,
+                                SymbolNameAttr:$sym_visibility
                                 );
 
 
@@ -237,6 +267,21 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
 
  }
 
+ def ForOp : StarplatBaseOp<"for", []>
+ {
+    let summary = "For loop over nodes up to a given node";
+    let arguments = (ins
+        AnyType:$graph,
+        AnyType:$node,
+        OptionalAttr<StrAttr>:$sym_name
+    );
+    let regions = (region AnyRegion:$body);
+
+    let extraClassDeclaration = [{
+        BlockArgument getInductionVar() { return getBody().front().getArgument(0); }
+    }];
+ }
+
  def ForAllOp : StarplatBaseOp<"forall", [SymbolTable, Symbol]>
  {
     let summary = "Forall loop";
@@ -251,6 +296,90 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     
     let regions = (region AnyRegion:$body);
  }
+
+ def DoWhileOp : StarplatBaseOp<"dowhile", [SymbolTable, Symbol]>
+ {
+  let summary = "DoWhile loop";
+  let description = [{"Do While Loop"}];
+
+  let arguments = ( ins
+                    SymbolNameAttr:$sym_name
+                  );
+
+  let regions = (region AnyRegion:$body);
+ }
+
+ def DoWhileCondOp : StarplatBaseOp<"dowhile_cond", [Terminator]>
+{
+    let summary = "DoWhile condition terminator";
+    let arguments = (ins I1:$condition);
+}
+
+def ForAllNodesOp : StarplatBaseOp<"forallnodes", []>
+{
+    let summary = "ForAll over all nodes in a graph";
+    let arguments = (ins
+        AnyType:$graph,
+        OptionalAttr<StrAttr>:$sym_name
+    );
+    let regions = (region AnyRegion:$body);
+
+    let extraClassDeclaration = [{
+        BlockArgument getInductionVar() { return getBody().front().getArgument(0); }
+    }];
+}
+
+def ForAllNeighboursOp : StarplatBaseOp<"forallneighbours", []>
+{
+    let summary = "ForAll over neighbours of a node";
+    let arguments = (ins
+        AnyType:$graph,
+        AnyType:$node,
+        OptionalAttr<StrAttr>:$sym_name
+    );
+    let regions = (region AnyRegion:$body);
+
+    let extraClassDeclaration = [{
+        BlockArgument getInductionVar() { return getBody().front().getArgument(0); }
+    }];
+}
+
+def ForNodesToOp : StarplatBaseOp<"for_nodes_to", []>
+{
+    let summary = "For loop over incoming neighbours of a node";
+    let arguments = (ins
+        AnyType:$graph,
+        AnyType:$node,
+        SymbolNameAttr:$sym_name
+    );
+    let regions = (region AnyRegion:$body);
+
+    let extraClassDeclaration = [{
+        BlockArgument getInductionVar() { return getBody().front().getArgument(0); }
+    }];
+}
+
+def NodeCmpOp : StarplatBaseOp<"nodecmp">
+{
+    let summary = "Compare two nodes or values";
+    let arguments = (ins
+        AnyType:$lhs,
+        AnyType:$rhs,
+        Builtin_StringAttr:$op
+    );
+    let results = (outs I1:$result);
+}
+
+def CmpOp : StarplatBaseOp<"cmp">
+{
+    let summary = "Compare values";
+    let arguments = (ins
+        AnyType:$lhs,
+        AnyType:$rhs,
+        Builtin_StringAttr:$op
+    );
+    let results = (outs I1:$result);
+}
 
  def GetEdgeOp : StarplatBaseOp<"getedge">
  {
@@ -267,6 +396,27 @@ def GetEdgePropertyOp : StarplatBaseOp<"getEdgeProperty">
     );
  }
 
+def NumNodesOp : StarplatBaseOp<"num_nodes">
+{
+    let summary = "Get number of nodes in graph";
+    let arguments = (ins AnyType:$graph);
+    let results = (outs AnyType:$result);
+}
+
+def CastOp : StarplatBaseOp<"cast">
+{
+    let summary = "Cast between types";
+    let arguments = (ins AnyType:$input);
+    let results = (outs AnyType:$result);
+}
+
+def CountOutNbrsOp : StarplatBaseOp<"count_outNbrs">
+{
+    let summary = "Count outgoing neighbours of a node";
+    let arguments = (ins AnyType:$graph, AnyType:$node);
+    let results = (outs AnyType:$result);
+}
+
 def StoreOp : StarplatBaseOp<"store">
 {
   let summary = "Store Src to destination";
@@ -274,23 +424,20 @@ def StoreOp : StarplatBaseOp<"store">
 }
 
 
- def MinOp : StarplatBaseOp<"min">
- {
+def MinOp : StarplatBaseOp<"min">
+{
     let summary = "Min Operation of starplat";
-
     let arguments = ( ins 
-                      AnyType : $lhs1,
-                      AnyType : $lhs2,
-                      AnyType : $rhs1,
-                      AnyType : $rhs2,
-                      AnyType : $updateValue
+                      AnyType : $lhsNode1,
+                      AnyType : $lhsProp1,
+                      AnyType : $lhsNode2,
+                      AnyType : $lhsProp2,
+                      AnyType : $rhsValue1, 
+                      AnyType : $rhsValue2, 
+                      AnyType : $updateValue 
     );
-
-    let results = ( outs
-                    AnyType : $result1 
-    );
-
- }
+    let results = ( outs );  // no result, this is a write op
+}
 
 
  def AddOp : StarplatBaseOp<"add">
@@ -308,16 +455,132 @@ def StoreOp : StarplatBaseOp<"store">
                 );
  }
 
+ def SubOp : StarplatBaseOp<"sub">
+ {
+  let summary = "Sub Op";
+
+  let arguments = (
+                    ins 
+                    AnyType : $operand1,
+                    AnyType : $operand2
+  );
+
+  let results = ( outs 
+                   AnyType : $result
+                );
+ }
+
+ def MulOp : StarplatBaseOp<"mul">
+ {
+  let summary = "Mul Op";
+
+  let arguments = (
+                    ins 
+                    AnyType : $operand1,
+                    AnyType : $operand2
+  );
+
+  let results = ( outs 
+                   AnyType : $result
+                );
+ }
+
+ def DivOp : StarplatBaseOp<"div">
+ {
+  let summary = "Div Op";
+
+  let arguments = (
+                    ins 
+                    AnyType : $operand1,
+                    AnyType : $operand2
+  );
+
+  let results = ( outs 
+                   AnyType : $result
+                );
+ }
+
+ def AndOp : StarplatBaseOp<"and">
+ {
+  let summary = "And Op";
+
+  let arguments = (
+                    ins 
+                    AnyType : $operand1,
+                    AnyType : $operand2
+  );
+
+  let results = ( outs 
+                   AnyType : $result
+                );
+ }
+
+ def OrOp : StarplatBaseOp<"or">
+ {
+  let summary = "Or Op";
+
+  let arguments = (
+                    ins 
+                    AnyType : $operand1,
+                    AnyType : $operand2
+  );
+
+  let results = ( outs 
+                   AnyType : $result
+                );
+ }
+
+ def IncAndAssignOp : StarplatBaseOp<"incassign">
+ {
+  let summary = "Increase and Assign";
+
+  let arguments = (
+                    ins 
+                    AnyType : $lhs,
+                    AnyType : $rhs
+  );
+ }
+
 
  def endOp : StarplatBaseOp<"end", [Terminator]>
  {
     let summary = "End of the operation";
  }
 
- def ReturnOp : StarplatBaseOp<"return", [Terminator]>
- {
+def ReturnOp : StarplatBaseOp<"return", [Terminator]>
+{
     let summary = "End of the Function";
- }
+    let arguments = (ins Variadic<AnyType>:$operands);
+}
+
+ def IsEdgeOp : StarplatBaseOp<"isedge">
+{
+    let summary = "Check if edge exists between two nodes";
+    let arguments = (ins
+        AnyType : $graph,
+        AnyType : $node1,
+        AnyType : $node2
+    );
+    let results = (outs I1 : $result);
+}
+def StarPlatIfOp : StarplatBaseOp<"spif", []>
+{
+    let summary = "StarPlat If operation";
+    let arguments = (ins
+        I1:$condition
+    );
+    let regions = (region AnyRegion:$body);
+}
+
+def StarPlatIfElseOp : StarplatBaseOp<"ifelse", [NoTerminator]>
+{
+    let summary = "If-Else Statement";
+    let arguments = (ins
+        I1:$condition,
+        SymbolNameAttr:$sym_name
+    );
+    let regions = (region AnyRegion:$ifBody, AnyRegion:$elseBody);
+}
 
 
 
@@ -349,11 +612,21 @@ def VertexToEdge : Pass<"vertex-to-edge", "mlir::ModuleOp"> {
     let dependentDialects = ["mlir::starplat::StarPlatDialect"];
 }
 
-def ConvertStarPlatIRToOMPPass : Pass<"starplatir-to-omp">{
-  let summary = "StarPlat IR to OMP";
+def ConvertStarPlatIRToBasePass : Pass<"starplatir-to-base">{
+  let summary = "StarPlat IR to base";
 
   let dependentDialects = ["mlir::starplat::StarPlatDialect", "::mlir::omp::OpenMPDialect", "mlir::func::FuncDialect",
-  "::mlir::scf::SCFDialect", "::mlir::memref::MemRefDialect", "mlir::arith::ArithDialect"];
+  "::mlir::scf::SCFDialect", "::mlir::memref::MemRefDialect", "mlir::arith::ArithDialect", "mlir::LLVM::LLVMDialect"];
+
+
+}
+
+def ConvertBaseToOMPPass : Pass<"base-to-omp">{
+  let summary = "Base to OMP";
+
+  let dependentDialects = ["mlir::starplat::StarPlatDialect", "::mlir::omp::OpenMPDialect", "mlir::func::FuncDialect",
+  "::mlir::scf::SCFDialect", "::mlir::memref::MemRefDialect", "mlir::arith::ArithDialect", "mlir::LLVM::LLVMDialect"];
+
 
 }
 

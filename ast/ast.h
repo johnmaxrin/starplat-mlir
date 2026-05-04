@@ -17,7 +17,7 @@ class ASTNode
     virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const = 0;
 };
 
-enum ExpressionKind { KIND_NUMBER, KIND_IDENTIFIER, KIND_KEYWORD, KIND_BOOLEXPR, KIND_MEMBERACCESS, KIND_METHODCALL, KIND_ADDOP };
+enum ExpressionKind { KIND_NUMBER, KIND_IDENTIFIER, KIND_KEYWORD, KIND_BOOLEXPR, KIND_MEMBERACCESS, KIND_METHODCALL, KIND_ADDOP, KIND_SUBOP, KIND_MULOP, KIND_DIVOP, KIND_ANDOP, KIND_OROP };
 
 class Identifier : public ASTNode
 {
@@ -248,7 +248,7 @@ class FixedpointUntil : public ASTNode
 class ParameterAssignment : public ASTNode
 {
   public:
-    ParameterAssignment(ASTNode* identifier, ASTNode* keyword);
+    ParameterAssignment(ASTNode* identifier, ASTNode* keyword, bool iskeyword);
 
     virtual void Accept(Visitor* visitor) const override;
 
@@ -258,10 +258,14 @@ class ParameterAssignment : public ASTNode
 
     ASTNode* getidentifier() const;
     ASTNode* getkeyword() const;
+    ASTNode* getexpr() const;
+    bool isKeyword() const;
 
   private:
     ASTNode* identifier_;
     ASTNode* keyword_;
+    ASTNode* expr_;
+    bool iskeyword_;
 };
 
 class TemplateDeclarationStatement : public ASTNode
@@ -306,6 +310,48 @@ class ForallStatement : public ASTNode
     ASTNode* stmtlist_;
 };
 
+class ForStatement : public ASTNode
+{
+  public:
+    ForStatement(Identifier* loopVar, ASTNode* expr, ASTNode* stmtlist);
+
+    ForStatement();
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~ForStatement();
+
+    Identifier* getLoopVar() const;
+    ASTNode* getexpr() const;
+    ASTNode* getstmtlist() const;
+
+  private:
+    Identifier* loopVar_;
+    ASTNode* expr_;
+    ASTNode* stmtlist_;
+};
+
+class DoWhileStatement : public ASTNode
+{
+  public:
+    DoWhileStatement(ASTNode* expr, ASTNode* stmtlist);
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~DoWhileStatement();
+    
+    ASTNode* getexpr() const;
+    ASTNode* getstmtlist() const;
+
+  private:
+    ASTNode* expr_;
+    ASTNode* stmtlist_;
+};
+
 class IfStatement : public ASTNode
 {
   public:
@@ -325,6 +371,29 @@ class IfStatement : public ASTNode
   private:
     ASTNode* expr;
     ASTNode* stmt;
+};
+
+class IfElseStatement : public ASTNode
+{
+  public:
+    IfElseStatement(ASTNode* expr, ASTNode* stmt1, ASTNode* stmt2);
+
+    IfElseStatement();
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~IfElseStatement();
+
+    ASTNode* getexpr() const;
+    ASTNode* getstmt1() const;
+    ASTNode* getstmt2() const;
+
+  private:
+    ASTNode* expr;
+    ASTNode* stmt1;
+    ASTNode* stmt2;
 };
 
 class BoolExpr : public ASTNode
@@ -360,6 +429,101 @@ class Add : public ASTNode
     virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
 
     ~Add();
+
+    ASTNode* getOperand1() const;
+    ASTNode* getOperand2() const;
+
+  private:
+    ASTNode* operand1_;
+    ASTNode* operand2_;
+};
+
+class Sub : public ASTNode
+{
+  public:
+    Sub(ASTNode* operand1, ASTNode* operand2);
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~Sub();
+
+    ASTNode* getOperand1() const;
+    ASTNode* getOperand2() const;
+
+  private:
+    ASTNode* operand1_;
+    ASTNode* operand2_;
+};
+
+class Mul : public ASTNode
+{
+  public:
+    Mul(ASTNode* operand1, ASTNode* operand2);
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~Mul();
+
+    ASTNode* getOperand1() const;
+    ASTNode* getOperand2() const;
+
+  private:
+    ASTNode* operand1_;
+    ASTNode* operand2_;
+};
+
+class Div : public ASTNode
+{
+  public:
+    Div(ASTNode* operand1, ASTNode* operand2);
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~Div();
+
+    ASTNode* getOperand1() const;
+    ASTNode* getOperand2() const;
+
+  private:
+    ASTNode* operand1_;
+    ASTNode* operand2_;
+};
+
+class And : public ASTNode
+{
+  public:
+    And(ASTNode* operand1, ASTNode* operand2);
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~And();
+
+    ASTNode* getOperand1() const;
+    ASTNode* getOperand2() const;
+
+  private:
+    ASTNode* operand1_;
+    ASTNode* operand2_;
+};
+
+class Or : public ASTNode
+{
+  public:
+    Or(ASTNode* operand1, ASTNode* operand2);
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~Or();
 
     ASTNode* getOperand1() const;
     ASTNode* getOperand2() const;
@@ -427,9 +591,28 @@ class Incandassignstmt : public ASTNode
     ASTNode* expr;
 };
 
-class Number : public ASTNode
+class Incstmt : public ASTNode 
 {
   public:
+    Incstmt(Identifier* identifier);
+
+    Incstmt();
+
+    virtual void Accept(Visitor* visitor) const override;
+
+    virtual void Accept(MLIRVisitor* visitor, mlir::SymbolTable* symbolTable) const override;
+
+    ~Incstmt();
+
+    Identifier* getIdentifier() const;
+
+  private:
+    Identifier* identifier;
+};
+
+class Number : public ASTNode 
+{
+public:
     Number(char* number);
 
     Number();
@@ -440,8 +623,14 @@ class Number : public ASTNode
 
     int getnumber() const;
 
-  private:
+    double getnumberfloat() const;
+    
+    bool isFloat() const;
+    // ... rest
+private:
     int number_;
+    double numberfloat_;
+    bool isFloat_;
 };
 
 class ReturnStmt : public ASTNode

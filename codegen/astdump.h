@@ -8,6 +8,21 @@
 
 using namespace std;
 
+// for neat printing
+
+class Beautifier {
+public:
+  Beautifier();
+  void operator++();
+  void operator--();
+  void print_tab();
+
+private:
+  size_t tab_space;
+  size_t tab_size;
+
+};
+
 class CodeGen : public Visitor
 {
 
@@ -18,6 +33,16 @@ class CodeGen : public Visitor
 
     virtual void visitAdd(const Add* add) override;
 
+    virtual void visitSub(const Sub* sub) override;
+
+    virtual void visitMul(const Mul* mul) override;
+
+    virtual void visitDiv(const Div* div) override;
+
+    virtual void visitAnd(const And* _and) override;
+
+    virtual void visitOr(const Or* _or) override;
+
     virtual void visitMemberaccessStmt(const MemberacceessStmt* memberAccess) override;
 
     virtual void visitTemplateDeclarationStmt(const TemplateDeclarationStatement* templateDeclStmt) override;
@@ -26,11 +51,19 @@ class CodeGen : public Visitor
 
     virtual void visitForallStmt(const ForallStatement* forAllStmt) override;
 
+    virtual void visitForStmt(const ForStatement* forStmt) override;
+
+    virtual void visitDoWhileStmt(const DoWhileStatement* doWhileStmt) override;
+
     virtual void visitIfStmt(const IfStatement* ifStmt) override;
+
+    virtual void visitIfElseStmt(const IfElseStatement* ifElseStmt) override;
 
     virtual void visitBoolExpr(const BoolExpr* boolExpr) override;
 
     virtual void visitIncandassignstmt(const Incandassignstmt* incandassignstmt) override;
+
+    virtual void visitIncstmt(const Incstmt* incstmt) override;
 
     virtual void visitAssignment(const Assignment* assignment) override;
 
@@ -81,6 +114,7 @@ class CodeGen : public Visitor
   private:
     int result;
     map<string, int> variables;
+    Beautifier beautifier;
 };
 
 #endif
